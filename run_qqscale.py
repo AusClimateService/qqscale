@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--method",
         type=str,
-        choices=('additive', 'multiplicative')
+        choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
     )

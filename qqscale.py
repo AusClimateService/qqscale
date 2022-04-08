@@ -37,17 +37,17 @@ def qqscale(da_obs, da_hist, da_fut, month, bias_method):
     hist_mon_selection = da_hist['time'].dt.month.isin([month])
     da_hist_month = da_hist.sel({'time': hist_mon_selection})
     da_hist_month_mean = da_hist_month.mean('time')
-    da_hist_month_mean_interp = da_hist_month_mean.interp(lat=lats, lon=lons, kwargs={"fill_value": "extrapolate"}) 
+    da_hist_month_mean_interp = da_hist_month_mean.interp(lat=lats, lon=lons, kwargs={'fill_value': 'extrapolate'}) 
     da_hist_month_perc = calc_percentiles(da_hist_month, percentiles)
-    da_hist_month_perc_interp = da_hist_month_perc.interp(lat=lats, lon=lons, kwargs={"fill_value": "extrapolate"})
+    da_hist_month_perc_interp = da_hist_month_perc.interp(lat=lats, lon=lons, kwargs={'fill_value': 'extrapolate'})
     
     logging.info('Processing future model data ...')
     fut_mon_selection = da_fut['time'].dt.month.isin([month])
     da_fut_month = da_fut.sel({'time': fut_mon_selection})
     da_fut_month_mean = da_fut_month.mean('time')
-    da_fut_month_mean_interp = da_fut_month_mean.interp(lat=lats, lon=lons, kwargs={"fill_value": "extrapolate"}) 
+    da_fut_month_mean_interp = da_fut_month_mean.interp(lat=lats, lon=lons, kwargs={'fill_value': 'extrapolate'}) 
     da_fut_month_perc = calc_percentiles(da_fut_month, percentiles)
-    da_fut_month_perc_interp = da_fut_month_perc.interp(lat=lats, lon=lons, kwargs={"fill_value": "extrapolate"})
+    da_fut_month_perc_interp = da_fut_month_perc.interp(lat=lats, lon=lons, kwargs={'fill_value': 'extrapolate'})
 
     logging.info('Processing observational data ...')
     obs_mon_selection = da_obs['time'].dt.month.isin([month])
@@ -64,15 +64,15 @@ def qqscale(da_obs, da_hist, da_fut, month, bias_method):
     )
     
     ds_qqscale = xr.Dataset()
-    ds_qqscale["lat"] = da_obs['lat']
-    ds_qqscale["lon"] = da_obs['lon']
-    ds_qqscale["time"] =  MO_corrected['time']
-    ds_qqscale["data_month"] = MO_corrected
-    ds_qqscale["hist_percentile"] = da_hist_month_perc
-    ds_qqscale["fut_percentile"] = da_fut_month_perc
-    ds_qqscale["hist_percentile_interp"] = da_hist_month_perc_interp
-    ds_qqscale["fut_percentile_interp"] = da_fut_month_perc_interp
-    ds_qqscale["change_factor"] = change_month
+    ds_qqscale['lat'] = da_obs['lat']
+    ds_qqscale['lon'] = da_obs['lon']
+    ds_qqscale['time'] =  MO_corrected['time']
+    ds_qqscale['data_month'] = MO_corrected
+    ds_qqscale['hist_percentile'] = da_hist_month_perc
+    ds_qqscale['fut_percentile'] = da_fut_month_perc
+    ds_qqscale['hist_percentile_interp'] = da_hist_month_perc_interp
+    ds_qqscale['fut_percentile_interp'] = da_fut_month_perc_interp
+    ds_qqscale['change_factor'] = change_month
     
     qqscale.attrs.update(file_attributes.global_atts)
     ds_qqscale.lat.attrs = file_attributes.lat_dim
@@ -110,37 +110,36 @@ def apply_scaling(
     Returns
     -------
     ds : xarray Dataset
-    
-  
     """
     
-    if method == "additive":
+    if method == 'additive':
         op = operator.sub
-    elif method == "multiplicative":
+    elif method == 'multiplicative':
         op = operator.truediv
     else:
-        raise ValueError(f"Unrecognised scaling method: {method}")
+        raise ValueError(f'Unrecognised scaling method: {method}')
     change_month = op(ds_fut_month_perc_interp, ds_hist_month_perc_interp)
-    change_month_stack = change_month.stack(z={"lat", "lon"})
+    change_month_stack = change_month.stack(z={'lat', 'lon'})
 
-    ds_obs_month_ranked = ds_obs_month.load().rank(dim="time", pct=True, keep_attrs=True) * 100
+    ds_obs_month_ranked = ds_obs_month.load().rank(dim='time', pct=True, keep_attrs=True) * 100
     ds_obs_month_loc = ds_obs_month_ranked.round()
-    ds_obs_month_perc_stack = ds_obs_month_perc.stack(z={"lat", "lon"})
-    ds_obs_month_loc_stack = ds_obs_month_loc.stack(z={"lat", "lon"})
-    ds_obs_month_stack = ds_obs_month.stack(z={"lat", "lon"})
+    ds_obs_month_perc_stack = ds_obs_month_perc.stack(z={'lat', 'lon'})
+    ds_obs_month_loc_stack = ds_obs_month_loc.stack(z={'lat', 'lon'})
+    ds_obs_month_stack = ds_obs_month.stack(z={'lat', 'lon'})
 
     temp_var = np.zeros(np.shape(ds_obs_month_loc_stack))
-    temp_var = xr.DataArray(data=temp_var, dims=["time", "z"], coords=ds_obs_month_loc_stack.coords)
+    temp_var = xr.DataArray(data=temp_var, dims=['time', 'z'], coords=ds_obs_month_loc_stack.coords)
     
-    logging.info("Applying the change factor ...')
+    logging.info('Applying the change factor ...')
     for tt in range(ds_obs_month_stack.time.size):
         if (tt+1) % 10 == 0:
-            logging.info("{0} of {1}".format(tt+1, len(ds_obs_month_stack.time)))
-        temp_var1 = ds_obs_month_loc_stack[tt,:].astype(int).drop("z")
+            logging.info('{0} of {1}'.format(tt+1, len(ds_obs_month_stack.time)))
+        temp_var1 = ds_obs_month_loc_stack[tt,:].astype(int).drop('z')
         temp_var2 = temp_var1.where(temp_var1 < 100, 99)
         temp_var3 = change_month_stack.drop('z')[temp_var1, :]
-        change_factor = (ds_obs_month_stack[tt,:] - ds_obs_month_perc_stack[temp_var2, :])
-            / (ds_obs_month_perc_stack[temp_var2+1, :] - ds_mon_obs_month_perc_stack[temp_var2, :])
+        numerator = ds_obs_month_stack[tt,:] - ds_obs_month_perc_stack[temp_var2, :]
+        denominator = (ds_obs_month_perc_stack[temp_var2+1, :] - ds_mon_obs_month_perc_stack[temp_var2, :])
+        change_factor = numerator / 
         change_factor_updated = (1 - change_factor) * temp_var3 + change_factor * change_month_stack[temp_var2+1, :]
         change_factor_updated = change_factor_updated.fillna(0)
         temp_var4 = ds_obs_month_stack[tt,:] + change_factor_updated
