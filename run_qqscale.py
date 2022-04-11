@@ -14,20 +14,23 @@ def main(args):
 
     ds_obs = xr.open_mfdataset(args.obs_files)
     da_obs = ds_obs[args.obs_variable]
-    da_obs_period = da_obs.sel({'time': slice(args.obs_time_bounds)})
+    start_obs, end_obs = args.obs_time_bounds
+    da_obs_period = da_obs.sel({'time': slice(start_obs, end_obs)})
     
     ds_hist = xr.open_mfdataset(args.hist_files)
     da_hist = ds_hist[args.model_variable]
-    da_hist_period = da_hist.sel({'time': slice(args.hist_time_bounds)})
+    start_hist, end_hist = args.hist_time_bounds
+    da_hist_period = da_hist.sel({'time': slice(start_hist, end_hist)})
 
     ds_fut = xr.open_mfdataset(args.fut_files)
     da_fut = ds_fut[args.model_variable]
-    da_fut_period = da_fut.sel({'time': slice(args.fut_time_bounds)})
+    start_fut, end_fut = args.fut_time_bounds
+    da_fut_period = da_fut.sel({'time': slice(start_fut, end_fut)})
 
     ds_qqscale = qqscale.qqscale(
         da_obs_period, da_hist_period, da_fut_period, args.month, args.method
     )
-    ds_qqscale.attrs["history"] = cmdprov.new_log()
+    ds_qqscale.attrs['history'] = cmdprov.new_log()
     ds_qqscale.to_netcdf(args.output_file)
 
 
