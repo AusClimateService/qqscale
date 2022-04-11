@@ -1,5 +1,5 @@
 """Functions for QQ-scale analysis."""
-
+import pdb
 import logging
 import operator
 import time
@@ -67,15 +67,17 @@ def qqscale(da_obs, da_hist, da_fut, month, method, verbose=True):
     MO_corrected, change_month = apply_scaling(
         da_obs_month,
         da_obs_month_perc,
+        da_hist_month_mean_interp,
         da_hist_month_perc_interp,
+        da_fut_month_mean_interp,
         da_fut_month_perc_interp,
         method,
     )
     
     ds_qqscale = xr.Dataset()
-    ds_qqscale['lat'] = da_obs['lat']
-    ds_qqscale['lon'] = da_obs['lon']
-    ds_qqscale['time'] =  MO_corrected['time']
+    ds_qqscale = ds_qqscale.assign_coords({'time': MO_corrected['time']})
+    ds_qqscale = ds_qqscale.assign_coords({'lat': da_obs['lat']})
+    ds_qqscale = ds_qqscale.assign_coords({'lon': da_obs['lon']})
     ds_qqscale['data_month'] = MO_corrected
     ds_qqscale['hist_percentile'] = da_hist_month_perc
     ds_qqscale['fut_percentile'] = da_fut_month_perc
@@ -83,11 +85,11 @@ def qqscale(da_obs, da_hist, da_fut, month, method, verbose=True):
     ds_qqscale['fut_percentile_interp'] = da_fut_month_perc_interp
     ds_qqscale['change_factor'] = change_month
     
-    qqscale.attrs.update(file_attributes.global_atts)
+    ds_qqscale.attrs.update(file_attributes.global_atts)
     ds_qqscale.lat.attrs = file_attributes.lat_dim
     ds_qqscale.lon.attrs = file_attributes.lon_dim
-    ds_qqscale.time.attrs = file_attributes.time_dim
-    ds_qqscale.data_month = file_attributes.data_month_dim
+#    ds_qqscale.time.attrs = file_attributes.time_dim
+    ds_qqscale.data_month.attrs = file_attributes.data_month_dim
     
     time_end = time.perf_counter()
     logging.info('Duration = {0} minutes'.format((time_end - time_start) / 60.0) )
@@ -98,7 +100,9 @@ def qqscale(da_obs, da_hist, da_fut, month, method, verbose=True):
 def apply_scaling(
     da_obs_month,
     da_obs_month_perc,
+    da_hist_month_mean_interp,
     da_hist_month_perc_interp,
+    da_fut_month_mean_interp,
     da_fut_month_perc_interp,
     method
 ):
@@ -110,8 +114,12 @@ def apply_scaling(
         Observational data for a particular month
     da_obs_month_perc : xarray DataArray
         Observational percentiles for a particular month
+    da_hist_month_mean_interp : xarray DataArray
+        Historical model mean for a particular month interpolated to the obs grid
     da_hist_month_perc_interp : xarray DataArray
         Historical model percentiles for a particular month interpolated to the obs grid
+    da_fut_month_mean_interp : xarray DataArray
+        Future model mean for a particular month interpolated to the obs grid
     da_fut_month_perc_interp : xarray DataArray
         Future model percentiles for a particular month interpolated to the obs grid
     method : {'additive', 'multiplicative'}, str
@@ -148,7 +156,7 @@ def apply_scaling(
         temp_var2 = temp_var1.where(temp_var1 < 100, 99)
         temp_var3 = change_month_stack.drop('z')[temp_var1, :]
         numerator = da_obs_month_stack[tt,:] - da_obs_month_perc_stack[temp_var2, :]
-        denominator = da_obs_month_perc_stack[temp_var2+1, :] - da_mon_obs_month_perc_stack[temp_var2, :]
+        denominator = da_obs_month_perc_stack[temp_var2+1, :] - da_obs_month_perc_stack[temp_var2, :]
         change_factor = numerator / denominator
         change_factor_updated = (1 - change_factor) * temp_var3 + change_factor * change_month_stack[temp_var2+1, :]
         change_factor_updated = change_factor_updated.fillna(0)

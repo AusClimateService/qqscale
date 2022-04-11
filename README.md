@@ -44,7 +44,7 @@ $ python run_qqscale.py /g/data/zv2/agcd/v1/tmax/mean/r005/01day/agcd_v1_tmax_me
 ### Environment
 
 The following Python libraries are dependencies for running the code:
-`xarray`, `netCDF4`, `dask`, `scipy`  and `cmdline_provenance`.
+`xarray`, `netCDF4`, `dask`, `bottleneck`, `scipy`  and `cmdline_provenance`.
 
 
 ### Questions
