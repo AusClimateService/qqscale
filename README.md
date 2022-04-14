@@ -1,5 +1,5 @@
 ## qqscale
-Raktima's changes
+Raktima's changes need more details
 ### Method overview
 
 Quantile-quantile scaling (QQ-scaling) is a technique designed to capture
