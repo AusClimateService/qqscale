@@ -1,5 +1,5 @@
 """Command line program for calculating QQ-scaling adjustment factors."""
-import pdb
+
 import argparse
 
 import numpy as np
