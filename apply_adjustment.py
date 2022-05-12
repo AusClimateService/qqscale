@@ -15,7 +15,7 @@ def check_units(da_obs, qm, obs_units, aj_units, output_units):
     """Check units and convert if necessary."""
 
     if obs_units:
-        da_obs.attrs['units'] = args.obs_units
+        da_obs.attrs['units'] = obs_units
     if aj_units:
         qm.ds['af'].attrs['units'] = aj_units
         qm.ds['hist_q'].attrs['units'] = aj_units

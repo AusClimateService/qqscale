@@ -8,8 +8,18 @@ import xclim as xc
 from xclim import sdba
 import cmdline_provenance as cmdprov
 
+import spatial_selection
 
-def read_data(infiles, var, time_bounds, input_units, output_units):
+
+def read_data(
+    infiles,
+    var,
+    time_bounds=None,
+    spatial_sel=None,
+    spatial_agg="none",
+    input_units=None,
+    output_units=None,
+):
     """Read and process a multi-file dataset."""
 
     ds = xr.open_mfdataset(infiles)
@@ -17,29 +27,41 @@ def read_data(infiles, var, time_bounds, input_units, output_units):
         ds = ds.drop('height')
     except ValueError:
         pass
-    da = ds[var]
-    start_date, end_date = time_bounds
-    da_period = da.sel({'time': slice(start_date, end_date)})
-    da_period = da_period.chunk({'time': -1})
-    if input_units:
-        da_period.attrs['units'] = input_units
-    if output_units:
-        da_period = xc.units.convert_units_to(da_period, output_units)
 
-    return da_period
+    if time_bounds:
+        start_date, end_date = time_bounds
+        ds = ds.sel({'time': slice(start_date, end_date)})
+    ds = ds.chunk({'time': -1})
+
+    if spatial_sel is None:
+        pass
+    elif len(spatial_sel) == 4:
+        ds = spatial_selection.select_box_region(ds, spatial_sel, agg=spatial_agg)
+    elif len(spatial_sel) == 2:
+        ds = spatial_selection.select_point_region(ds, spatial_sel)
+    else:
+        msg = "spatial sel must be None, a box (list of 4 floats) or a point (list of 2 floats)"
+        raise ValueError(msg)
+
+    if input_units:
+        ds[var].attrs['units'] = input_units
+    if output_units:
+        ds[var] = xc.units.convert_units_to(ds[var], output_units)
+
+    return ds
      
 
 def main(args):
     """Run the program."""
     
-    da_hist = read_data(
+    ds_hist = read_data(
         args.hist_files,
         args.variable,
         args.hist_time_bounds,
         args.input_units,
         args.output_units
     )
-    da_fut = read_data(
+    ds_fut = read_data(
         args.fut_files,
         args.variable,
         args.fut_time_bounds,
@@ -49,13 +71,13 @@ def main(args):
 
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
-        da_fut,
-        da_hist,
+        ds_fut[args.variable],
+        ds_hist[args.variable],
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
     )
-    qm.ds = qm.ds.assign_coords({'lat': da_fut['lat'], 'lon': da_fut['lon']}) #xclim strips lat/lon attributes
+    qm.ds = qm.ds.assign_coords({'lat': ds_fut['lat'], 'lon': ds_fut['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
     qm.ds.attrs['history'] = cmdprov.new_log()
