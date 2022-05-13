@@ -60,14 +60,16 @@ def main(args):
         args.variable,
         time_bounds=args.hist_time_bounds,
         input_units=args.input_units,
-        output_units=args.output_units
+        output_units=args.output_units,
+        lon_chunk_size=args.lon_chunk_size,
     )
     ds_fut = read_data(
         args.fut_files,
         args.variable,
         time_bounds=args.fut_time_bounds,
         input_units=args.input_units,
-        output_units=args.output_units
+        output_units=args.output_units,
+        lon_chunk_size=args.lon_chunk_size,
     )
 
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
@@ -143,6 +145,9 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--output_units", type=str, default=None, help="output data units"
+    )
+    parser.add_argument(
+        "--lon_chunk_size", type=int, default=-1, help="chunk size along the longitude axis"
     )
 
     args = parser.parse_args()
