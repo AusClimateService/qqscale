@@ -9,6 +9,10 @@ import xclim as xc
 from xclim import sdba
 import xesmf as xe
 import cmdline_provenance as cmdprov
+import dask.diagnostics
+
+
+dask.diagnostics.ProgressBar().register()
 
 
 def check_units(da_obs, qm, obs_units, aj_units, output_units):
@@ -39,7 +43,7 @@ def main(args):
     ds_obs = xr.open_mfdataset(args.obs_files)
     start_obs, end_obs = args.time_bounds
     ds_obs = ds_obs.sel({'time': slice(start_obs, end_obs)})
-    ds_obs = ds_obs.chunk({'time': -1})
+    ds_obs = ds_obs.chunk({'time': -1, 'lon': 20})
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)

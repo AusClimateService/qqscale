@@ -19,6 +19,7 @@ def read_data(
     spatial_agg="none",
     input_units=None,
     output_units=None,
+    lon_chunk_size=20,
 ):
     """Read and process a multi-file dataset."""
 
@@ -31,7 +32,7 @@ def read_data(
     if time_bounds:
         start_date, end_date = time_bounds
         ds = ds.sel({'time': slice(start_date, end_date)})
-    ds = ds.chunk({'time': -1})
+    ds = ds.chunk({'time': -1, 'lon': lon_chunk_size})
 
     if spatial_sel is None:
         pass
@@ -57,16 +58,16 @@ def main(args):
     ds_hist = read_data(
         args.hist_files,
         args.variable,
-        args.hist_time_bounds,
-        args.input_units,
-        args.output_units
+        time_bounds=args.hist_time_bounds,
+        input_units=args.input_units,
+        output_units=args.output_units
     )
     ds_fut = read_data(
         args.fut_files,
         args.variable,
-        args.fut_time_bounds,
-        args.input_units,
-        args.output_units
+        time_bounds=args.fut_time_bounds,
+        input_units=args.input_units,
+        output_units=args.output_units
     )
 
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
