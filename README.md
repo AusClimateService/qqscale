@@ -6,8 +6,7 @@ This directory contains command line programs for producing future climate data
 using the quantile-quantile scaling method.
 
 The programs make use of the “Bias Adjustment and Downscaling Algorithms” capability built into the xclim library,
-which is described at:  
-https://xclim.readthedocs.io/en/stable/sdba.html
+which is described at: https://xclim.readthedocs.io/en/stable/sdba.html
 
 If you're a member of the `wp00` project on NCI
 (i.e. if you're part of the CSIRO Climate Innovation Hub),
@@ -19,8 +18,12 @@ and run the code in a Python environment with the following libraries installed:
 `xarray`, `netCDF4`, `dask`, `xclim`, `xesmf`  and `cmdline_provenance`.
 
 The data processing is a two step process.
-The first step involves using the 
+The `calc_adjustment.py` script is used to calculate the adjustment factors
+for a given CMIP experiment and time period (e.g. RCP4.5 for 1995-2014 to 2040-2059),
+and then `apply_adjustment.py` is used to apply those adjustment factors
+to a given observational dataset (e.g. AGCD data from 1995-2014).
 
+TODO: Add documentation on how to run these two scripts.
 
 ### Questions
 
