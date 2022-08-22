@@ -1,39 +1,25 @@
 ## qqscale
 
-### Method overview
+NOTE: THIS CODE IS STILL UNDER DEVELOPMENT AND IS NOT READY FOR BROAD USE.
 
-Quantile-quantile scaling (QQ-scaling) is a technique designed to capture
-important changes in the daily variance of weather variables.
-It does this for each given location by computing change values on a set of quantiles
-derived from the difference between daily historic GCM and future GCM data.
-The change values corresponding to the quantiles (derived from the daily observed climate data)
-are then applied to the daily observed data following these steps.
+This directory contains command line programs for producing future climate data
+using the quantile-quantile scaling method.
 
-The QQ scale method is applied on daily data for each month,
-extracted over a climatological historical and future period.
-One hundred and one quantiles (0,1,2,…100) are calculated at each grid point
-for both historical and future model simulations of a particular month.
-A change factor is then calculated between historical and future data for each quantile. 
+The programs make use of the “Bias Adjustment and Downscaling Algorithms” capability built into the xclim library,
+which is described at:  
+https://xclim.readthedocs.io/en/stable/sdba.html
 
-The reverse quantile is calculated using relevant baseline climatologies
-(e.g., Australian Gridded Climate Data (AGCD) or ERA5 reanalysis data)
-for a particular month over a defined baseline period (e.g., 1986-2005),
-i.e., a quantile value is assigned to each daily value. 
+If you're a member of the `wp00` project on NCI
+(i.e. if you're part of the CSIRO Climate Innovation Hub),
+the easiest way to use the scripts in this directory is to use the cloned copy at `/g/data/wp00/shared_code/qqscale/`.
+They can be run using the Python environment at `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python`.
 
-The change factor for that particular quantile is applied
-to the observed daily data to get projections data. 
-
-Since the QQ-scaling method is applied on daily data for each month,
-it conserves the seasonal variability in observational and model datasets.
-The method attempts to minimise model biases as change in quantile is used instead of mean change. 
-Finally, the QQ scaled data are corrected so that the change in climatological monthly mean
-between observations and QQ-scaled data matches the GCM simulated change in monthly mean.
-
-
-### Environment
-
-The following Python libraries are dependencies for running the code:
+Alternatively, you can clone this GitHub repository
+and run the code in a Python environment with the following libraries installed:
 `xarray`, `netCDF4`, `dask`, `xclim`, `xesmf`  and `cmdline_provenance`.
+
+The data processing is a two step process.
+The first step involves using the 
 
 
 ### Questions
