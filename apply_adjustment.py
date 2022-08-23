@@ -3,6 +3,7 @@
 import logging
 import argparse
 
+import git
 import numpy as np
 import xarray as xr
 import xclim as xc
