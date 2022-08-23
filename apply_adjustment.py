@@ -1,7 +1,7 @@
 """Command line program for applying QQ-scaling adjustment factors."""
-import pdb
+
+import logging
 import argparse
-import time
 
 import numpy as np
 import xarray as xr
@@ -10,9 +10,35 @@ from xclim import sdba
 import xesmf as xe
 import cmdline_provenance as cmdprov
 import dask.diagnostics
+from dask.distributed import Client, LocalCluster, progress
+
+import calc_adjustment
 
 
-dask.diagnostics.ProgressBar().register()
+def get_new_log(infile_name, infile_history):
+    """Generate command log for output file."""
+
+    try:
+        repo = git.Repo()
+        repo_url = repo.remotes[0].url.split(".git")[0]
+    except (git.exc.InvalidGitRepositoryError, NameError):
+        repo_url = None
+    new_log = cmdprov.new_log(
+        infile_logs={infile_name: infile_history},
+        code_url=repo_url,
+    )
+
+    return new_log
+
+
+def profiling_stats(rprof):
+    """Record profiling information."""
+
+    max_memory = np.max([result.mem for result in rprof.results])
+    max_cpus = np.max([result.cpu for result in rprof.results])
+
+    logging.debug(f'Peak memory usage: {max_memory}MB')
+    logging.debug(f'Peak CPU usage: {max_cpus}%')
 
 
 def check_units(da_obs, qm, obs_units, aj_units, output_units):
@@ -38,12 +64,21 @@ def check_units(da_obs, qm, obs_units, aj_units, output_units):
 def main(args):
     """Run the program."""
 
-    timer_start = time.perf_counter()
+    if args.local_cluster:
+        assert args.dask_dir, "Must provide --dask_dir for local cluster"
+        dask.config.set(temporary_directory=args.dask_dir)
+        cluster = LocalCluster(n_workers=args.nworkers)
+        client = Client(cluster)
+        print("Watch progress at http://localhost:8787/status")
+    else:
+        dask.diagnostics.ProgressBar().register()
 
-    ds_obs = xr.open_mfdataset(args.obs_files)
-    start_obs, end_obs = args.time_bounds
-    ds_obs = ds_obs.sel({'time': slice(start_obs, end_obs)})
-    ds_obs = ds_obs.chunk({'time': -1, 'lon': 20})
+    ds_obs = calc_adjustment.read_data(
+        args.obs_files,
+        args.variable,
+        time_bounds=args.time_bounds,
+        lon_chunk_size=args.lon_chunk_size,
+    )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
@@ -51,13 +86,7 @@ def main(args):
     qm.ds = regridder(qm.ds)
     qm.ds = qm.ds.compute()
 
-    chunk_num, total_chunks = args.lon_chunking
-    lon_chunks = np.array_split(qm.ds['lon'], total_chunks)
-    lon_selection = lon_chunks[chunk_num - 1] 
-    ds_obs = ds_obs.sel({'lon': lon_selection})
-    qm.ds = qm.ds.sel({'lon': lon_selection}) 
     da_obs = ds_obs[args.variable]
-
     da_obs, qm = check_units(
         da_obs,
         qm,
@@ -70,6 +99,9 @@ def main(args):
         extrapolation="constant",
         interp="linear"
     )
+    if args.local_cluster:
+        qq_obs = qq_obs.persist()
+        progress(qq_obs)
     
     qq_obs = qq_obs.rename(args.variable)
     qq_obs = qq_obs.transpose('time', 'lat', 'lon')
@@ -77,14 +109,8 @@ def main(args):
     time_adjustment = np.datetime64(new_start_date) - qq_obs['time'][0]
     qq_obs['time'] = qq_obs['time'] + time_adjustment
 
-    qq_obs.attrs['history'] = cmdprov.new_log(
-        infile_logs={args.adjustment_file: ds_adjust.attrs['history']},
-    )
+    qq_obs.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
     qq_obs.to_netcdf(args.output_file)
-
-    timer_end = time.perf_counter()
-    total_time = (timer_end - timer_start) / 60.0
-    print(f'Adjustment duration = {total_time:0.4f} minutes')
 
 
 if __name__ == '__main__':
@@ -103,14 +129,6 @@ if __name__ == '__main__':
     parser.add_argument("--adjustment_units", type=str, default=None, help="adjustment data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
-        "--lon_chunking",
-        type=int,
-        nargs=2,
-        metavar=('CHUNK_NUMBER', 'TOTAL_CHUNKS'),
-        default=(1, 1),
-        help="subset data along longitude dimension (chunk numbers start at 1)"
-    )
-    parser.add_argument(
         "--time_bounds",
         type=str,
         nargs=2,
@@ -118,5 +136,39 @@ if __name__ == '__main__':
         required=True,
         help="observations time bounds in YYYY-MM-DD format"
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help='Set logging level to DEBUG',
+    )
+    parser.add_argument(
+        "--local_cluster",
+        action="store_true",
+        default=False,
+        help='Use a local dask cluster',
+    )
+    parser.add_argument(
+        "--dask_dir",
+        type=str,
+        default=None,
+        help='Directory where dask worker space files can be written. Required for local cluster.',
+    )
+    parser.add_argument(
+        "--nworkers",
+        type=int,
+        default=None,
+        help='Number of workers for cluster',
+    )
+    parser.add_argument(
+        "--lon_chunk_size",
+        type=int,
+        default=None,
+        help='Size of longitude chunks (i.e. number of lons in each chunk)',
+    )
     args = parser.parse_args()
-    main(args)
+    log_level = logging.DEBUG if args.verbose else logging.WARNING
+    logging.basicConfig(level=log_level)
+    with dask.diagnostics.ResourceProfiler() as rprof:
+        main(args)
+    profiling_stats(rprof)

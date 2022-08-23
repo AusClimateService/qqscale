@@ -12,16 +12,6 @@ import cmdline_provenance as cmdprov
 import dask.diagnostics
 from dask.distributed import Client, LocalCluster, progress
 
-
-def profiling_stats(rprof):
-    """Record profiling information."""
-
-    max_memory = np.max([result.mem for result in rprof.results])
-    max_cpus = np.max([result.cpu for result in rprof.results])
-
-    logging.debug(f'Peak memory usage: {max_memory}MB')
-    logging.debug(f'Peak CPU usage: {max_cpus}%')
-
     
 def get_new_log():
     """Generate command log for output file."""
@@ -44,7 +34,7 @@ def read_data(
     time_bounds=None,
     input_units=None,
     output_units=None,
-    lon_chunk_size=20,
+    lon_chunk_size=None,
 ):
     """Read and process an input dataset."""
 
@@ -80,14 +70,7 @@ def read_data(
 def main(args):
     """Run the program."""
     
-    if args.local_cluster:
-        assert args.dask_dir, "Must provide --dask_dir for local cluster"
-        dask.config.set(temporary_directory=args.dask_dir)
-        cluster = LocalCluster(n_workers=args.nworkers)
-        client = Client(cluster)
-        print("Watch progress at http://localhost:8787/status")
-    else:
-        dask.diagnostics.ProgressBar().register()
+    dask.diagnostics.ProgressBar().register()
     
     ds_hist = read_data(
         args.hist_files,
@@ -113,11 +96,7 @@ def main(args):
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
-    )
-    if args.local_cluster:
-        qm = qm.persist()
-        progress(qm)
-    
+    )    
     qm.ds = qm.ds.assign_coords({'lat': ds_fut['lat'], 'lon': ds_fut['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
@@ -192,33 +171,7 @@ if __name__ == '__main__':
         default=False,
         help='Set logging level to DEBUG',
     )
-    parser.add_argument(
-        "--local_cluster",
-        action="store_true",
-        default=False,
-        help='Use a local dask cluster',
-    )
-    parser.add_argument(
-        "--dask_dir",
-        type=str,
-        default=None,
-        help='Directory where dask worker space files can be written. Required for local cluster.',
-    )
-    parser.add_argument(
-        "--nworkers",
-        type=int,
-        default=None,
-        help='Number of workers for cluster',
-    )
-    parser.add_argument(
-        "--lon_chunk_size",
-        type=int,
-        default=None,
-        help='Size of longitude chunks (i.e. number of lons in each chunk)',
-    )
     args = parser.parse_args()
     log_level = logging.DEBUG if args.verbose else logging.WARNING
     logging.basicConfig(level=log_level)
-    with dask.diagnostics.ResourceProfiler() as rprof:
-        main(args)
-    profiling_stats(rprof)
+    main(args)

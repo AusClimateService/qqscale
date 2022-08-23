@@ -16,7 +16,7 @@ ${AF_FILE} :
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_FILE}
 ${QQ_FILE} : ${AF_FILE}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${OBS_VAR} ${OBS_FILES} ${OBS_VAR} $< $@ --time_bounds ${BASE_START}-01-01 ${BASE_END}-12-31 --obs_units ${OBS_UNITS} --adjustment_units ${OUTPUT_UNITS} --output_units ${OUTPUT_UNITS}
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${OBS_FILES} ${OBS_VAR} $< $@ --time_bounds ${BASE_START}-01-01 ${BASE_END}-12-31 --obs_units ${OBS_UNITS} --adjustment_units ${OUTPUT_UNITS} --output_units ${OUTPUT_UNITS}
 
 #bash apply_adjustment.sh tmax /g/data/wp00/dbi599/tasmax-qqscale-factors_day_ACCESS1-3_rcp45_r1i1p1_19860101-20051231_20210101-20401231.nc /g/data/wp00/dbi599/tasmax_day_AGCD-ACCESS1-3_rcp45_r1i1p1_20210101-20401231.nc 1986-01-01 2005-12-31 15 /g/data/zv2/agcd/v1/tmax/mean/r005/01day/agcd_v1_tmax_mean_r005_daily_198[6,7,8,9]*.nc /g/data/zv2/agcd/v1/tmax/mean/r005/01day/agcd_v1_tmax_mean_r005_daily_199*.nc /g/data/zv2/agcd/v1/tmax/mean/r005/01day/agcd_v1_tmax_mean_r005_daily_200[0,1,2,3,4,5]*.nc
 
