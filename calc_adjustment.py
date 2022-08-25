@@ -56,8 +56,8 @@ def read_data(
     if lon_chunk_size:
         chunk_dict['lon'] = lon_chunk_size
     ds = ds.chunk(chunk_dict)
-    logging.debug(f'Array size: {ds[var].shape}')
-    logging.debug(f'Chunk size: {ds[var].chunksizes}')
+    logging.info(f'Array size: {ds[var].shape}')
+    logging.info(f'Chunk size: {ds[var].chunksizes}')
 
     if input_units:
         ds[var].attrs['units'] = input_units
@@ -78,7 +78,6 @@ def main(args):
         time_bounds=args.hist_time_bounds,
         input_units=args.input_units,
         output_units=args.output_units,
-        lon_chunk_size=args.lon_chunk_size,
     )
     ds_fut = read_data(
         args.fut_files,
@@ -86,7 +85,6 @@ def main(args):
         time_bounds=args.fut_time_bounds,
         input_units=args.input_units,
         output_units=args.output_units,
-        lon_chunk_size=args.lon_chunk_size,
     )
 
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
@@ -172,6 +170,6 @@ if __name__ == '__main__':
         help='Set logging level to DEBUG',
     )
     args = parser.parse_args()
-    log_level = logging.DEBUG if args.verbose else logging.WARNING
+    log_level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=log_level)
     main(args)

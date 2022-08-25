@@ -1,5 +1,5 @@
 """Command line program for applying QQ-scaling adjustment factors."""
-
+import pdb
 import logging
 import argparse
 
@@ -38,8 +38,8 @@ def profiling_stats(rprof):
     max_memory = np.max([result.mem for result in rprof.results])
     max_cpus = np.max([result.cpu for result in rprof.results])
 
-    logging.debug(f'Peak memory usage: {max_memory}MB')
-    logging.debug(f'Peak CPU usage: {max_cpus}%')
+    logging.info(f'Peak memory usage: {max_memory}MB')
+    logging.info(f'Peak CPU usage: {max_cpus}%')
 
 
 def check_units(da_obs, qm, obs_units, aj_units, output_units):
@@ -59,6 +59,9 @@ def check_units(da_obs, qm, obs_units, aj_units, output_units):
         if qm.ds['hist_q'].attrs['units'] != output_units:
             qm.ds['hist_q'] = xc.units.convert_units_to(qm.ds['hist_q'], output_units)
     
+    #da_obs = da_obs.sel({'lat': slice(-30, -28), 'lon': slice(140, 142)})
+    #qm.ds = qm.ds.sel({'lat': slice(-30, -28), 'lon': slice(140, 142)})
+
     return da_obs, qm
 
 
@@ -85,7 +88,9 @@ def main(args):
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     regridder = xe.Regridder(qm.ds, ds_obs, "bilinear")
     qm.ds = regridder(qm.ds)
-    qm.ds = qm.ds.compute()
+    #qm.ds = qm.ds.compute()
+    if args.lon_chunk_size:
+        qm.ds = qm.ds.chunk({'lon': args.lon_chunk_size})
 
     da_obs = ds_obs[args.variable]
     da_obs, qm = check_units(
@@ -95,6 +100,16 @@ def main(args):
         args.adjustment_units,
         args.output_units
     )
+
+    hist_q_shape = qm.ds['hist_q'].shape
+    hist_q_chunksizes = qm.ds['hist_q'].chunksizes
+    af_shape = qm.ds['af'].shape
+    af_chunksizes = qm.ds['af'].chunksizes
+    logging.info(f'hist_q array size: {hist_q_shape}')
+    logging.info(f'hist_q chunk size: {hist_q_chunksizes}')
+    logging.info(f'af array size: {af_shape}')
+    logging.info(f'af chunk size: {af_chunksizes}')
+
     qq_obs = qm.adjust(
         da_obs,
         extrapolation="constant",
@@ -168,7 +183,7 @@ if __name__ == '__main__':
         help='Size of longitude chunks (i.e. number of lons in each chunk)',
     )
     args = parser.parse_args()
-    log_level = logging.DEBUG if args.verbose else logging.WARNING
+    log_level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=log_level)
     with dask.diagnostics.ResourceProfiler() as rprof:
         main(args)
