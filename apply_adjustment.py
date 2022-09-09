@@ -71,7 +71,7 @@ def main(args):
     if args.local_cluster:
         assert args.dask_dir, "Must provide --dask_dir for local cluster"
         dask.config.set(temporary_directory=args.dask_dir)
-        cluster = LocalCluster(n_workers=args.nworkers)
+        cluster = LocalCluster(n_workers=args.nworkers, threads_per_worker=1)
         client = Client(cluster)
         print("Watch progress at http://localhost:8787/status")
     else:
@@ -126,7 +126,10 @@ def main(args):
     qq_obs['time'] = qq_obs['time'] + time_adjustment
 
     qq_obs.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
-    qq_obs.to_netcdf(args.output_file)
+    qq_obs.to_netcdf(
+        args.output_file,
+        compute=False,
+    )
 
 
 if __name__ == '__main__':
