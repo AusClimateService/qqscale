@@ -1,5 +1,5 @@
 """Command line program for applying QQ-scaling adjustment factors."""
-import pdb
+
 import logging
 import argparse
 
@@ -58,9 +58,6 @@ def check_units(da_obs, qm, obs_units, aj_units, output_units):
             qm.ds['af'] = xc.units.convert_units_to(qm.ds['af'], output_units)
         if qm.ds['hist_q'].attrs['units'] != output_units:
             qm.ds['hist_q'] = xc.units.convert_units_to(qm.ds['hist_q'], output_units)
-    
-    #da_obs = da_obs.sel({'lat': slice(-30, -28), 'lon': slice(140, 142)})
-    #qm.ds = qm.ds.sel({'lat': slice(-30, -28), 'lon': slice(140, 142)})
 
     return da_obs, qm
 
@@ -88,7 +85,7 @@ def main(args):
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     regridder = xe.Regridder(qm.ds, ds_obs, "bilinear")
     qm.ds = regridder(qm.ds)
-    #qm.ds = qm.ds.compute()
+
     if args.lon_chunk_size:
         qm.ds = qm.ds.chunk({'lon': args.lon_chunk_size})
 
@@ -115,6 +112,7 @@ def main(args):
         extrapolation="constant",
         interp="linear"
     )
+
     if args.local_cluster:
         qq_obs = qq_obs.persist()
         progress(qq_obs)
@@ -126,10 +124,7 @@ def main(args):
     qq_obs['time'] = qq_obs['time'] + time_adjustment
 
     qq_obs.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
-    qq_obs.to_netcdf(
-        args.output_file,
-        compute=False,
-    )
+    qq_obs.to_netcdf(args.output_file)
 
 
 if __name__ == '__main__':
