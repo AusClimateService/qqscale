@@ -11,7 +11,6 @@ from xclim import sdba
 import xesmf as xe
 import cmdline_provenance as cmdprov
 import dask.diagnostics
-from dask.distributed import Client, LocalCluster, progress
 
 import calc_adjustment
 
@@ -65,14 +64,7 @@ def check_units(da_obs, qm, obs_units, aj_units, output_units):
 def main(args):
     """Run the program."""
 
-    if args.local_cluster:
-        assert args.dask_dir, "Must provide --dask_dir for local cluster"
-        dask.config.set(temporary_directory=args.dask_dir)
-        cluster = LocalCluster(n_workers=args.nworkers, threads_per_worker=1)
-        client = Client(cluster)
-        print("Watch progress at http://localhost:8787/status")
-    else:
-        dask.diagnostics.ProgressBar().register()
+    dask.diagnostics.ProgressBar().register()
 
     ds_obs = calc_adjustment.read_data(
         args.obs_files,
@@ -85,9 +77,6 @@ def main(args):
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     regridder = xe.Regridder(qm.ds, ds_obs, "bilinear")
     qm.ds = regridder(qm.ds)
-
-    if args.lon_chunk_size:
-        qm.ds = qm.ds.chunk({'lon': args.lon_chunk_size})
 
     da_obs = ds_obs[args.variable]
     da_obs, qm = check_units(
@@ -112,10 +101,6 @@ def main(args):
         extrapolation="constant",
         interp="linear"
     )
-
-    if args.local_cluster:
-        qq_obs = qq_obs.persist()
-        progress(qq_obs)
     
     qq_obs = qq_obs.rename(args.variable)
     qq_obs = qq_obs.transpose('time', 'lat', 'lon')
@@ -155,30 +140,6 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to DEBUG',
-    )
-    parser.add_argument(
-        "--local_cluster",
-        action="store_true",
-        default=False,
-        help='Use a local dask cluster',
-    )
-    parser.add_argument(
-        "--dask_dir",
-        type=str,
-        default=None,
-        help='Directory where dask worker space files can be written. Required for local cluster.',
-    )
-    parser.add_argument(
-        "--nworkers",
-        type=int,
-        default=None,
-        help='Number of workers for cluster',
-    )
-    parser.add_argument(
-        "--lon_chunk_size",
-        type=int,
-        default=None,
-        help='Size of longitude chunks (i.e. number of lons in each chunk)',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
