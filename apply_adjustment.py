@@ -70,7 +70,6 @@ def main(args):
         args.obs_files,
         args.variable,
         time_bounds=args.time_bounds,
-        lon_chunk_size=args.lon_chunk_size,
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
