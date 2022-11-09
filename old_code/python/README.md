@@ -1,7 +1,7 @@
-### Existing method
-
-This directory contains the original QQ-scale code adapted from:  
+This directory contains a Python implementation of QQ-scaling code adapted from:  
 https://github.com/climate-resilient-enterprise/workflows/tree/master/notebooks/qq_scale
+
+(Rakima Dey wrote the Python code at that link in early 2022.)
 
 The `qqscale.py` module contains the functions used to perform QQ-scaling.
 It can run using the `run_qqscale.py` command line program
