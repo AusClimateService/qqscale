@@ -8,6 +8,7 @@ import numpy as np
 import xarray as xr
 import xclim as xc
 from xclim import sdba
+import xesmf as xe
 import cmdline_provenance as cmdprov
 import dask.diagnostics
 from dask.distributed import Client, LocalCluster, progress
@@ -74,35 +75,39 @@ def main(args):
     
     ds_hist = read_data(
         args.hist_files,
-        args.variable,
+        args.hist_var,
         time_bounds=args.hist_time_bounds,
-        input_units=args.input_units,
+        input_units=args.input_hist_units,
         output_units=args.output_units,
     )
-    ds_fut = read_data(
-        args.fut_files,
-        args.variable,
-        time_bounds=args.fut_time_bounds,
-        input_units=args.input_units,
+    ds_ref = read_data(
+        args.ref_files,
+        args.ref_var,
+        time_bounds=args.ref_time_bounds,
+        input_units=args.input_ref_units,
         output_units=args.output_units,
     )
 
+    if len(ds_hist['lat']) != ds_ref['lat']):
+        regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
+        ds_hist = regridder(ds_hist)
+    
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
-        ds_fut[args.variable],
-        ds_hist[args.variable],
+        ds_ref[args.ref_var],
+        ds_hist[args.hist_var],
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
     )    
-    qm.ds = qm.ds.assign_coords({'lat': ds_fut['lat'], 'lon': ds_fut['lon']}) #xclim strips lat/lon attributes
+    qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
     qm.ds.attrs['history'] = get_new_log()
-    qm.ds.attrs['base_period_start'] = args.hist_time_bounds[0]
-    qm.ds.attrs['base_period_end'] = args.hist_time_bounds[1]
-    qm.ds.attrs['future_period_start'] =args.fut_time_bounds[0]
-    qm.ds.attrs['future_period_end'] = args.fut_time_bounds[1]
+    qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]
+    qm.ds.attrs['historical_period_end'] = args.hist_time_bounds[1]
+    qm.ds.attrs['reference_period_start'] =args.ref_time_bounds[0]
+    qm.ds.attrs['reference_period_end'] = args.ref_time_bounds[1]
     qm.ds.to_netcdf(args.output_file)
 
 
@@ -112,21 +117,22 @@ if __name__ == '__main__':
         argument_default=argparse.SUPPRESS,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )          
-    parser.add_argument("variable", type=str, help="model variable to process")
+    parser.add_argument("hist_var", type=str, help="historical variable to process")
+    parser.add_argument("ref_var", type=str, help="reference variable to process")
     parser.add_argument("output_file", type=str, help="output file")
     parser.add_argument(
         "--hist_files",
         type=str,
         nargs='*',
         required=True,
-        help="historical GCM data files"
+        help="historical data files"
     )
     parser.add_argument(
-        "--fut_files",
+        "--ref_files",
         type=str,
         nargs='*',
         required=True,
-        help="future GCM data files"
+        help="reference data files"
     )
     parser.add_argument(
         "--hist_time_bounds",
@@ -137,12 +143,12 @@ if __name__ == '__main__':
         help="historical time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(
-        "--fut_time_bounds",
+        "--ref_time_bounds",
         type=str,
         nargs=2,
         metavar=('START_DATE', 'END_DATE'),
         required=True,
-        help="future time bounds in YYYY-MM-DD format"
+        help="reference time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(
         "--method",
@@ -152,10 +158,16 @@ if __name__ == '__main__':
         help="scaling method",
     )
     parser.add_argument(
-        "--input_units",
+        "--input_hist_units",
         type=str,
         default=None,
-        help="input data units"
+        help="input historical data units"
+    )
+    parser.add_argument(
+        "--input_ref_units",
+        type=str,
+        default=None,
+        help="input reference data units"
     )
     parser.add_argument(
         "--output_units",

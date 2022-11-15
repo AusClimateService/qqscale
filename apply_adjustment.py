@@ -41,18 +41,18 @@ def profiling_stats(rprof):
     logging.info(f'Peak CPU usage: {max_cpus}%')
 
 
-def check_units(da_obs, qm, obs_units, aj_units, output_units):
+def check_units(da, qm, input_units, adjustment_units, output_units):
     """Check units and convert if necessary."""
 
-    if obs_units:
-        da_obs.attrs['units'] = obs_units
-    if aj_units:
-        qm.ds['af'].attrs['units'] = aj_units
-        qm.ds['hist_q'].attrs['units'] = aj_units
+    if input_units:
+        da.attrs['units'] = input_units
+    if adjustment_units:
+        qm.ds['af'].attrs['units'] = adjustment_units
+        qm.ds['hist_q'].attrs['units'] = adjustment_units
 
     if output_units:
-        if da_obs.attrs['units'] != output_units:
-            da_obs = xc.units.convert_units_to(da_obs, output_units)
+        if da.attrs['units'] != output_units:
+            da = xc.units.convert_units_to(da, output_units)
         if qm.ds['af'].attrs['units'] != output_units:
             qm.ds['af'] = xc.units.convert_units_to(qm.ds['af'], output_units)
         if qm.ds['hist_q'].attrs['units'] != output_units:
@@ -66,22 +66,22 @@ def main(args):
 
     dask.diagnostics.ProgressBar().register()
 
-    ds_obs = calc_adjustment.read_data(
-        args.obs_files,
+    ds = calc_adjustment.read_data(
+        args.infiles,
         args.variable,
         time_bounds=args.time_bounds,
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
-    regridder = xe.Regridder(qm.ds, ds_obs, "bilinear")
+    regridder = xe.Regridder(qm.ds, ds, "bilinear")
     qm.ds = regridder(qm.ds)
 
-    da_obs = ds_obs[args.variable]
-    da_obs, qm = check_units(
-        da_obs,
+    da = ds[args.variable]
+    da, qm = check_units(
+        da,
         qm,
-        args.obs_units,
+        args.input_units,
         args.adjustment_units,
         args.output_units
     )
@@ -96,19 +96,19 @@ def main(args):
     logging.info(f'af chunk size: {af_chunksizes}')
 
     qq_obs = qm.adjust(
-        da_obs,
+        da,
         extrapolation="constant",
         interp="linear"
     )
     
-    qq_obs = qq_obs.rename(args.variable)
-    qq_obs = qq_obs.transpose('time', 'lat', 'lon')
+    qq = qq.rename(args.variable)
+    qq = qq.transpose('time', 'lat', 'lon')
     new_start_date = ds_adjust.attrs['future_period_start'] 
-    time_adjustment = np.datetime64(new_start_date) - qq_obs['time'][0]
-    qq_obs['time'] = qq_obs['time'] + time_adjustment
+    time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
+    qq['time'] = qq['time'] + time_adjustment
 
-    qq_obs.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
-    qq_obs.to_netcdf(args.output_file)
+    qq.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
+    qq.to_netcdf(args.output_file)
 
 
 if __name__ == '__main__':
@@ -118,12 +118,12 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
                           
-    parser.add_argument("obs_files", type=str, nargs='*', help="observation data")           
-    parser.add_argument("variable", type=str, help="model variable to process")
+    parser.add_argument("infiles", type=str, nargs='*', help="input data (to be adjusted)")           
+    parser.add_argument("variable", type=str, help="variable to process")
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
     parser.add_argument("output_file", type=str, help="output file")
 
-    parser.add_argument("--obs_units", type=str, default=None, help="obs data units")
+    parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--adjustment_units", type=str, default=None, help="adjustment data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         nargs=2,
         metavar=('START_DATE', 'END_DATE'),
         required=True,
-        help="observations time bounds in YYYY-MM-DD format"
+        help="time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(
         "--verbose",
