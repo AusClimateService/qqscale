@@ -66,7 +66,52 @@ def read_data(
         ds[var] = xc.units.convert_units_to(ds[var], output_units)
 
     return ds
-     
+
+
+def adapt_frequency(da_ref, da_hist, threshold):
+    """Adapt frequency of values under threshold of historical data to match reference data
+    
+    Parameters
+    ----------
+    da_ref : xarray.DataArray
+        Reference data
+    da_hist : xarray.DataArray
+        Historical data
+    threshold : str
+        Threshold under which to match frequency.
+        Typically close to zero (e.g. '0.5 mm d-1').
+    
+    Returns
+    -------
+    da_hist_ad : xarray.DataArray
+        Adapted historical data
+    
+    Notes
+    -----
+    Frequency adaptation is sometimes needed for precipitation data when using multiplicative scaling,
+    particularly for dry locations where a number of quantiles are 0.0 mm.
+    Problems can arise if the historical data has more zero quantiles
+    for a given month than the reference data.
+    When you get the first non-zero quantile you end up dividing a relatively large
+    reference value by a relatively small historical value,
+    leading to a large adjustment factor.
+    
+    https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#First-example-:-pr-and-frequency-adaptation
+    
+    The threshold is usually set just above zero
+    (because the point is to match the number of zero quantiles)
+    but the resulting adjustment factors can be pretty sensitive to whether
+    'just above zero' is 0.001 or 0.5 (for instance).
+    
+    """
+    assert da_ref.attrs['units'] in threshold
+    assert da_hist.attrs['units'] in threshold
+    da_hist_ad, pth, dP0 = sdba.processing.adapt_freq(
+        da_ref, da_hist, thresh=threshold, group="time.month"
+    )
+    
+    return da_hist_ad
+    
 
 def main(args):
     """Run the program."""
@@ -88,9 +133,18 @@ def main(args):
         output_units=args.output_units,
     )
 
-    if len(ds_hist['lat']) != ds_ref['lat']):
+    if len(ds_hist['lat']) != len(ds_ref['lat']):
         regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
         ds_hist = regridder(ds_hist)
+    
+    if args.adapt_freq:
+        assert args.method == 'multiplicative', \
+            "Frequency adaptation is only needed for multiplicative scaling"
+        ds_hist[args.hist_var] = adapt_frequency(
+            ds_ref[args.ref_var],
+            ds_hist[args.hist_var],
+            args.adapt_freq,
+        )
     
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
@@ -99,7 +153,8 @@ def main(args):
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
-    )    
+    )
+    qm.ds = qm.ds.fillna(0)
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
@@ -174,6 +229,12 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help="output data units"
+    )
+    parser.add_argument(
+        "--adapt_freq",
+        type=str,
+        default=None,
+        help="""adapt historical frequency of values under this threshold to match reference (e.g. '0.5 mm d-1')"""
     )
     parser.add_argument(
         "--verbose",
