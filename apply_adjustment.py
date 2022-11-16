@@ -58,7 +58,7 @@ def check_units(da, qm, input_units, adjustment_units, output_units):
         if qm.ds['hist_q'].attrs['units'] != output_units:
             qm.ds['hist_q'] = xc.units.convert_units_to(qm.ds['hist_q'], output_units)
 
-    return da_obs, qm
+    return da, qm
 
 
 def main(args):
@@ -74,8 +74,10 @@ def main(args):
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
-    regridder = xe.Regridder(qm.ds, ds, "bilinear")
-    qm.ds = regridder(qm.ds)
+
+    if len(ds_adjust['lat']) != len(ds['lat']):
+        regridder = xe.Regridder(qm.ds, ds, "bilinear")
+        qm.ds = regridder(qm.ds)
 
     da = ds[args.variable]
     da, qm = check_units(
@@ -95,15 +97,12 @@ def main(args):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq_obs = qm.adjust(
-        da,
-        extrapolation="constant",
-        interp="linear"
-    )
-    
+    qq = qm.adjust(da, extrapolation="constant", interp="linear")
     qq = qq.rename(args.variable)
     qq = qq.transpose('time', 'lat', 'lon')
-    new_start_date = ds_adjust.attrs['future_period_start'] 
+    
+    # TODO: Check this time adjustment
+    new_start_date = ds_adjust.attrs['reference_period_start'] 
     time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
     qq['time'] = qq['time'] + time_adjustment
 

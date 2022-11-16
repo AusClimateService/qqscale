@@ -161,7 +161,7 @@ def main(args):
     qm.ds.attrs['history'] = get_new_log()
     qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]
     qm.ds.attrs['historical_period_end'] = args.hist_time_bounds[1]
-    qm.ds.attrs['reference_period_start'] =args.ref_time_bounds[0]
+    qm.ds.attrs['reference_period_start'] = args.ref_time_bounds[0]
     qm.ds.attrs['reference_period_end'] = args.ref_time_bounds[1]
     qm.ds.to_netcdf(args.output_file)
 
