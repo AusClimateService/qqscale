@@ -101,10 +101,10 @@ def main(args):
     qq = qq.rename(args.variable)
     qq = qq.transpose('time', 'lat', 'lon')
     
-    # TODO: Check this time adjustment
-    new_start_date = ds_adjust.attrs['reference_period_start'] 
-    time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
-    qq['time'] = qq['time'] + time_adjustment
+    if args.ref_time:
+        new_start_date = ds_adjust.attrs['reference_period_start'] 
+        time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
+        qq['time'] = qq['time'] + time_adjustment
 
     qq.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
     qq.to_netcdf(args.output_file)
@@ -138,6 +138,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to DEBUG',
+    )
+    parser.add_argument(
+        "--ref_time",
+        action="store_true",
+        default=False,
+        help='Shift output time axis to match reference dataset',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
