@@ -1,5 +1,5 @@
 """Command line program for calculating QQ-scaling adjustment factors."""
-
+import pdb
 import argparse
 import logging
 
@@ -137,15 +137,6 @@ def main(args):
         regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
         ds_hist = regridder(ds_hist)
     
-    if args.adapt_freq:
-        assert args.method == 'multiplicative', \
-            "Frequency adaptation is only needed for multiplicative scaling"
-        ds_hist[args.hist_var] = adapt_frequency(
-            ds_ref[args.ref_var],
-            ds_hist[args.hist_var],
-            args.adapt_freq,
-        )
-    
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
         ds_ref[args.ref_var],
@@ -154,7 +145,32 @@ def main(args):
         group="time.month",
         kind=mapping_methods[args.method]
     )
-    qm.ds = qm.ds.fillna(0)
+    qm_reverse = sdba.EmpiricalQuantileMapping.train(
+        ds_hist[args.hist_var],
+        ds_ref[args.ref_var],
+        nquantiles=100,
+        group="time.month",
+        kind=mapping_methods[args.method]
+    )
+    qm.ds['ref_q'] = qm_reverse.ds['hist_q']
+    if args.adapt_freq:
+        assert args.method == 'multiplicative', \
+            "Frequency adaptation is only needed for multiplicative scaling"
+        da_hist_adapted = adapt_frequency(
+            ds_ref[args.ref_var],
+            ds_hist[args.hist_var],
+            args.adapt_freq,
+        )
+        qm_ad = sdba.EmpiricalQuantileMapping.train(
+            ds_ref[args.ref_var],
+            da_hist_adapted,
+            nquantiles=100,
+            group="time.month",
+            kind=mapping_methods[args.method]
+        )
+        qm.ds['hist_q_ad'] = qm_ad.ds['hist_q']
+        qm.ds['af_ad'] = qm_ad.ds['af']
+        
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
