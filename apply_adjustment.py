@@ -73,6 +73,8 @@ def main(args):
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
+    ds_adjust = ds_adjust[['af', 'hist_q']]
+    ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):

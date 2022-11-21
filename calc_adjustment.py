@@ -52,7 +52,7 @@ def read_data(
     if time_bounds:
         start_date, end_date = time_bounds
         ds = ds.sel({'time': slice(start_date, end_date)})
-
+        
     chunk_dict = {'time': -1}
     if lon_chunk_size:
         chunk_dict['lon'] = lon_chunk_size
@@ -136,40 +136,48 @@ def main(args):
     if len(ds_hist['lat']) != len(ds_ref['lat']):
         regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
         ds_hist = regridder(ds_hist)
+
+    if args.adapt_freq:
+        assert args.method == 'multiplicative', \
+            "Frequency adaptation is only needed for multiplicative scaling"
+        da_hist = adapt_frequency(
+            ds_ref[args.ref_var],
+            ds_hist[args.hist_var],
+            args.adapt_freq,
+        )
+    else:
+        da_hist = ds_hist[args.hist_var]
     
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
         ds_ref[args.ref_var],
-        ds_hist[args.hist_var],
+        da_hist,
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
     )
+
+    #output non-frequency adapted quantiles and adjustment factors
+    if args.adapt_freq:
+        qm_no_adapt = sdba.EmpiricalQuantileMapping.train(
+            ds_ref[args.ref_var],
+            ds_hist[args.hist_var],
+            nquantiles=100,
+            group="time.month",
+            kind=mapping_methods[args.method]
+        )
+        qm.ds['hist_q_no_adapt'] = qm_no_adapt.ds['hist_q']
+        qm.ds['af_no_adapt'] = qm_no_adapt.ds['af']
+        
+    #output the reference quantiles, which aren't included by xclim
     qm_reverse = sdba.EmpiricalQuantileMapping.train(
-        ds_hist[args.hist_var],
+        da_hist,
         ds_ref[args.ref_var],
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
     )
     qm.ds['ref_q'] = qm_reverse.ds['hist_q']
-    if args.adapt_freq:
-        assert args.method == 'multiplicative', \
-            "Frequency adaptation is only needed for multiplicative scaling"
-        da_hist_adapted = adapt_frequency(
-            ds_ref[args.ref_var],
-            ds_hist[args.hist_var],
-            args.adapt_freq,
-        )
-        qm_ad = sdba.EmpiricalQuantileMapping.train(
-            ds_ref[args.ref_var],
-            da_hist_adapted,
-            nquantiles=100,
-            group="time.month",
-            kind=mapping_methods[args.method]
-        )
-        qm.ds['hist_q_ad'] = qm_ad.ds['hist_q']
-        qm.ds['af_ad'] = qm_ad.ds['af']
         
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
