@@ -54,9 +54,10 @@ def main(args):
         output_units=args.output_units,
         ssr=args.ssr,
     )
+
     ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
-    assert ds_adjust['af'].attrs['units'] == ds[args.variable].attrs['units']     
+    assert ds_adjust['hist_q'].attrs['units'] == ds[args.var].attrs['units']     
     ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
 
@@ -75,9 +76,10 @@ def main(args):
 
     qq = qm.adjust(ds[args.var], extrapolation="constant", interp="linear")
     qq = qq.rename(args.var)
-    qq = qq.transpose('time', 'lat', 'lon')
-    if ssr:
-        qq[args.var] = qq[args.var].where(qq[args.var] >= 8.64e-4, 0.0)
+    qq = qq.transpose('time', 'lat', 'lon') 
+    if args.ssr:
+        qq = qq.where(qq >= 8.64e-4, 0.0)
+    qq = qq.to_dataset()
     
     if args.ref_time:
         new_start_date = ds_adjust.attrs['reference_period_start'] 

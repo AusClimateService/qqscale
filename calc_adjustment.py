@@ -176,7 +176,9 @@ def main(args):
         kind=mapping_methods[args.method]
     )
     qm.ds['ref_q'] = qm_reverse.ds['hist_q']
-        
+    
+    qm.ds['hist_q'].attrs['units'] = args.output_units
+    qm.ds['ref_q'].attrs['units'] = args.output_units
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
