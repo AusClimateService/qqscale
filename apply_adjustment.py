@@ -41,26 +41,6 @@ def profiling_stats(rprof):
     logging.info(f'Peak CPU usage: {max_cpus}%')
 
 
-def check_units(da, qm, input_units, adjustment_units, output_units):
-    """Check units and convert if necessary."""
-
-    if input_units:
-        da.attrs['units'] = input_units
-    if adjustment_units:
-        qm.ds['af'].attrs['units'] = adjustment_units
-        qm.ds['hist_q'].attrs['units'] = adjustment_units
-
-    if output_units:
-        if da.attrs['units'] != output_units:
-            da = xc.units.convert_units_to(da, output_units)
-        if qm.ds['af'].attrs['units'] != output_units:
-            qm.ds['af'] = xc.units.convert_units_to(qm.ds['af'], output_units)
-        if qm.ds['hist_q'].attrs['units'] != output_units:
-            qm.ds['hist_q'] = xc.units.convert_units_to(qm.ds['hist_q'], output_units)
-
-    return da, qm
-
-
 def main(args):
     """Run the program."""
 
@@ -68,27 +48,21 @@ def main(args):
 
     ds = calc_adjustment.read_data(
         args.infiles,
-        args.variable,
+        args.var,
         time_bounds=args.time_bounds,
+        input_units=args.input_units,
+        output_units=args.output_units,
+        ssr=args.ssr,
     )
-
     ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
+    assert ds_adjust['af'].attrs['units'] == ds[args.variable].attrs['units']     
     ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):
         regridder = xe.Regridder(qm.ds, ds, "bilinear")
         qm.ds = regridder(qm.ds)
-
-    da = ds[args.variable]
-    da, qm = check_units(
-        da,
-        qm,
-        args.input_units,
-        args.adjustment_units,
-        args.output_units
-    )
 
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
@@ -99,9 +73,11 @@ def main(args):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(da, extrapolation="constant", interp="linear")
-    qq = qq.rename(args.variable)
+    qq = qm.adjust(ds[args.var], extrapolation="constant", interp="linear")
+    qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon')
+    if ssr:
+        qq[args.var] = qq[args.var].where(qq[args.var] >= 8.64e-4, 0.0)
     
     if args.ref_time:
         new_start_date = ds_adjust.attrs['reference_period_start'] 
@@ -120,12 +96,11 @@ if __name__ == '__main__':
     )
                           
     parser.add_argument("infiles", type=str, nargs='*', help="input data (to be adjusted)")           
-    parser.add_argument("variable", type=str, help="variable to process")
+    parser.add_argument("var", type=str, help="variable to process")
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
     parser.add_argument("output_file", type=str, help="output file")
 
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
-    parser.add_argument("--adjustment_units", type=str, default=None, help="adjustment data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
         "--time_bounds",
@@ -146,6 +121,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Shift output time axis to match reference dataset',
+    )
+    parser.add_argument(
+        "--ssr",
+        action="store_true",
+        default=False,
+        help='Adjustment factors used Singularity Stochastic Removal',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

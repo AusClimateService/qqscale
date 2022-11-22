@@ -36,6 +36,7 @@ def read_data(
     input_units=None,
     output_units=None,
     lon_chunk_size=None,
+    ssr=False,
 ):
     """Read and process an input dataset."""
 
@@ -65,52 +66,57 @@ def read_data(
     if output_units:
         ds[var] = xc.units.convert_units_to(ds[var], output_units)
 
+    if ssr:
+        threshold = 8.64e-4
+        random_numbers = (1.0 - np.random.random_sample(ds[var].shape)) * threshold
+        ds[var] = ds[var].where(ds[var] >= threshold, random_numbers)
+        
     return ds
 
 
-def adapt_frequency(da_ref, da_hist, threshold):
-    """Adapt frequency of values under threshold of historical data to match reference data
-    
-    Parameters
-    ----------
-    da_ref : xarray.DataArray
-        Reference data
-    da_hist : xarray.DataArray
-        Historical data
-    threshold : str
-        Threshold under which to match frequency.
-        Typically close to zero (e.g. '0.5 mm d-1').
-    
-    Returns
-    -------
-    da_hist_ad : xarray.DataArray
-        Adapted historical data
-    
-    Notes
-    -----
-    Frequency adaptation is sometimes needed for precipitation data when using multiplicative scaling,
-    particularly for dry locations where a number of quantiles are 0.0 mm.
-    Problems can arise if the historical data has more zero quantiles
-    for a given month than the reference data.
-    When you get the first non-zero quantile you end up dividing a relatively large
-    reference value by a relatively small historical value,
-    leading to a large adjustment factor.
-    
-    https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#First-example-:-pr-and-frequency-adaptation
-    
-    The threshold is usually set just above zero
-    (because the point is to match the number of zero quantiles)
-    but the resulting adjustment factors can be pretty sensitive to whether
-    'just above zero' is 0.001 or 0.5 (for instance).
-    
-    """
-    assert da_ref.attrs['units'] in threshold
-    assert da_hist.attrs['units'] in threshold
-    da_hist_ad, pth, dP0 = sdba.processing.adapt_freq(
-        da_ref, da_hist, thresh=threshold, group="time.month"
-    )
-    
-    return da_hist_ad
+#def adapt_frequency(da_ref, da_hist, threshold):
+#    """Adapt frequency of values under threshold of historical data to match reference data
+#    
+#    Parameters
+#    ----------
+#    da_ref : xarray.DataArray
+#        Reference data
+#    da_hist : xarray.DataArray
+#        Historical data
+#    threshold : str
+#        Threshold under which to match frequency.
+#        Typically close to zero (e.g. '0.5 mm d-1').
+#    
+#    Returns
+#    -------
+#    da_hist_ad : xarray.DataArray
+#        Adapted historical data
+#    
+#    Notes
+#    -----
+#    Frequency adaptation is sometimes needed for precipitation data when using multiplicative scaling,
+#    particularly for dry locations where a number of quantiles are 0.0 mm.
+#    Problems can arise if the historical data has more zero quantiles
+#    for a given month than the reference data.
+#    When you get the first non-zero quantile you end up dividing a relatively large
+#    reference value by a relatively small historical value,
+#    leading to a large adjustment factor.
+#    
+#    https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#First-example-:-pr-and-frequency-adaptation
+#    
+#    The threshold is usually set just above zero
+#    (because the point is to match the number of zero quantiles)
+#    but the resulting adjustment factors can be pretty sensitive to whether
+#    'just above zero' is 0.001 or 0.5 (for instance).
+#    
+#    """
+#    assert da_ref.attrs['units'] in threshold
+#    assert da_hist.attrs['units'] in threshold
+#    da_hist_ad, pth, dP0 = sdba.processing.adapt_freq(
+#        da_ref, da_hist, thresh=threshold, group="time.month"
+#    )
+#    
+#    return da_hist_ad
     
 
 def main(args):
@@ -124,6 +130,7 @@ def main(args):
         time_bounds=args.hist_time_bounds,
         input_units=args.input_hist_units,
         output_units=args.output_units,
+        ssr=args.ssr,
     )
     ds_ref = read_data(
         args.ref_files,
@@ -131,47 +138,38 @@ def main(args):
         time_bounds=args.ref_time_bounds,
         input_units=args.input_ref_units,
         output_units=args.output_units,
+        ssr=args.ssr,
     )
 
     if len(ds_hist['lat']) != len(ds_ref['lat']):
         regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
         ds_hist = regridder(ds_hist)
-
-    if args.adapt_freq:
-        assert args.method == 'multiplicative', \
-            "Frequency adaptation is only needed for multiplicative scaling"
-        da_hist = adapt_frequency(
-            ds_ref[args.ref_var],
-            ds_hist[args.hist_var],
-            args.adapt_freq,
-        )
-    else:
-        da_hist = ds_hist[args.hist_var]
+        
+#    if args.adapt_freq:
+#        assert args.method == 'multiplicative', \
+#            "Frequency adaptation is only needed for multiplicative scaling"
+#        da_hist = adapt_frequency(
+#            ds_ref[args.ref_var],
+#            ds_hist[args.hist_var],
+#            args.adapt_freq,
+#        )
+#        da_ref = ds_ref[args.ref_var]
+#    else:
+#        da_hist = ds_hist[args.hist_var]
+#        da_ref = ds_ref[args.ref_var]
     
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
         ds_ref[args.ref_var],
-        da_hist,
+        ds_hist[args.hist_var],
         nquantiles=100,
         group="time.month",
         kind=mapping_methods[args.method]
     )
-
-    #output non-frequency adapted quantiles and adjustment factors
-    if args.adapt_freq:
-        qm_no_adapt = sdba.EmpiricalQuantileMapping.train(
-            ds_ref[args.ref_var],
-            ds_hist[args.hist_var],
-            nquantiles=100,
-            group="time.month",
-            kind=mapping_methods[args.method]
-        )
-        qm.ds['hist_q_no_adapt'] = qm_no_adapt.ds['hist_q']
-        qm.ds['af_no_adapt'] = qm_no_adapt.ds['af']
         
     #output the reference quantiles, which aren't included by xclim
     qm_reverse = sdba.EmpiricalQuantileMapping.train(
-        da_hist,
+        ds_hist[args.hist_var],
         ds_ref[args.ref_var],
         nquantiles=100,
         group="time.month",
@@ -254,17 +252,23 @@ if __name__ == '__main__':
         default=None,
         help="output data units"
     )
-    parser.add_argument(
-        "--adapt_freq",
-        type=str,
-        default=None,
-        help="""adapt historical frequency of values under this threshold to match reference (e.g. '0.5 mm d-1')"""
-    )
+#    parser.add_argument(
+#        "--adapt_freq",
+#        type=str,
+#        default=None,
+#        help="""adapt historical frequency of values under this threshold to match reference (e.g. '0.5 mm d-1')"""
+#    )
     parser.add_argument(
         "--verbose",
         action="store_true",
         default=False,
         help='Set logging level to DEBUG',
+    )
+    parser.add_argument(
+        "--ssr",
+        action="store_true",
+        default=False,
+        help='Apply Singularity Stochastic Removal',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
