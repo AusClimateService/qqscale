@@ -84,7 +84,7 @@ if __name__ == '__main__':
         type=str,
         nargs=2,
         metavar=('START_DATE', 'END_DATE'),
-        required=True,
+        default=None,
         help="time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(

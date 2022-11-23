@@ -20,7 +20,6 @@ def main(args):
         output_units=args.output_units,
         ssr=True,
     )
-    ds = ds.to_dataset()
     ds.attrs['history'] = utils.get_new_log()
     ds.to_netcdf(args.outfile)
 
