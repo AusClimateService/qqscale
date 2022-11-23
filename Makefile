@@ -17,6 +17,7 @@ PYTHON=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python
 CODE_DIR=/g/data/wp00/shared_code/qqscale
 QQ_DIR=/g/data/wp00/users/dbi599/test_space
 AF_PATH=${QQ_DIR}/${AF_FILE}
+SSR_PATH=${QQ_DIR}/${SSR_FILE}
 QQ_PATH=${QQ_DIR}/${QQ_BASE}.nc
 VALIDATION_NOTEBOOK=${CODE_DIR}/${QQ_BASE}.ipynb
 TEMPLATE_NOTEBOOK=${CODE_DIR}/validation.ipynb
@@ -25,12 +26,17 @@ TEMPLATE_NOTEBOOK=${CODE_DIR}/validation.ipynb
 ## adjustment-factors: Calculate the QQ-scale adjustment factors
 adjustment-factors : ${AF_PATH}
 ${AF_PATH} :
-	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${REF_VAR} ${HIST_VAR} $@ --hist_files ${HIST_FILES} --ref_files ${REF_FILES} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --method ${METHOD} --input_hist_units ${HIST_UNITS} --input_ref_units ${REF_UNITS} --output_units ${OUTPUT_UNITS} ${SSR_OPT} --verbose
+	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${REF_VAR} ${HIST_VAR} $@ --hist_files ${HIST_FILES} --ref_files ${REF_FILES} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --method ${METHOD} --input_hist_units ${HIST_UNITS} --input_ref_units ${REF_UNITS} --output_units ${OUTPUT_UNITS} --verbose --ssr
+
+## ssr: Apply Singularity Stochastic Removal to target data
+ssr-target : ${SSR_PATH}
+${SSR_PATH} : 
+	${PYTHON} ${CODE_DIR}/apply_ssr.py ${TARGET_FILES} ${TARGET_VAR} $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS}
 
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}
-${QQ_PATH} : ${AF_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${TARGET_FILES} ${TARGET_VAR} $< $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS} ${SSR_OPT} --verbose --ref_time
+${QQ_PATH} : ${SSR_PATH} ${AF_PATH}
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) $@ --verbose --ref_time --ssr_out
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}

@@ -3,42 +3,13 @@
 import logging
 import argparse
 
-import git
 import numpy as np
 import xarray as xr
-import xclim as xc
 from xclim import sdba
 import xesmf as xe
-import cmdline_provenance as cmdprov
 import dask.diagnostics
 
-import calc_adjustment
-
-
-def get_new_log(infile_name, infile_history):
-    """Generate command log for output file."""
-
-    try:
-        repo = git.Repo()
-        repo_url = repo.remotes[0].url.split(".git")[0]
-    except (git.exc.InvalidGitRepositoryError, NameError):
-        repo_url = None
-    new_log = cmdprov.new_log(
-        infile_logs={infile_name: infile_history},
-        code_url=repo_url,
-    )
-
-    return new_log
-
-
-def profiling_stats(rprof):
-    """Record profiling information."""
-
-    max_memory = np.max([result.mem for result in rprof.results])
-    max_cpus = np.max([result.cpu for result in rprof.results])
-
-    logging.info(f'Peak memory usage: {max_memory}MB')
-    logging.info(f'Peak CPU usage: {max_cpus}%')
+import utils
 
 
 def main(args):
@@ -46,13 +17,13 @@ def main(args):
 
     dask.diagnostics.ProgressBar().register()
 
-    ds = calc_adjustment.read_data(
+    ds = utils.read_data(
         args.infiles,
         args.var,
         time_bounds=args.time_bounds,
         input_units=args.input_units,
         output_units=args.output_units,
-        ssr=args.ssr,
+        ssr=args.ssr_in,
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
@@ -77,7 +48,7 @@ def main(args):
     qq = qm.adjust(ds[args.var], extrapolation="constant", interp="linear")
     qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon') 
-    if args.ssr:
+    if args.ssr_out:
         qq = qq.where(qq >= 8.64e-4, 0.0)
     qq = qq.to_dataset()
     
@@ -86,8 +57,12 @@ def main(args):
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
         qq['time'] = qq['time'] + time_adjustment
 
-    qq.attrs['history'] = get_new_log(args.adjustment_file, ds_adjust.attrs['history'])
-    qq.to_netcdf(args.output_file)
+    infile_logs = {
+        args.infiles[0]: ds.attrs['history'],
+        args.adjustment_file: ds_adjust.attrs['history'],
+    }
+    qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
+    qq.to_netcdf(args.outfile)
 
 
 if __name__ == '__main__':
@@ -100,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument("infiles", type=str, nargs='*', help="input data (to be adjusted)")           
     parser.add_argument("var", type=str, help="variable to process")
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
-    parser.add_argument("output_file", type=str, help="output file")
+    parser.add_argument("outfile", type=str, help="output file")
 
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
@@ -125,10 +100,16 @@ if __name__ == '__main__':
         help='Shift output time axis to match reference dataset',
     )
     parser.add_argument(
-        "--ssr",
+        "--ssr_in",
         action="store_true",
         default=False,
-        help='Adjustment factors used Singularity Stochastic Removal',
+        help='Apply Singularity Stochastic Removal when reading infiles',
+    )
+    parser.add_argument(
+        "--ssr_out",
+        action="store_true",
+        default=False,
+        help='Reverse Singularity Stochastic Removal when writing outfile',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

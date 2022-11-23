@@ -5,7 +5,6 @@ HIST_UNITS="kg m-2 s-1"
 REF_UNITS="kg m-2 s-1"
 TARGET_UNITS="mm d-1"
 OUTPUT_UNITS="mm d-1"
-SSR_OPT=--ssr
 
 METHOD=multiplicative
 MODEL=ACCESS-ESM1-5
@@ -26,6 +25,7 @@ REF_FILES := /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp
 TARGET_FILES := /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr
 
 AF_FILE=${HIST_VAR}-qqscale-factors-${METHOD}-ssr_day_${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231_${REF_START}0101-${REF_END}1231.nc
+SSR_FILE=precip-total_AGCD-CSIRO_r005_${TARGET_START}0101-${TARGET_END}1231_daily.nc
 QQ_BASE=${HIST_VAR}-qqscaled-${METHOD}-ssr_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
 
 
