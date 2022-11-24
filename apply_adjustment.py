@@ -116,4 +116,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=log_level)
     with dask.diagnostics.ResourceProfiler() as rprof:
         main(args)
-    profiling_stats(rprof)
+    utils.profiling_stats(rprof)
