@@ -6,6 +6,8 @@ import git
 import numpy as np
 import xarray as xr
 import xclim as xc
+from xclim.sdba import nbutils
+
 import cmdline_provenance as cmdprov
 
 
@@ -78,4 +80,26 @@ def read_data(
     logging.info(f'Chunk size: {ds[var].chunksizes}')
     
     return ds
+
+
+def get_ref_q(da):
+    """Get reference quantiles.
+
+    Required because sdba.EmpiricalQuantileMapping.train only
+    outputs hist_q and not ref_q too.    
+    """
+
+    months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    q_list = []
+    for month in months:
+        mth = nbutils.quantile(da[da['time'].dt.month == month], np.arange(0.005, 1, 0.01), ['time'])
+    q_list.append(mth)
+
+    ref_q = xr.concat(q_list, dim='month')
+    ref_q.coords['month'] = months
+    ref_q = ref_q.transpose('lat', 'lon', 'month', 'quantiles')
+    ref_q.attrs['standard_name'] = 'Reference quantiles'
+    ref_q.attrs['long_name'] = 'Quantiles of reference on the reference period'
+
+    return ref_q
 

@@ -44,16 +44,7 @@ def main(args):
         group="time.month",
         kind=mapping_methods[args.method]
     )
-        
-    #output the reference quantiles, which aren't included by xclim
-    qm_reverse = sdba.EmpiricalQuantileMapping.train(
-        ds_hist[args.hist_var],
-        ds_ref[args.ref_var],
-        nquantiles=100,
-        group="time.month",
-        kind=mapping_methods[args.method]
-    )
-    qm.ds['ref_q'] = qm_reverse.ds['hist_q']
+    qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var])
     
     qm.ds['hist_q'].attrs['units'] = args.output_units
     qm.ds['ref_q'].attrs['units'] = args.output_units
