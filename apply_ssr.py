@@ -1,6 +1,7 @@
 """Command line program for applying Singularity Stochastic Removal."""
 
 import argparse
+import logging
 
 import dask.diagnostics
 
@@ -46,6 +47,7 @@ if __name__ == '__main__':
         help="time bounds in YYYY-MM-DD format"
     )
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO)
     with dask.diagnostics.ResourceProfiler() as rprof:
         main(args)
     utils.profiling_stats(rprof)
