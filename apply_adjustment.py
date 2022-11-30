@@ -23,7 +23,6 @@ def main(args):
         time_bounds=args.time_bounds,
         input_units=args.input_units,
         output_units=args.output_units,
-        ssr=args.ssr_in,
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
@@ -48,7 +47,7 @@ def main(args):
     qq = qm.adjust(ds[args.var], extrapolation="constant", interp="linear")
     qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon') 
-    if args.ssr_out:
+    if args.ssr:
         qq = qq.where(qq >= 8.64e-4, 0.0)
     qq = qq.to_dataset()
     
@@ -91,7 +90,7 @@ if __name__ == '__main__':
         "--verbose",
         action="store_true",
         default=False,
-        help='Set logging level to DEBUG',
+        help='Set logging level to INFO',
     )
     parser.add_argument(
         "--ref_time",
@@ -100,13 +99,7 @@ if __name__ == '__main__':
         help='Shift output time axis to match reference dataset',
     )
     parser.add_argument(
-        "--ssr_in",
-        action="store_true",
-        default=False,
-        help='Apply Singularity Stochastic Removal when reading infiles',
-    )
-    parser.add_argument(
-        "--ssr_out",
+        "--ssr",
         action="store_true",
         default=False,
         help='Reverse Singularity Stochastic Removal when writing outfile',

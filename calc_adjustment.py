@@ -21,7 +21,6 @@ def main(args):
         time_bounds=args.hist_time_bounds,
         input_units=args.input_hist_units,
         output_units=args.output_units,
-        ssr=args.ssr,
     )
     ds_ref = utils.read_data(
         args.ref_files,
@@ -29,7 +28,6 @@ def main(args):
         time_bounds=args.ref_time_bounds,
         input_units=args.input_ref_units,
         output_units=args.output_units,
-        ssr=args.ssr,
     )
 
     if len(ds_hist['lat']) != len(ds_ref['lat']):
@@ -127,15 +125,11 @@ if __name__ == '__main__':
         "--verbose",
         action="store_true",
         default=False,
-        help='Set logging level to DEBUG',
-    )
-    parser.add_argument(
-        "--ssr",
-        action="store_true",
-        default=False,
-        help='Apply Singularity Stochastic Removal',
+        help='Set logging level to INFO',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
     logging.basicConfig(level=log_level)
-    main(args)
+    with dask.diagnostics.ResourceProfiler() as rprof:
+        main(args)
+    utils.profiling_stats(rprof)
