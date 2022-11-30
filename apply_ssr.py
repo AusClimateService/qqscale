@@ -1,4 +1,10 @@
-"""Command line program for applying Singularity Stochastic Removal."""
+"""Command line program for applying Singularity Stochastic Removal.
+
+Vrac, M., Noel, T., & Vautard, R. (2016). Bias correction of precipitation
+through Singularity Stochastic Removal: Because occurrences matter.
+Journal of Geophysical Research: Atmospheres, 121(10), 5237–5258.
+https://doi.org/10.1002/2015JD024511
+"""
 
 import argparse
 import logging
