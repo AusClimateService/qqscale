@@ -13,7 +13,7 @@ HIST_SSR_PATH=${QQ_DIR}/${HIST_SSR_FILE}
 REF_SSR_PATH=${QQ_DIR}/${REF_SSR_FILE}
 TARGET_SSR_PATH=${QQ_DIR}/${TARGET_SSR_FILE}
 QQ_PATH=${QQ_DIR}/${QQ_BASE}.nc
-VALIDATION_NOTEBOOK=${CODE_DIR}/${QQ_BASE}.ipynb
+VALIDATION_NOTEBOOK=${CODE_DIR}/example_validation/${QQ_BASE}.ipynb
 TEMPLATE_NOTEBOOK=${CODE_DIR}/validation.ipynb
 
 ## ssr-hist: Apply Singularity Stochastic Removal to historical data
@@ -34,7 +34,7 @@ ${TARGET_SSR_PATH} :
 ## adjustment-factors: Calculate the QQ-scale adjustment factors
 adjustment-factors : ${AF_PATH}
 ${AF_PATH} : ${HIST_SSR_PATH} ${REF_SSR_PATH}
-	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${REF_VAR} ${HIST_VAR} $@ --hist_files $< --ref_files $(word 2,$^) --method ${METHOD} --verbose
+	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${REF_VAR} ${HIST_VAR} $@ --hist_files $< --ref_files $(word 2,$^) --method ${METHOD} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --verbose
 
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}

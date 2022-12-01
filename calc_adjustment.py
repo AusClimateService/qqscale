@@ -44,8 +44,8 @@ def main(args):
     )
     qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var])
     
-    qm.ds['hist_q'].attrs['units'] = args.output_units
-    qm.ds['ref_q'].attrs['units'] = args.output_units
+    qm.ds['hist_q'].attrs['units'] = ds_hist[args.hist_var].attrs['units']
+    qm.ds['ref_q'].attrs['units'] = ds_ref[args.ref_var].attrs['units']
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 

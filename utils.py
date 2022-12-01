@@ -93,8 +93,7 @@ def get_ref_q(da):
     q_list = []
     for month in months:
         mth = nbutils.quantile(da[da['time'].dt.month == month], np.arange(0.005, 1, 0.01), ['time'])
-    q_list.append(mth)
-
+        q_list.append(mth)
     ref_q = xr.concat(q_list, dim='month')
     ref_q.coords['month'] = months
     ref_q = ref_q.transpose('lat', 'lon', 'month', 'quantiles')
