@@ -3,6 +3,7 @@
 import argparse
 import logging
 
+import xclim as xc
 from xclim import sdba
 import xesmf as xe
 import dask.diagnostics
@@ -54,6 +55,7 @@ def main(args):
     qm.ds.attrs['historical_period_end'] = args.hist_time_bounds[1]
     qm.ds.attrs['reference_period_start'] = args.ref_time_bounds[0]
     qm.ds.attrs['reference_period_end'] = args.ref_time_bounds[1]
+    qm.ds.attrs['xclim_version'] = xc.__version__
     qm.ds.to_netcdf(args.output_file)
 
 

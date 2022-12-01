@@ -5,6 +5,7 @@ import argparse
 
 import numpy as np
 import xarray as xr
+import xclim as xc
 from xclim import sdba
 import xesmf as xe
 import dask.diagnostics
@@ -61,6 +62,7 @@ def main(args):
         args.adjustment_file: ds_adjust.attrs['history'],
     }
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
+    qq.attrs['xclim_version'] = xc.__version__
     qq.to_netcdf(args.outfile)
 
 
