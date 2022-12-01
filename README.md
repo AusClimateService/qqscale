@@ -41,6 +41,8 @@ TODO: Investigate implementing
 
 ## Software environment
 
+### For members of the CSIRO Climate Innovation Hub...
+
 If you're a member of the `wp00` project on NCI
 (i.e. if you're part of the CSIRO Climate Innovation Hub),
 the easiest way to use the scripts in this directory is to use the cloned copy at `/g/data/wp00/shared_code/qqscale/`.
@@ -48,26 +50,47 @@ They can be run using the Python environment at `/g/data/wp00/users/dbi599/minic
 
 For example, to view the help information for the `apply_adjustment.py` script
 a member of the `wp00` project could run the following:
+
 ```
 $ /g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python /g/data/wp00/shared_code/qqscale/apply_adjustment.py -h
 ```
 
+### For members of the Australian Climate Service...
+
 If you're a member of the `xv83` project on NCI
 (i.e. if you're part of the Australian Climate Service),
-you'll need to clone this GitHub repository,
-but you can then run the scripts using the Python environment at `/g/data/xv83/dbi599/miniconda3/envs/qqscale`.
+you'll need to clone this GitHub repository.
 
-For example:
 ```
 $ git clone git@github.com:climate-innovation-hub/qqscale.git
 $ cd qqscale
+```
+
+You can then run the scripts using the Python environment at `/g/data/xv83/dbi599/miniconda3/envs/qqscale`. e.g.:
+
+```
 $ /g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python apply_adjustment.py -h
 ```
 
-If you don't have access to either of those Python environments,
-you'll need to install the following libraries:
-`xarray`, `netCDF4`, `dask`, `xclim`, `xesmf`  and `cmdline_provenance`.
+### For everyone else...
 
+If you don't have access to a Python environment with the required packages
+pre-installed you'll need to create your own.
+For example:
+
+```
+$ conda install -c conda-forge xarray netCDF4 dask xclim xesmf cmdline_provenance gitpython
+```
+
+You can then clone this GitHub repository and run the help option
+on one of the command line programs to check that everything is working.
+For example:
+
+```
+$ git clone git@github.com:climate-innovation-hub/qqscale.git
+$ cd qqscale
+$ python calc_adjustment.py -h
+```
 
 ## Examples
 
