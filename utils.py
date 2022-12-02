@@ -66,7 +66,8 @@ def read_data(
         ds[var].attrs['units'] = input_units
     if output_units:
         ds[var] = xc.units.convert_units_to(ds[var], output_units)
-
+        ds[var].attrs['units'] = output_units
+        
     if ssr:
         threshold = 8.64e-4
         random_array = (1.0 - np.random.random_sample(ds[var].shape)) * threshold

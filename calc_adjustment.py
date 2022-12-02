@@ -15,7 +15,7 @@ def main(args):
     """Run the program."""
     
     dask.diagnostics.ProgressBar().register()
-    
+
     ds_hist = utils.read_data(
         args.hist_files,
         args.hist_var,
@@ -23,6 +23,8 @@ def main(args):
         input_units=args.input_hist_units,
         output_units=args.output_units,
     )
+    hist_units = ds_hist[args.hist_var].attrs['units']
+
     ds_ref = utils.read_data(
         args.ref_files,
         args.ref_var,
@@ -30,6 +32,7 @@ def main(args):
         input_units=args.input_ref_units,
         output_units=args.output_units,
     )
+    ref_units = ds_ref[args.ref_var].attrs['units']
 
     if len(ds_hist['lat']) != len(ds_ref['lat']):
         regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
@@ -43,12 +46,12 @@ def main(args):
         group="time.month",
         kind=mapping_methods[args.method]
     )
-    qm.ds['hist_q'].attrs['units'] = ds_hist[args.hist_var].attrs['units']
+    qm.ds['hist_q'].attrs['units'] = hist_units
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
     qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var], qm.ds['quantiles'].data)
-    qm.ds['ref_q'].attrs['units'] = ds_ref[args.ref_var].attrs['units']
+    qm.ds['ref_q'].attrs['units'] = ref_units
    
     qm.ds.attrs['history'] = utils.get_new_log()
     qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]

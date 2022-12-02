@@ -25,10 +25,13 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
     )
-
+    infile_units = ds[args.var].attrs['units']  
+    
     ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
-    assert ds_adjust['hist_q'].attrs['units'] == ds[args.var].attrs['units']     
+    af_units = ds_adjust['hist_q'].attrs['units']
+    assert infile_units == af_units, \
+        f"input file units {infile_units} differ from adjustment units {af_units}"
     ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
 
