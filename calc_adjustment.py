@@ -43,13 +43,13 @@ def main(args):
         group="time.month",
         kind=mapping_methods[args.method]
     )
-    qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var])
-    
     qm.ds['hist_q'].attrs['units'] = ds_hist[args.hist_var].attrs['units']
-    qm.ds['ref_q'].attrs['units'] = ds_ref[args.ref_var].attrs['units']
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
     qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
 
+    qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var], qm.ds['quantiles'].data)
+    qm.ds['ref_q'].attrs['units'] = ds_ref[args.ref_var].attrs['units']
+   
     qm.ds.attrs['history'] = utils.get_new_log()
     qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]
     qm.ds.attrs['historical_period_end'] = args.hist_time_bounds[1]
