@@ -33,7 +33,7 @@ def main(args):
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment units {af_units}"
     ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
-    qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
+    qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):
         regridder = xe.Regridder(qm.ds, ds, "bilinear")
