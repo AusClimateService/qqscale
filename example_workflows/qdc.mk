@@ -10,8 +10,8 @@ CODE_DIR=/g/data/wp00/shared_code/qqscale
 QQ_DIR=/g/data/wp00/users/dbi599/test_space
 AF_PATH=${QQ_DIR}/${AF_FILE}
 QQ_PATH=${QQ_DIR}/${QQ_BASE}.nc
-VALIDATION_NOTEBOOK=${CODE_DIR}/${QQ_BASE}.ipynb
-TEMPLATE_NOTEBOOK=${CODE_DIR}/validation.ipynb
+VALIDATION_NOTEBOOK=${CODE_DIR}/example_validation/${QQ_BASE}.ipynb
+TEMPLATE_NOTEBOOK=${CODE_DIR}/example_validation/validation.ipynb
 
 
 ## adjustment-factors: Calculate the QQ-scale adjustment factors
