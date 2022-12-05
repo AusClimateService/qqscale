@@ -17,7 +17,8 @@ QQ-scaling is traditionally applied in one of two contexts:
   in order to produce a statistically downscaled climate projection time series.
   Otherwise known as quantile perturbation.
 
-[Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) provides a nice clear summary of these traditional methods.
+[Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) provides a nice clear summary of these traditional methods
+and [Boe et al (2007)](https://doi.org/10.1002/joc.1602) has a nice schematic (Figure 2) of how the mapping works.
 
 The command line programs in this repository build on the relevant xclim functionality 
 (namely [`xclim.sdba.adjustment.EmpiricalQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html))
