@@ -33,10 +33,10 @@ This helps avoid divide by zero issues associated with dry days in precipitation
 > [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) define
 > Detrended Quantile Mapping (DQM) and Quantile Delta Mapping (QDM),
 > both of which build upon the traditional methods.
-
+>
 > TODO: Investigate implementing
 > [` xclim.sdba.adjustment.DetrendedQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html) and 
->[`xclim.sdba.adjustment.QuantileDeltaMapping`](https://xclim.readthedocs.io/en/stable/sdba.html).
+> [`xclim.sdba.adjustment.QuantileDeltaMapping`](https://xclim.readthedocs.io/en/stable/sdba.html).
 
 > **Different timescales?**
 >
