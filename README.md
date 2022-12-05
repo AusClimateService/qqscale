@@ -4,8 +4,6 @@ This directory contains command line programs for empirical quantile mapping (a.
 
 ## Methods
 
-### Traditional
-
 QQ-scaling is traditionally applied in one of two contexts:
 - *Quantile mapping bias adjustment (QMBA)*:
   The difference (or ratio) between an observational dataset and historical model simulation is calculated for each quantile.
@@ -30,15 +28,22 @@ the `apply_ssr.py` script can be used to apply singularity stochastic removal
 ([Vrac et al, 2016](https://doi.org/10.1002/2015JD024511)).
 This helps avoid divide by zero issues associated with dry days in precipitation datasets. 
 
-### Additional
+> **Add more complexity?**
+>
+> [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) define
+> Detrended Quantile Mapping (DQM) and Quantile Delta Mapping (QDM),
+> both of which build upon the traditional methods.
 
-[Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) define
-Detrended Quantile Mapping (DQM) and Quantile Delta Mapping (QDM),
-both of which build upon the traditional methods.
+> TODO: Investigate implementing
+> [` xclim.sdba.adjustment.DetrendedQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html) and 
+>[`xclim.sdba.adjustment.QuantileDeltaMapping`](https://xclim.readthedocs.io/en/stable/sdba.html).
 
-TODO: Investigate implementing
-[` xclim.sdba.adjustment.DetrendedQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html) and 
-[`xclim.sdba.adjustment.QuantileDeltaMapping`](https://xclim.readthedocs.io/en/stable/sdba.html).
+> **Different timescales?**
+>
+> At the moment quantiles are calculated (and adjustments are applied) for each month separately.
+>
+> TODO: Consider using [grouping](https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#Grouping)
+> to process each day of the year separately but with a 31 day rolling window.
 
 ## Software environment
 
