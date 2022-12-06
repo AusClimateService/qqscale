@@ -39,19 +39,29 @@ def main(args):
         ds_hist = regridder(ds_hist)
     
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
+    if args.grouping == 'monthly':
+        group_operator = 'time.month'
+        group_axis = 'month'
+    elif args.grouping == '31day':
+        group_operator = sdba.Grouper('time.dayofyear', window=31)
+        group_axis = 'dayofyear'
+    else:
+        raise ValueError(f'Invalid grouping: {args.grouping}')
+
     qm = sdba.EmpiricalQuantileMapping.train(
         ds_ref[args.ref_var],
         ds_hist[args.hist_var],
         nquantiles=100,
-        group="time.month",
+        group=group_operator,
         kind=mapping_methods[args.method]
     )
     qm.ds['hist_q'].attrs['units'] = hist_units
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
-    qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
+    qm.ds = qm.ds.transpose('quantiles', group_axis, 'lat', 'lon')
 
-    qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var], qm.ds['quantiles'].data)
-    qm.ds['ref_q'].attrs['units'] = ref_units
+    if args.grouping == 'monthly':
+        qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var], qm.ds['quantiles'].data)
+        qm.ds['ref_q'].attrs['units'] = ref_units
    
     qm.ds.attrs['history'] = utils.get_new_log()
     qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]
@@ -107,6 +117,13 @@ if __name__ == '__main__':
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
+    )
+    parser.add_argument(
+        "--grouping",
+        type=str,
+        choices=('monthly', '31day'),
+        default='monthly',
+        help="Temporal grouping",
     )
     parser.add_argument(
         "--input_hist_units",
