@@ -1,4 +1,4 @@
-# Workflow for quantile delta change with singularity stochastic removal 
+# Workflow for qq-scaling with singularity stochastic removal 
 
 .PHONY: help
 
@@ -48,7 +48,7 @@ ${VALIDATION_NOTEBOOK} : ${TEMPLATE_NOTEBOOK} ${AF_PATH} ${QQ_PATH}
 
 ## help : show this message
 help :
-	@echo 'make [target] [-Bnf] CONFIG=config_file.mk'
+	@echo 'make [target] -f ssr.mk [-Bn] CONFIG=config_file.mk'
 	@echo ''
 	@echo 'valid targets:'
 	@grep -h -E '^##' ${MAKEFILE_LIST} | sed -e 's/## //g' | column -t -s ':'
