@@ -34,12 +34,12 @@ ${TARGET_SSR_PATH} :
 ## adjustment-factors: Calculate the QQ-scale adjustment factors
 adjustment-factors : ${AF_PATH}
 ${AF_PATH} : ${HIST_SSR_PATH} ${REF_SSR_PATH}
-	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${REF_VAR} ${HIST_VAR} $@ --hist_files $< --ref_files $(word 2,$^) --method ${METHOD} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --grouping ${GROUPING} --verbose
+	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${HIST_VAR} ${REF_VAR} $@ --hist_files $< --ref_files $(word 2,$^) --method ${METHOD} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --grouping ${GROUPING} --verbose
 
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}
 ${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) $@ --verbose --ref_time --ssr
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) ${OUTPUT_GRID} $@ --verbose --ref_time --ssr
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}

@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 import xclim as xc
 from xclim.sdba import nbutils
+import xesmf as xe
 
 import cmdline_provenance as cmdprov
 
@@ -103,3 +104,34 @@ def get_ref_q(da, quantiles):
 
     return ref_q
 
+
+def regrid(ds, ds_grid, variable=None, method='bilinear'):
+    """Regrid data
+    
+    Parameters
+    ----------
+    ds : xarray Dataset
+        Dataset to be regridded
+    ds_grid : xarray Dataset
+        Dataset containing target horizontal grid
+    variable : str, optional
+        Variable to restore attributes for
+    method : str, default bilinear
+        Method for regridding
+    
+    Returns
+    -------
+    ds : xarray Dataset
+    
+    """
+    
+    global_attrs = ds.attrs
+    if variable:
+        var_attrs = ds[variable].attrs        
+    regridder = xe.Regridder(ds, ds_grid, method)
+    ds = regridder(ds)
+    ds.attrs = global_attrs
+    if variable:
+        ds[variable].attrs = var_attrs
+    
+    return ds

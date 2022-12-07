@@ -7,6 +7,7 @@ HIST_UNITS="kg m-2 s-1"
 REF_UNITS="kg m-2 s-1"
 TARGET_UNITS="mm d-1"
 OUTPUT_UNITS="mm d-1"
+OUTPUT_GRID=infiles
 
 METHOD=multiplicative
 GROUPING=31day

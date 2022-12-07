@@ -7,7 +7,6 @@ import numpy as np
 import xarray as xr
 import xclim as xc
 from xclim import sdba
-import xesmf as xe
 import dask.diagnostics
 
 import utils
@@ -25,7 +24,7 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
     )
-    infile_units = ds[args.var].attrs['units']  
+    infile_units = ds[args.var].attrs['units']
     
     ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
@@ -36,8 +35,12 @@ def main(args):
     qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):
-        regridder = xe.Regridder(qm.ds, ds, "bilinear")
-        qm.ds = regridder(qm.ds)
+        if args.output_grid == 'infiles':
+            qm.ds = utils.regrid(qm.ds, ds)
+        elif args.output_grid == 'adjustment':
+            ds = utils.regrid(ds, qm.ds, variable=args.var)
+        else:
+            raise ValueError(f'Invalid requested output grid: {args.output_grid}')
 
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
@@ -48,7 +51,7 @@ def main(args):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[args.var], extrapolation="constant", interp="linear")
+    qq = qm.adjust(ds[args.var], extrapolation='constant', interp='linear')
     qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon') 
     if args.ssr:
@@ -79,6 +82,7 @@ if __name__ == '__main__':
     parser.add_argument("infiles", type=str, nargs='*', help="input data (to be adjusted)")           
     parser.add_argument("var", type=str, help="variable to process")
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
+    parser.add_argument("output_grid", type=str, choices=('infiles', 'adjustment'), help="output_grid")
     parser.add_argument("outfile", type=str, help="output file")
 
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
@@ -92,12 +96,6 @@ if __name__ == '__main__':
         help="time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        default=False,
-        help='Set logging level to INFO',
-    )
-    parser.add_argument(
         "--ref_time",
         action="store_true",
         default=False,
@@ -108,6 +106,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Reverse Singularity Stochastic Removal when writing outfile',
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help='Set logging level to INFO',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

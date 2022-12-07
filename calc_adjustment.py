@@ -5,7 +5,6 @@ import logging
 
 import xclim as xc
 from xclim import sdba
-import xesmf as xe
 import dask.diagnostics
 
 import utils
@@ -24,7 +23,7 @@ def main(args):
         output_units=args.output_units,
     )
     hist_units = ds_hist[args.hist_var].attrs['units']
-
+    
     ds_ref = utils.read_data(
         args.ref_files,
         args.ref_var,
@@ -35,8 +34,7 @@ def main(args):
     ref_units = ds_ref[args.ref_var].attrs['units']
 
     if len(ds_hist['lat']) != len(ds_ref['lat']):
-        regridder = xe.Regridder(ds_hist, ds_ref, "bilinear")
-        ds_hist = regridder(ds_hist)
+        ds_hist = utils.regrid(ds_hist, ds_ref, variable=args.hist_var)
     
     mapping_methods = {'additive': '+', 'multiplicative': '*'}
     if args.grouping == 'monthly':
