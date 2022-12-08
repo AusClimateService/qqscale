@@ -36,7 +36,7 @@ def main(args):
     if len(ds_hist['lat']) != len(ds_ref['lat']):
         ds_hist = utils.regrid(ds_hist, ds_ref, variable=args.hist_var)
     
-    mapping_methods = {'additive': '+', 'multiplicative': '*'}
+    scaling_methods = {'additive': '+', 'multiplicative': '*'}
     if args.grouping == 'monthly':
         group_operator = 'time.month'
         group_axis = 'month'
@@ -46,12 +46,13 @@ def main(args):
     else:
         raise ValueError(f'Invalid grouping: {args.grouping}')
 
-    qm = sdba.EmpiricalQuantileMapping.train(
+    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
+    qm = mapping_methods[args.mapping].train(
         ds_ref[args.ref_var],
         ds_hist[args.hist_var],
         nquantiles=100,
         group=group_operator,
-        kind=mapping_methods[args.method]
+        kind=scaling_methods[args.scaling]
     )
     qm.ds['hist_q'].attrs['units'] = hist_units
     qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
@@ -110,7 +111,14 @@ if __name__ == '__main__':
         help="reference time bounds in YYYY-MM-DD format"
     )
     parser.add_argument(
-        "--method",
+        "--mapping",
+        type=str,
+        choices=('qm', 'qdm'),
+        default='qm',
+        help="mapping method (qm = empirical quantile mapping; qdm = quantile delta mapping)",
+    )
+    parser.add_argument(
+        "--scaling",
         type=str,
         choices=('additive', 'multiplicative'),
         default='additive',

@@ -32,7 +32,8 @@ def main(args):
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment units {af_units}"
     ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
-    qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
+    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
+    qm = mapping_methods[args.mapping].from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):
         if args.output_grid == 'infiles':
@@ -94,6 +95,13 @@ if __name__ == '__main__':
         metavar=('START_DATE', 'END_DATE'),
         default=None,
         help="time bounds in YYYY-MM-DD format"
+    )
+    parser.add_argument(
+        "--mapping",
+        type=str,
+        choices=('qm', 'qdm'),
+        default='qm',
+        help="mapping method (qm = empirical quantile mapping; qdm = quantile delta mapping)",
     )
     parser.add_argument(
         "--ref_time",

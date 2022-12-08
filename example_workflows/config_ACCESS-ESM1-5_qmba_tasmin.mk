@@ -9,7 +9,8 @@ TARGET_UNITS=K
 OUTPUT_UNITS=C
 OUTPUT_GRID=adjustment
 
-METHOD=additive
+MAPPING=qm
+SCALING=additive
 GROUPING=monthly
 MODEL=ACCESS-ESM1-5
 OBS_DATASET=AGCD
@@ -33,7 +34,7 @@ TARGET_FILES := /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/
 
 REF_FILES := /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_19100101-20220405_daily_time-chunked.zarr
 
-AF_FILE=${HIST_VAR}-qmba-adjustment-factors-${METHOD}-${GROUPING}_day_${OBS_DATASET}-${MODEL}_historical_${RUN}_${HIST_START}0101-${HIST_END}1231.nc
-QQ_BASE=${HIST_VAR}-qmba-${METHOD}-${GROUPING}_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${TARGET_START}0101-${TARGET_END}1231
+AF_FILE=${HIST_VAR}-qmba-adjustment-factors-${SCALING}-${GROUPING}_day_${OBS_DATASET}-${MODEL}_historical_${RUN}_${HIST_START}0101-${HIST_END}1231.nc
+QQ_BASE=${HIST_VAR}-qmba-${SCALING}-${GROUPING}_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${TARGET_START}0101-${TARGET_END}1231
 
 
