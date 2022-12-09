@@ -39,7 +39,7 @@ HIST_SSR_FILE = pr-ssr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_${HIST_START}010
 TARGET_FILES := /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/latest/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc
 TARGET_SSR_FILE = pr-ssr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_${TARGET_START}0101-${TARGET_END}1231.nc
 
-REF_FILES := /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_time-chunked.zarr
+REF_FILES := /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr
 REF_SSR_FILE = precip-total-ssr_AGCD-CSIRO_r005_${REF_START}0101-${REF_END}1231_daily.nc
 
 AF_FILE=${HIST_VAR}-${MAPPING}-adjustment-factors-${SCALING}-${GROUPING}-ssr_day_${OBS_DATASET}-${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231.nc

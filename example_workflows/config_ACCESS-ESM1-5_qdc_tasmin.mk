@@ -32,7 +32,7 @@ HIST_FILES := /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historica
 
 REF_FILES := /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/tasmin/gn/latest/tasmin_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/tasmin/gn/latest/tasmin_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20650101-21001231.nc
 
-TARGET_FILES := /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_19100101-20220405_daily_time-chunked.zarr
+TARGET_FILES := /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_19100101-20220405_daily_space-chunked.zarr
 
 AF_FILE=${HIST_VAR}-qdc-adjustment-factors-${SCALING}-${GROUPING}_day_${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231_${REF_START}0101-${REF_END}1231.nc
 QQ_BASE=${HIST_VAR}-qdc-${SCALING}-${GROUPING}_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
