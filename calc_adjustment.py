@@ -28,6 +28,8 @@ def main(args):
         args.ref_files,
         args.ref_var,
         time_bounds=args.ref_time_bounds,
+        lat_bounds=args.lat_bounds,
+        lon_bounds=args.lon_bounds,
         input_units=args.input_ref_units,
         output_units=args.output_units,
     )
@@ -109,6 +111,20 @@ if __name__ == '__main__':
         metavar=('START_DATE', 'END_DATE'),
         required=True,
         help="reference time bounds in YYYY-MM-DD format"
+    )
+    parser.add_argument(
+        "--lat_bounds",
+        type=float,
+        nargs=2,
+        default=None,
+        help='Latitude bounds for reference data: (south_bound, north_bound)',
+    )
+    parser.add_argument(
+        "--lon_bounds",
+        type=float,
+        nargs=2,
+        default=None,
+        help='Longitude bounds for reference data: (west_bound, east_bound)',
     )
     parser.add_argument(
         "--mapping",
