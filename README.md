@@ -139,7 +139,7 @@ For precipitation it is common to use multiplicative (as opposed to additive) QQ
 to avoid producing negative daily rainfall totals.
 In order to avoid divide by zero issues associated with quantiles containing all dry days,
 we provide a script for applying singularity stochastic removal
-(SSR; [Vrac et al, 2016](https://doi.org/10.1002/2015JD024511) to each of the input datasets.
+(SSR; [Vrac et al, 2016](https://doi.org/10.1002/2015JD024511)) to each of the input datasets.
 This basically takes all days with scarcely any rain (zero up to `8.64e-4`mm)
 and replaces the daily rainfall total with a random value that lies between `0 > total > 8.64e-4`
 so that no quantiles are zero.
