@@ -12,6 +12,48 @@ import dask.diagnostics
 import utils
 
 
+def match_mean(da_qq, da_target, ref_clim, hist_clim, scaling):
+    """Adjust QQ-scaled data so change in annual mean matches hist to ref change.
+    
+    Used in quantile delta change methods to make sure the change in the annual mean
+      between a historical (hist_clim) and future (ref_clim) model simulation
+      matches the change between the original observational data (da_target)
+      and the QQ-scaled observational data (da_qq).
+    
+    Parameters
+    ----------
+    da_qq : xarray DataArray
+        QQ-scaled data to be adjusted
+    da_target : xarray DataArray
+        Data prior to qq-scaling
+    ref_clim : xarray DataArray
+        Reference climatology
+    hist_clim : xarray DataArray
+        Historical climatology    
+    scaling : {'additive', 'multiplicative'}
+        Variable to restore attributes for
+    
+    Returns
+    -------
+    da_qq_adjusted : xarray DataArray
+    
+    """
+    
+    qq_clim = da_qq.mean('time', keep_attrs=True)
+    target_clim = da_target.mean('time', keep_attrs=True)
+    if scaling == 'multiplicative':
+        adjustment_factor =  ((ref_clim / hist_clim) * target_clim) / qq_clim
+        da_qq_adjusted = da_qq * adjustment_factor
+    elif scaling == 'additive':
+        adjustment_factor = (ref_clim - hist_clim) - (qq_clim - target_clim)
+        da_qq_adjusted = da_qq + adjustment_factor
+    else:
+        raise ValueError(f'Invalid scaling method: {scaling}')
+    da_qq_adjusted.attrs = da_qq.attrs
+
+    return da_qq_adjusted
+
+
 def main(args):
     """Run the program."""
 
@@ -55,6 +97,11 @@ def main(args):
     qq = qm.adjust(ds[args.var], extrapolation='constant', interp='linear')
     qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon') 
+
+    if args.match_mean:
+        qq = match_mean(
+            qq, ds[args.var], ds_adjust['ref_clim'], ds_adjust['hist_clim'], args.scaling
+        )
     if args.ssr:
         qq = qq.where(qq >= 8.64e-4, 0.0)
     qq = qq.to_dataset()
@@ -104,10 +151,23 @@ if __name__ == '__main__':
         help="mapping method (qm = empirical quantile mapping; qdm = quantile delta mapping)",
     )
     parser.add_argument(
+        "--scaling",
+        type=str,
+        choices=('additive', 'multiplicative'),
+        default='additive',
+        help="scaling method",
+    )
+    parser.add_argument(
         "--ref_time",
         action="store_true",
         default=False,
         help='Shift output time axis to match reference dataset',
+    )
+    parser.add_argument(
+        "--match_mean",
+        action="store_true",
+        default=False,
+        help='Scale the QQ-scaled data so mean change matches the change between ref and hist',
     )
     parser.add_argument(
         "--ssr",

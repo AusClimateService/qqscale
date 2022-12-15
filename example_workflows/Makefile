@@ -20,7 +20,7 @@ ${AF_PATH} :
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}
 ${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${TARGET_FILES} ${TARGET_VAR} $< ${OUTPUT_GRID} $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --mapping ${MAPPING} --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS} --ref_time --verbose 
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${TARGET_FILES} ${TARGET_VAR} $< ${OUTPUT_GRID} $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --mapping ${MAPPING} --scaling ${SCALING} --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS} --ref_time --verbose --match_mean
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}

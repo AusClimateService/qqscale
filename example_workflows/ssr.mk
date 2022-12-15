@@ -39,7 +39,7 @@ ${AF_PATH} : ${HIST_SSR_PATH} ${REF_SSR_PATH}
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}
 ${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) ${OUTPUT_GRID} $@ --mapping ${MAPPING} --verbose --ref_time --ssr
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) ${OUTPUT_GRID} $@ --mapping ${MAPPING} --scaling ${SCALING} --verbose --ref_time --ssr --match_mean
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}

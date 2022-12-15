@@ -63,6 +63,8 @@ def main(args):
     if args.grouping == 'monthly':
         qm.ds['ref_q'] = utils.get_ref_q(ds_ref[args.ref_var], qm.ds['quantiles'].data)
         qm.ds['ref_q'].attrs['units'] = ref_units
+    qm.ds['hist_clim'] = ds_hist[args.hist_var].mean('time', keep_attrs=True)
+    qm.ds['ref_clim'] = ds_ref[args.ref_var].mean('time', keep_attrs=True)   
    
     qm.ds.attrs['history'] = utils.get_new_log()
     qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]

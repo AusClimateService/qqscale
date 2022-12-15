@@ -11,7 +11,8 @@ OUTPUT_GRID=infiles
 
 MAPPING=qm
 SCALING=multiplicative
-GROUPING=31day
+GROUPING=monthly
+# monthly 31day
 MODEL=ACCESS-ESM1-5
 OBS_DATASET=AGCD
 EXPERIMENT=ssp370
@@ -43,6 +44,6 @@ TARGET_FILES := /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r00
 TARGET_SSR_FILE = precip-total-ssr_AGCD-CSIRO_r005_${TARGET_START}0101-${TARGET_END}1231_daily.nc
 
 AF_FILE=${HIST_VAR}-qdc-adjustment-factors-${SCALING}-${GROUPING}-ssr_day_${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231_${REF_START}0101-${REF_END}1231.nc
-QQ_BASE=${HIST_VAR}-qdc-${SCALING}-${GROUPING}-ssr_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
+QQ_BASE=${HIST_VAR}-qdc-${SCALING}-${GROUPING}-ssr-mean-match_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
 
 
