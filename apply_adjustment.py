@@ -70,20 +70,25 @@ def main(args):
     
     ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
+
     af_units = ds_adjust['hist_q'].attrs['units']
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment units {af_units}"
-    ds_adjust = ds_adjust.where(ds_adjust.apply(np.isfinite), 0.0)
-    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
-    qm = mapping_methods[args.mapping].from_dataset(ds_adjust)
 
     if len(ds_adjust['lat']) != len(ds['lat']):
         if args.output_grid == 'infiles':
-            qm.ds = utils.regrid(qm.ds, ds)
+            ds_adjust = utils.regrid(ds_adjust, ds)
         elif args.output_grid == 'adjustment':
-            ds = utils.regrid(ds, qm.ds, variable=args.var)
+            ds = utils.regrid(ds, ds_adjust, variable=args.var)
         else:
             raise ValueError(f'Invalid requested output grid: {args.output_grid}')
+
+    if args.reference_quantiles == 'infileq':
+        ds_adjust['hist_q'] = utils.get_quantiles(ds[args.var], ds_adjust['quantiles'].data)
+        ds_adjust['hist_q'].attrs['units'] = infile_units
+
+    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
+    qm = mapping_methods[args.mapping].from_dataset(ds_adjust)
 
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
@@ -174,6 +179,13 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Reverse Singularity Stochastic Removal when writing outfile',
+    )
+    parser.add_argument(
+        "--reference_quantiles",
+        type=str,
+        choices=('histq', 'infileq'),
+        default='histq',
+        help="quantiles to refer to when mapping to adjustment factors",
     )
     parser.add_argument(
         "--verbose",

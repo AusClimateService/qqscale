@@ -90,11 +90,11 @@ def read_data(
     return ds
 
 
-def get_ref_q(da, quantiles, timescale='monthly'):
-    """Get reference quantiles.
+def get_quantiles(da, quantiles, timescale='monthly'):
+    """Get quantiles.
 
     Required because sdba.EmpiricalQuantileMapping.train only
-    outputs hist_q and not ref_q too.    
+    outputs hist_q and not others like ref_q.    
     """
 
     if timescale == 'monthly':
@@ -103,19 +103,19 @@ def get_ref_q(da, quantiles, timescale='monthly'):
         for month in months:
             mth = nbutils.quantile(da[da['time'].dt.month == month], quantiles, ['time'])
             q_list.append(mth)
-        ref_q = xr.concat(q_list, dim='month')
-        ref_q.coords['month'] = months
-        ref_q = ref_q.transpose('quantiles', 'month', 'lat', 'lon')
+        da_q = xr.concat(q_list, dim='month')
+        da_q.coords['month'] = months
+        da_q = da_q.transpose('quantiles', 'month', 'lat', 'lon')
     elif timescale == 'annual':
-        ref_q = nbutils.quantile(da, quantiles, ['time'])
-        ref_q = ref_q.transpose('quantiles', 'lat', 'lon')
+        da_q = nbutils.quantile(da, quantiles, ['time'])
+        da_q = da_q.transpose('quantiles', 'lat', 'lon')
     else:
         raise ValueError('Invalid timescale: {timescale}')
         
-    ref_q.attrs['standard_name'] = 'Reference quantiles'
-    ref_q.attrs['long_name'] = 'Quantiles of reference on the reference period'
+    da_q.attrs['standard_name'] = 'Quantiles'
+    da_q.attrs['long_name'] = 'Quantiles'
 
-    return ref_q
+    return da_q
 
 
 def regrid(ds, ds_grid, variable=None, method='bilinear'):
