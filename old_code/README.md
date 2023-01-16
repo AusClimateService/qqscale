@@ -18,3 +18,6 @@ Here's the relevant history:
 
 3. The Climate Innovation Hub came into being and Raktima and Vassili started writing a python version (see `python/`).
    It implements the same improved method as the previous fortran method that Marcus and Craig developed. 
+
+These methods are documented on the [CCiA website](https://www.climatechangeinaustralia.gov.au/en/obtain-data/application-ready-data/scaling-methods/)
+and also in a [CAWCR Technical Report](http://www.bom.gov.au/research/publications/cawcrreports/CTR_034.pdf).
