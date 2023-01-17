@@ -15,35 +15,7 @@ QQ-scaling is traditionally applied in one of two contexts:
   in order to produce a statistically downscaled climate projection time series.
   Otherwise known as quantile perturbation.
 
-[Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) provides a nice clear summary of these traditional methods
-and [Boe et al (2007)](https://doi.org/10.1002/joc.1602) has a nice schematic (Figure 2) of how the mapping works.
-
-The command line programs in this repository build on the relevant xclim functionality 
-(namely [`xclim.sdba.adjustment.EmpiricalQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html))
-in order to implement these traditional QQ-scaling methods.
-The `calc_adjustment.py` script is used to calculate the adjustment factors (by month and quantile) between two datasets,
-and then `apply_adjustment.py` is used to apply those adjustment factors to a given dataset.
-Before calculating and applying adjustment factors,
-the `apply_ssr.py` script can be used to apply singularity stochastic removal
-([Vrac et al, 2016](https://doi.org/10.1002/2015JD024511)).
-This helps avoid divide by zero issues associated with dry days in precipitation datasets. 
-
-> **Add more complexity?**
->
-> [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) define
-> Detrended Quantile Mapping (DQM) and Quantile Delta Mapping (QDM),
-> both of which build upon the traditional methods.
->
-> TODO: Investigate implementing
-> [` xclim.sdba.adjustment.DetrendedQuantileMapping`](https://xclim.readthedocs.io/en/stable/sdba.html) and 
-> [`xclim.sdba.adjustment.QuantileDeltaMapping`](https://xclim.readthedocs.io/en/stable/sdba.html).
-
-> **Different timescales?**
->
-> At the moment quantiles are calculated (and adjustments are applied) for each month separately.
->
-> TODO: Consider using [grouping](https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#Grouping)
-> to process each day of the year separately but with a 31 day rolling window.
+Both methods can be achieved using this scripts in this repository (see examples below).
 
 ## Software environment
 
