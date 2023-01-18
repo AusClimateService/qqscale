@@ -1,4 +1,5 @@
-# Workflow for qq-scaling with singularity stochastic removal 
+# Workflow for producing climate projection data using the CSIRO quantile delta change method
+# with singularity stochastic removal 
 
 .PHONY: help
 
@@ -13,6 +14,7 @@ AF_PATH=${QQ_DIR}/${AF_FILE}
 HIST_SSR_PATH=${QQ_DIR}/${HIST_SSR_FILE}
 REF_SSR_PATH=${QQ_DIR}/${REF_SSR_FILE}
 TARGET_SSR_PATH=${QQ_DIR}/${TARGET_SSR_FILE}
+TARGET_SSR_Q_PATH=${QQ_DIR}/${TARGET_SSR_Q_FILE}
 QQ_PATH=${QQ_DIR}/${QQ_BASE}.nc
 VALIDATION_NOTEBOOK=${CODE_DIR}/example_validation/${QQ_BASE}.ipynb
 TEMPLATE_NOTEBOOK=${CODE_DIR}/example_validation/validation.ipynb
@@ -37,16 +39,21 @@ adjustment-factors : ${AF_PATH}
 ${AF_PATH} : ${HIST_SSR_PATH} ${REF_SSR_PATH}
 	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${HIST_VAR} ${REF_VAR} $@ --hist_files $< --ref_files $(word 2,$^) --mapping ${MAPPING} --scaling ${SCALING} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --grouping ${GROUPING} --verbose
 
+## quantiles : Calculate quantiles for the target data
+quantiles : ${TARGET_SSR_Q_PATH}
+${TARGET_SSR_Q_PATH} : ${TARGET_SSR_PATH}
+	${PYTHON} ${CODE_DIR}/calc_quantiles.py $< ${TARGET_VAR} 100 $@
+
 ## qqscale-projections: Calculate QQ-scaled climate projection data
 qqscale-projections : ${QQ_PATH}
-${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) ${OUTPUT_GRID} $@ --mapping ${MAPPING} --scaling ${SCALING} --verbose --ref_time --ssr --reference_quantiles ${REFERENCE_QUANTILES}
+${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH} ${TARGET_SSR_Q_PATH}
+	${PYTHON} ${CODE_DIR}/apply_adjustment.py $< ${TARGET_VAR} $(word 2,$^) ${OUTPUT_GRID} $@ --mapping ${MAPPING} --scaling ${SCALING} --verbose --ref_time --ssr --reference_quantile_file $(word 3,$^) --reference_quantile_var ${TARGET_VAR}
 #--match_mean
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}
-${VALIDATION_NOTEBOOK} : ${TEMPLATE_NOTEBOOK} ${AF_PATH} ${QQ_PATH}
-	${PAPERMILL} -p adjustment_file $(word 2,$^) -p qq_file $(word 3,$^) -r hist_files "${HIST_FILES}" -r ref_files "${REF_FILES}" -r target_files "${TARGET_FILES}" -r hist_time_bounds "${HIST_START}-01-01 ${HIST_END}-12-31" -r ref_time_bounds "${REF_START}-01-01 ${REF_END}-12-31" -r target_time_bounds "${TARGET_START}-01-01 ${TARGET_END}-12-31" -p example_lat ${EXAMPLE_LAT} -p example_lon ${EXAMPLE_LON} -p example_month ${EXAMPLE_MONTH} -p hist_units ${HIST_UNITS} -p ref_units ${REF_UNITS} -p target_units ${TARGET_UNITS} -p output_units ${OUTPUT_UNITS} -p hist_var ${HIST_VAR} -p ref_var ${REF_VAR} -p target_var ${TARGET_VAR} $< $@
+${VALIDATION_NOTEBOOK} : ${TEMPLATE_NOTEBOOK} ${AF_PATH} ${QQ_PATH} ${TARGET_SSR_Q_PATH}
+	${PAPERMILL} -p adjustment_file $(word 2,$^) -p qq_file $(word 3,$^) -r hist_files "${HIST_FILES}" -r ref_files "${REF_FILES}" -r target_files "${TARGET_FILES}" -r target_q_file $(word 4,$^) -r hist_time_bounds "${HIST_START}-01-01 ${HIST_END}-12-31" -r ref_time_bounds "${REF_START}-01-01 ${REF_END}-12-31" -r target_time_bounds "${TARGET_START}-01-01 ${TARGET_END}-12-31" -p example_lat ${EXAMPLE_LAT} -p example_lon ${EXAMPLE_LON} -p example_month ${EXAMPLE_MONTH} -p hist_units ${HIST_UNITS} -p ref_units ${REF_UNITS} -p target_units ${TARGET_UNITS} -p output_units ${OUTPUT_UNITS} -p hist_var ${HIST_VAR} -p ref_var ${REF_VAR} -p target_var ${TARGET_VAR} $< $@
 
 ## help : show this message
 help :

@@ -13,7 +13,6 @@ MAPPING=qm
 SCALING=multiplicative
 GROUPING=monthly
 # monthly 31day
-REFERENCE_QUANTILES=infileq
 MODEL=ACCESS-ESM1-5
 OBS_DATASET=AGCD
 EXPERIMENT=ssp370
@@ -43,8 +42,10 @@ REF_SSR_FILE = pr-ssr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_${REF_START}0101-${RE
 
 TARGET_FILES := /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr
 TARGET_SSR_FILE = precip-total-ssr_AGCD-CSIRO_r005_${TARGET_START}0101-${TARGET_END}1231_daily.nc
+TARGET_SSR_Q_FILE = precip-total-ssr-quantiles_AGCD-CSIRO_r005_${TARGET_START}0101-${TARGET_END}1231_daily.nc
 
 AF_FILE=${HIST_VAR}-qdc-adjustment-factors-${SCALING}-${GROUPING}-ssr_day_${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231_${REF_START}0101-${REF_END}1231.nc
+
 QQ_BASE=${HIST_VAR}-qdc-${SCALING}-${GROUPING}-ssr-${REFERENCE_QUANTILES}_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
 #mean-match
 

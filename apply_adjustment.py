@@ -83,9 +83,9 @@ def main(args):
         else:
             raise ValueError(f'Invalid requested output grid: {args.output_grid}')
 
-    if args.reference_quantiles == 'infileq':
-        ds_adjust['hist_q'] = utils.get_quantiles(ds[args.var], ds_adjust['quantiles'].data)
-        ds_adjust['hist_q'].attrs['units'] = infile_units
+    if args.reference_quantile_file:
+        ds_q = utils.read_data(args.reference_quantile_file, args.var)
+        ds_adjust['hist_q'] = ds_q[args.reference_quantile_var]
 
     mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
     qm = mapping_methods[args.mapping].from_dataset(ds_adjust)
@@ -181,11 +181,16 @@ if __name__ == '__main__':
         help='Reverse Singularity Stochastic Removal when writing outfile',
     )
     parser.add_argument(
-        "--reference_quantiles",
+        "--reference_quantile_file",
         type=str,
-        choices=('histq', 'infileq'),
-        default='histq',
-        help="quantiles to refer to when mapping to adjustment factors",
+        default=None,
+        help="quantile file to refer for adjustment factor mapping",
+    )
+    parser.add_argument(
+        "--reference_quantile_var",
+        type=str,
+        default=None,
+        help="quantile file variable",
     )
     parser.add_argument(
         "--verbose",
