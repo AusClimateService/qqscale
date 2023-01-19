@@ -36,7 +36,10 @@ REF_FILES := /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp
 
 TARGET_FILES := /g/data/xv83/agcd-csiro/tmax/daily/tmax_AGCD-CSIRO_r005_19100101-20220404_daily_space-chunked.zarr
 
+TARGET_Q_FILE = tmax-quantiles_AGCD-CSIRO_r005_${TARGET_START}-${TARGET_END}_daily.nc
+
 AF_FILE=${HIST_VAR}-qdc-adjustment-factors-${SCALING}-${GROUPING}_day_${MODEL}_historical-${EXPERIMENT}_${RUN}_${HIST_START}0101-${HIST_END}1231_${REF_START}0101-${REF_END}1231.nc
+
 QQ_BASE=${HIST_VAR}-qdc-${SCALING}-${GROUPING}-${REFERENCE_QUANTILES}_day_${OBS_DATASET}-${MODEL}_${EXPERIMENT}_${RUN}_${REF_START}0101-${REF_END}1231
 # mean-match
 
