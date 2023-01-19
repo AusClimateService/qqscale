@@ -84,7 +84,7 @@ def main(args):
             raise ValueError(f'Invalid requested output grid: {args.output_grid}')
 
     if args.reference_quantile_file:
-        ds_q = utils.read_data(args.reference_quantile_file, args.var)
+        ds_q = xr.open_dataset(args.reference_quantile_file)
         ds_adjust['hist_q'] = ds_q[args.reference_quantile_var]
 
     mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
