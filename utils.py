@@ -105,10 +105,16 @@ def get_quantiles(da, quantiles, timescale='monthly'):
             q_list.append(mth)
         da_q = xr.concat(q_list, dim='month')
         da_q.coords['month'] = months
-        da_q = da_q.transpose('quantiles', 'month', 'lat', 'lon')
+        try:
+            da_q = da_q.transpose('quantiles', 'month', 'lat', 'lon')
+        except ValueError:
+            da_q = da_q.transpose('quantiles', 'month')
     elif timescale == 'annual':
         da_q = nbutils.quantile(da, quantiles, ['time'])
-        da_q = da_q.transpose('quantiles', 'lat', 'lon')
+        try:
+            da_q = da_q.transpose('quantiles', 'lat', 'lon')
+        except ValueError:
+            pass
     else:
         raise ValueError('Invalid timescale: {timescale}')
         
