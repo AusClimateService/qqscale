@@ -103,14 +103,15 @@ def main(args):
     qq = qq.rename(args.var)
     qq = qq.transpose('time', 'lat', 'lon') 
 
+    if args.ssr:
+        qq = qq.where(qq >= 8.64e-4, 0.0)
+
     if args.match_mean:
         qq = match_mean(
             qq, ds[args.var], ds_adjust['ref_clim'], ds_adjust['hist_clim'], args.scaling
         )
-    if args.ssr:
-        qq = qq.where(qq >= 8.64e-4, 0.0)
-    qq = qq.to_dataset()
-    
+    qq = qq.to_dataset()    
+
     if args.ref_time:
         new_start_date = ds_adjust.attrs['reference_period_start'] 
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
