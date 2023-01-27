@@ -54,7 +54,7 @@ ${QQ_PATH} : ${TARGET_SSR_PATH} ${AF_PATH} ${TARGET_SSR_Q_PATH}
 ## match-mean : Modify QQ-scaled data so mean change matches GCM
 match-mean : ${QQ_MEAN_MATCH_PATH}
 ${QQ_MEAN_MATCH_PATH} : ${QQ_PATH}
-	${PYTHON} ${CODE_DIR}/match_mean_change.py $< ${TARGET_VAR} $@ --output_units ${OUTPUT_UNITS} --hist_files ${HIST_FILES} --hist_var ${HIST_VAR} --input_hist_units ${HIST_UNITS} --ref_files ${REF_FILES} --ref_var ${REF_VAR} --input_ref_units ${REF_UNITS} --target_files ${TARGET_FILES} --input_target_units ${TARGET_UNITS} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --scaling ${SCALING} --verbose
+	${PYTHON} ${CODE_DIR}/match_mean_change.py $< ${TARGET_VAR} $@ --output_units ${OUTPUT_UNITS} --hist_files ${HIST_FILES} --hist_var ${HIST_VAR} --input_hist_units ${HIST_UNITS} --ref_files ${REF_FILES} --ref_var ${REF_VAR} --input_ref_units ${REF_UNITS} --target_files ${TARGET_FILES} --input_target_units ${TARGET_UNITS} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --target_time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --scaling ${SCALING} --verbose
 
 ## validation : Create validation plots for QQ-scaled climate projection data
 validation : ${VALIDATION_NOTEBOOK}

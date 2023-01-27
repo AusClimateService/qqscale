@@ -33,7 +33,7 @@ def main(args):
     ds_target = utils.read_data(
         args.target_files,
         args.qq_var,
-        time_bounds=args.hist_time_bounds,
+        time_bounds=args.target_time_bounds,
         input_units=args.input_target_units,
         output_units=args.output_units,
     )
@@ -124,6 +124,14 @@ if __name__ == '__main__':
         metavar=('START_DATE', 'END_DATE'),
         default=None,
         help="time bounds for the reference/future period (in YYYY-MM-DD format)"
+    )
+    parser.add_argument(
+        "--target_time_bounds",
+        type=str,
+        nargs=2,
+        metavar=('START_DATE', 'END_DATE'),
+        default=None,
+        help="time bounds for the target data (in YYYY-MM-DD format)"
     )
     parser.add_argument(
         "--scaling",
