@@ -4,13 +4,28 @@
 
 include ${CONFIG}
 
+MAPPING=qm
+SCALING=additive
+GROUPING=monthly
+REFERENCE_QUANTILES=infileq
+OUTPUT_GRID=infiles
+OBS_DATASET=AGCD
+
+HIST_FILES := $(sort $(wildcard /g/data/${NCI_LOC}/CMIP6/CMIP/*/${MODEL}/historical/${RUN}/day/${HIST_VAR}/${MODEL_GRID}/${HIST_VERSION}/*.nc))
+REF_FILES := $(sort $(wildcard /g/data/${NCI_LOC}/CMIP6/ScenarioMIP/*/${MODEL}/${EXPERIMENT}/${RUN}/day/${REF_VAR}/${MODEL_GRID}/${REF_VERSION}/*.nc))
+TARGET_FILES := $(wildcard /g/data/xv83/agcd-csiro/${TARGET_VAR}/daily/${TARGET_VAR}_AGCD-CSIRO_r005_*_daily_space-chunked.zarr)
+TARGET_Q_FILE = ${TARGET_VAR}-quantiles_${OBS_DATASET}_r005_${TARGET_START}-${TARGET_END}_daily.nc
+AF_FILE=${HIST_VAR}-${MAPPING}-${SCALING}-${GROUPING}-adjustment-factors_${MODEL}_${EXPERIMENT}_${RUN}_${MODEL_GRID}_${REF_START}0101-${REF_END}1231_wrt_${HIST_START}0101-${HIST_END}1231.nc
+QQ_BASE=${HIST_VAR}_day_${MODEL}_${EXPERIMENT}_${RUN}_AUS-r005_${REF_START}0101-${REF_END}1231_qdc-${SCALING}-${GROUPING}_${OBS_DATASET}_${TARGET_START}0101-${TARGET_END}1231_historical_${HIST_START}0101-${HIST_END}1231.nc
+
 #PYTHON=/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python
 PYTHON=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python
 PAPERMILL=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/papermill
 CODE_DIR=/g/data/wp00/shared_code/qqscale
-QQ_DIR=/g/data/wp00/users/dbi599/test_space
+QQ_DIR=/g/data/wp00/data/QQ-CMIP6/${MODEL}/${EXPERIMENT}/${RUN}/day/${HIST_VAR}/${HIST_VERSION}
+OBS_DIR=/g/data/wp00/data/${OBS_DATASET}
 AF_PATH=${QQ_DIR}/${AF_FILE}
-TARGET_Q_PATH=${QQ_DIR}/${TARGET_Q_FILE}
+TARGET_Q_PATH=${OBS_DIR}/${TARGET_Q_FILE}
 QQ_PATH=${QQ_DIR}/${QQ_BASE}.nc
 VALIDATION_NOTEBOOK=${CODE_DIR}/example_validation/${QQ_BASE}.ipynb
 TEMPLATE_NOTEBOOK=${CODE_DIR}/example_validation/validation.ipynb
