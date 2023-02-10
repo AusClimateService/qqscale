@@ -29,7 +29,7 @@ all : ${HIST_DATA} ${REF_DATA} ${TARGET_DATA}
 
 ## help : show this message
 help :
-	@echo 'make [target] [-Bn] CONFIG=config_file.mk'
+	@echo 'make [target] -f ssr.mk [-Bn] CONFIG=config_file.mk'
 	@echo ''
 	@echo 'valid targets:'
 	@grep -h -E '^##' ${MAKEFILE_LIST} | sed -e 's/## //g' | column -t -s ':'

@@ -70,84 +70,41 @@ $ cd qqscale
 $ python calc_adjustment.py -h
 ```
 
-## Examples
+## Data processing
 
-Reminders:
-- Information about the input arguments for any of the command line programs
-  can be viewed by using the `-h` option.
-- While the examples below simply run `python`,
-  you might use one of the pre-installed environments 
-  (i.e. `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python` or
-  `/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python`
-  if you're a member of those projects on NCI)
-- While the examples below simply give the name of the command line program,
-  you may use a copy of those scripts at `/g/data/wp00/shared_code/qqscale/`
+> **Reminders**
+> 
+> - Information about the input arguments for any of the command line programs
+>   can be viewed by using the `-h` option.
+> - While the examples below simply run `python`,
+>   you might use one of the pre-installed environments 
+>   (i.e. `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python` or
+>   `/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python`
+>   if you're a member of those projects on NCI)
+> - While the examples below simply give the name of the command line program,
+>   you may use a copy of those scripts at `/g/data/wp00/shared_code/qqscale/`
   
+In general, QDC and QMBA can be achieved by running the following programs in sequence:
+1. `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to all the data you'll be working with
+   (optional: just for precipitation data when using multiplicative adjustment)
+1. `calc_adjustment.py` to calculate the adjustment factors between an historical and reference dataset
+   (in QDC the reference dataset is a future model simulation; in QMBA it is observations)
+1. `calc_quantiles.py` to calculate the quantiles of the target data
+   (i.e. the data to be adjusted - that's observational data for QDC or model data for QMBA)
+1. `apply_adjustment.py` to apply the adjustment factors to the target data
 
-### Example 1: Quantile delta change for daily maximum temperature
+In order to simplify the process of sequencing those steps
+and making sure the outputs of one step are correctly input into the next,
+a `Makefile` (see the `example_workflows` directory) has been produced.
+The steps involved in using the `Makefile` are:
+1. Create a configuration file based on `config_qdc.mk` or `config_qmba.mk`
+1. Run `make all -f make_ssr.mk CONFIG=config_[method].mk` if SSR is required.
+1. Run `make apply-adjustment CONFIG=config_[method].mk` to implement either QDC or QMBA
 
-**Step 1:** Calculate the adjustment factors for the ACCESS-ESM1-5 model
-between the historical (1995-2014) and ssp370 future (2035-2064) experiments
-using the additive (as opposed to multiplicative) method.
-
-```
-$ python calc_adjustment.py tasmax tasmax adjustment-factors.nc --hist_files /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/tasmax/gn/latest/tasmax_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_*.nc --ref_files /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/tasmax/gn/latest/tasmax_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_*.nc --hist_time_bounds 1995-01-01 2014-12-31 --ref_time_bounds 2035-01-01 2064-12-31 --method additive --input_hist_units K --input_ref_units K --output_units C --verbose
-```
-The input data files are in Kelvin but we want to work in Celsius,
-so the `--output_units` option was used to specify Celsius.
-
-**Step 2:** Apply the adjustment factors to 30 years of AGCD data.
-
-```
-$ python apply_adjustment.py /g/data/xv83/agcd-csiro/tmax/daily/tmax_AGCD-CSIRO_r005_19100101-20220404_daily_space-chunked.zarr tmax adjustment-factors.nc tmax-qqscaled_2035-2064.nc --time_bounds 1990-01-01 2019-12-31 --ref_time --verbose
-```
-
-The `--ref_time` option adjusts the output time axis
-so it starts at the same time as the future experiment (in this case, 2035-01-01).
-
-### Example 2: Quantile delta change for daily precipitation
-
-For precipitation it is common to use multiplicative (as opposed to additive) QQ-scaling
-to avoid producing negative daily rainfall totals.
-In order to avoid divide by zero issues associated with quantiles containing all dry days,
-we provide a script for applying singularity stochastic removal
-(SSR; [Vrac et al, 2016](https://doi.org/10.1002/2015JD024511)) to each of the input datasets.
-This basically takes all days with scarcely any rain (zero up to `8.64e-4`mm)
-and replaces the daily rainfall total with a random value that lies between `0 > total > 8.64e-4`
-so that no quantiles are zero.
-
-**Step 1:** Apply SSR to each of the input datasets
-
-```
-$ python apply_ssr.py /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/latest/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_*.nc pr pr-ssr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19950101-20141231.nc --time_bounds 1995-01-01 2014-12-31 --input_units "kg m-2 s-1" --output_units "mm d-1"
-```
-
-```
-$ python apply_ssr.py /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/latest/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_*.nc pr pr-ssr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20350101-20641231.nc --time_bounds 2035-01-01 2064-12-31 --input_units "kg m-2 s-1" --output_units "mm d-1"
-```
-
-```
-$ python apply_ssr.py /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr precip precip-total-ssr_AGCD-CSIRO_r005_19900101-20191231_daily.nc --time_bounds 1990-01-01 2019-12-31
-```
-
-**Step 2:** Calculate the adjustment factors for the ACCESS-ESM1-5 model
-between the historical (1995-2014) and ssp370 future (2035-2064) experiments
-using the multiplicative method.
-
-```
-$ python calc_adjustment.py pr pr adjustment-factors.nc --hist_files pr-ssr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19950101-20141231.nc --ref_files pr-ssr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20350101-20641231.nc --method multiplicative --hist_time_bounds 1995-01-01 2014-12-31 --ref_time_bounds 2035-01-01 2064-12-31 --verbose
-```
-
-**Step 3:** Apply the adjustment factors to 30 years of AGCD data.
-
-```
-$ python apply_adjustment.py precip-total-ssr_AGCD-CSIRO_r005_19900101-20191231_daily.nc precip adjustment-factors.nc pr-qqscaled_2035-2064.nc --verbose --ref_time --ssr
-```
-
-In this case the `--ssr` option reverses the singularity stochastic removal
-after the QQ-scaling has been applied,
-setting all days with scarely any rain (less than `8.64e-4`mm) back to zero.
-
+Additional processing steps for QDC
+(e.g. applying standard CIH file metadata)
+can be applied using `make_qdc_post-processing.mk`.
+Help information can be viewed by running `make help -f make_qdc_post-processing.mk`.
 
 ## Questions
 

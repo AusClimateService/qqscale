@@ -1,4 +1,4 @@
-# Workflow for producing climate projection data using the CSIRO quantile delta change method
+# Post-processing and analysis of QDC data
 
 .PHONY: help
 
@@ -8,23 +8,12 @@ include ${CONFIG}
 PYTHON=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python
 PAPERMILL=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/papermill
 CODE_DIR=/g/data/wp00/shared_code/qqscale
+VALIDATION_NOTEBOOK=${CODE_DIR}/example_validation/${QQ_BASE}.ipynb
+TEMPLATE_NOTEBOOK=${CODE_DIR}/example_validation/validation.ipynb
 
-## adjustment-factors: Calculate the QQ-scale adjustment factors
-adjustment-factors : ${AF_PATH}
-${AF_PATH} :
-	mkdir -p ${OUTPUT_REF_DIR}
-	${PYTHON} ${CODE_DIR}/calc_adjustment.py ${HIST_VAR} ${REF_VAR} $@ --hist_files ${HIST_DATA} --ref_files ${REF_DATA} --hist_time_bounds ${HIST_START}-01-01 ${HIST_END}-12-31 --ref_time_bounds ${REF_START}-01-01 ${REF_END}-12-31 --mapping ${MAPPING} --scaling ${SCALING} --input_hist_units ${HIST_UNITS} --input_ref_units ${REF_UNITS} --output_units ${OUTPUT_UNITS} --grouping ${GROUPING} --verbose
-
-## quantiles : Calculate quantiles for the target data
-quantiles : ${TARGET_Q_PATH}
-${TARGET_Q_PATH} :
-	mkdir -p ${OUTPUT_OBS_DIR}
-	${PYTHON} ${CODE_DIR}/calc_quantiles.py ${TARGET_DATA} ${TARGET_VAR} 100 $@ --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS} --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31
-
-## qqscale-projections: Calculate QQ-scaled climate projection data
-qqscale-projections : ${QQ_PATH}
-${QQ_PATH} : ${AF_PATH} ${TARGET_Q_PATH}
-	${PYTHON} ${CODE_DIR}/apply_adjustment.py ${TARGET_DATA} ${TARGET_VAR} $< ${OUTPUT_GRID} $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --mapping ${MAPPING} --scaling ${SCALING} --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS} --ref_time ${SSR} --verbose --reference_quantile_file $(word 2,$^) --reference_quantile_var ${TARGET_VAR}
+## cih-metadata: Apply CIH metadata to the QQ-scaled projection data
+cih-metadata : ${QQ_PATH}
+${QQ_PATH} :
 	module load nco
 	${PYTHON} /g/data/wp00/shared_code/attribute-editing/define_attributes.py $@ qqscale-cmip6 /g/data/wp00/shared_code/attribute-editing/global_attributes.yml --custom_global_attrs title="QQ Scaled Climate Variables, daily ${REF_VAR}" --del_var_attrs analysis_time analysis_version_number cell_methods frequency length_scale_for_analysis source history bias_adjustment --del_coord_attrs bounds --keep_attrs history xclim_version > metadata_fix.sh
 	bash metadata_fix.sh
@@ -42,7 +31,7 @@ ${VALIDATION_NOTEBOOK} : ${TEMPLATE_NOTEBOOK} ${AF_PATH} ${QQ_PATH} ${TARGET_Q_P
 
 ## help : show this message
 help :
-	@echo 'make [target] [-Bn] CONFIG=config_file.mk'
+	@echo 'make [target] -f qdc-post-processing.mk [-Bn] CONFIG=config_file.mk'
 	@echo ''
 	@echo 'valid targets:'
 	@grep -h -E '^##' ${MAKEFILE_LIST} | sed -e 's/## //g' | column -t -s ':'
