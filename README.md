@@ -71,18 +71,6 @@ $ python calc_adjustment.py -h
 ```
 
 ## Data processing
-
-> **Reminders**
-> 
-> - Information about the input arguments for any of the command line programs
->   can be viewed by using the `-h` option.
-> - While the examples below simply run `python`,
->   you might use one of the pre-installed environments 
->   (i.e. `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python` or
->   `/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python`
->   if you're a member of those projects on NCI)
-> - While the examples below simply give the name of the command line program,
->   you may use a copy of those scripts at `/g/data/wp00/shared_code/qqscale/`
   
 In general, QDC and QMBA can be achieved by running the following programs in sequence:
 1. `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to all the data you'll be working with
