@@ -74,7 +74,7 @@ $ python calc_adjustment.py -h
   
 In general, QDC and QMBA can be achieved by running the following programs in sequence:
 1. `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to all the data you'll be working with
-   (optional: just for precipitation data when using multiplicative adjustment)
+   (this is an optinal step: just for precipitation data when using multiplicative adjustment)
 1. `calc_adjustment.py` to calculate the adjustment factors between an historical and reference dataset
    (in QDC the reference dataset is a future model simulation; in QMBA it is observations)
 1. `calc_quantiles.py` to calculate the quantiles of the target data
