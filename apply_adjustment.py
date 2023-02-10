@@ -118,8 +118,8 @@ def main(args):
         qq['time'] = qq['time'] + time_adjustment
 
     infile_logs = {
-        args.infiles[0]: ds.attrs['history'],
         args.adjustment_file: ds_adjust.attrs['history'],
+        args.infiles[0]: ds.attrs['history'],
     }
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
     qq.attrs['xclim_version'] = xc.__version__

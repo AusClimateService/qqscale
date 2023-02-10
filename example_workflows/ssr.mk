@@ -24,6 +24,9 @@ ssr-target : ${TARGET_DATA}
 ${TARGET_DATA} : 
 	${PYTHON} ${CODE_DIR}/apply_ssr.py ${TARGET_FILES_ORIG} ${TARGET_VAR} $@ --time_bounds ${TARGET_START}-01-01 ${TARGET_END}-12-31 --input_units ${TARGET_UNITS} --output_units ${OUTPUT_UNITS}
 
+## all : Apply Singularity Stochastic Removal to historical, reference and target data
+all : ${HIST_DATA} ${REF_DATA} ${TARGET_DATA}
+
 ## help : show this message
 help :
 	@echo 'make [target] [-Bn] CONFIG=config_file.mk'
