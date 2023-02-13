@@ -36,9 +36,11 @@ EXAMPLE_MONTH = 5
 
 
 ## Automatic variables
+HIST_PATH=/g/data/tp28/ACS_DRS_v1_AWAP/CSIRO-BOM-ACCESS-CM2/historical/r4i1p1f1/BOM-BARPA-R/v1/day/${HIST_VAR}
+EXP_PATH=/g/data/tp28/ACS_DRS_v1_AWAP/CSIRO-BOM-ACCESS-CM2/${EXPERIMENT}/r4i1p1f1/BOM-BARPA-R/v1/day/${HIST_VAR}
 
-HIST_FILES_ORIG := $(sort $(wildcard /g/data/tp28/ACS_DRS_v1_AWAP/CSIRO-BOM_ACCESS-CM2/historical/r4i1p1f1/BOM-BARPA-R/v1/day/${HIST_VAR}/*.nc))
-TARGET_FILES_ORIG := $(sort $(wildcard /g/data/tp28/ACS_DRS_v1_AWAP/CSIRO-BOM_ACCESS-CM2/{historical,${EXPERIMENT}}/r4i1p1f1/BOM-BARPA-R/v1/day/${HIST_VAR}/*.nc))
+HIST_FILES_ORIG := $(sort $(wildcard ${HIST_PATH}/*day_198*.nc) $(wildcard ${HIST_PATH}/*day_199*.nc))
+TARGET_FILES_ORIG := $(sort $(wildcard ${HIST_PATH}/*day_200*.nc) $(wildcard ${HIST_PATH}/*day_201*.nc) $(wildcard ${EXP_PATH}/*day_201*.nc))
 REF_FILES_ORIG := $(wildcard /g/data/xv83/agcd-csiro/${REF_VAR}/daily/*_AGCD-CSIRO_r005_*_daily_space-chunked.zarr)
 
 OUTPUT_HIST_DIR=/g/data/wp00/users/dbi599/npcp
@@ -68,7 +70,7 @@ AF_FILE=${REF_FNAME_VAR}-${MAPPING}-${SCALING}-${GROUPING}-bias-vs-${OBS_DATASET
 AF_PATH=${OUTPUT_REF_DIR}/${AF_FILE}
 
 TARGET_Q_FILE=${TARGET_FNAME_VAR}-quantiles_AUS-15_CSIRO-BOM-ACCESS-CM2_historical-${EXPERIMENT}_r4i1p1f1_BOM-BARPA-R_v1_day_${TARGET_START}01-${TARGET_END}12_AWAP.nc
-TARGET_Q_PATH=${OUTPUT_OBS_DIR}/${TARGET_Q_FILE}
+TARGET_Q_PATH=${OUTPUT_TARGET_DIR}/${TARGET_Q_FILE}
 
 QQ_BASE=${REF_FNAME_VAR}_AUS-15_CSIRO-BOM-ACCESS-CM2_historical-${EXPERIMENT}_r4i1p1f1_BOM-BARPA-R_v1_day_${TARGET_START}01-${TARGET_END}12_AWAP_qmba-${SCALING}-${GROUPING}-${OBS_DATASET}-${HIST_START}0101-${HIST_END}1231
 QQ_PATH=${OUTPUT_REF_DIR}/${QQ_BASE}.nc
