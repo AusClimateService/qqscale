@@ -61,14 +61,10 @@ The main difference between the typical xclim workflow and the
 are mapped directly from model derived adjustment factors to observations.
 In other words, an adjustment factor is selected for a particular observed value
 based on the nearest (or interpolated surrounding) observed quantile,
-not the nearest historical model quantile.
+not the nearest historical model quantile (i.e. not `hist_q`).
 
-To achieve this the `apply_adjustment.py` script simply hacks the output from
-`sdba.EmpiricalQuantileMapping.train`,
-replacing `hist_q` with quantiles calculated from the observational data.
-
-
-
-
-
-
+To achieve the CSIRO method,
+you can calculate the observed quantiles using `calc_quantiles.py`
+and then pass those quantiles to `apply_adjustment.py` using the `--reference_quantile_file` option.
+The `apply_adjustment` script then replaces `hist_q` with
+the observed quantiles before performing the adjustment.
