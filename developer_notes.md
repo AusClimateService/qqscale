@@ -66,5 +66,5 @@ not the nearest historical model quantile (i.e. not `hist_q`).
 To achieve the CSIRO method,
 you can calculate the observed quantiles using `calc_quantiles.py`
 and then pass those quantiles to `apply_adjustment.py` using the `--reference_quantile_file` option.
-The `apply_adjustment` script then replaces `hist_q` with
+The `apply_adjustment.py` script then replaces `hist_q` with
 the observed quantiles before performing the adjustment.
