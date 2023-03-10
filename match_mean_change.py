@@ -45,20 +45,24 @@ def main(args):
 
     hist_clim = ds_hist[args.hist_var].mean('time', keep_attrs=True)
     ref_clim = ds_ref[args.ref_var].mean('time', keep_attrs=True)
-    hist_ref_clim_ratio = ref_clim / hist_clim
-
     target_clim = ds_target[args.qq_var].mean('time', keep_attrs=True)
     qq_clim = ds_qq[args.qq_var].mean('time', keep_attrs=True)
-
-    if len(hist_ref_clim_ratio['lat']) != len(qq_clim['lat']):
-       regridder = xe.Regridder(hist_ref_clim_ratio, qq_clim, 'bilinear')
-       hist_ref_clim_ratio = regridder(hist_ref_clim_ratio)
+    qq_clim['lat'] = target_clim['lat']
+    qq_clim['lon'] = target_clim['lon']
 
     if args.scaling == 'multiplicative':
-        adjustment_factor =  (hist_ref_clim_ratio * target_clim) / qq_clim
+        ref_hist_clim_ratio = ref_clim / hist_clim
+        if len(ref_hist_clim_ratio['lat']) != len(qq_clim['lat']):
+            regridder = xe.Regridder(ref_hist_clim_ratio, qq_clim, 'bilinear')
+            ref_hist_clim_ratio = regridder(ref_hist_clim_ratio)
+        adjustment_factor = (ref_hist_clim_ratio * target_clim) / qq_clim
         da_qq_adjusted = ds_qq[args.qq_var] * adjustment_factor
     elif args.scaling == 'additive':
-        adjustment_factor = (ref_clim - hist_clim) - (qq_clim - target_clim)
+        ref_hist_clim_diff = ref_clim - hist_clim
+        if len(ref_hist_clim_diff['lat']) != len(qq_clim['lat']):
+            regridder = xe.Regridder(ref_hist_clim_diff, qq_clim, 'bilinear')
+            ref_hist_clim_diff = regridder(ref_hist_clim_diff)
+        adjustment_factor = ref_hist_clim_diff - (qq_clim - target_clim)
         da_qq_adjusted = ds_qq[args.qq_var] + adjustment_factor
     else:
         raise ValueError(f'Invalid scaling method: {scaling}')
