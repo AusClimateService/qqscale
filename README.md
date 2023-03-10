@@ -73,24 +73,25 @@ $ python calc_adjustment.py -h
 ## Data processing
   
 In general, QDC and QMBA can be achieved by running the following programs in sequence:
-1. `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
-   (this is an optinal step: just for precipitation data when using multiplicative adjustment)
+1. (optional) `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
+   (just for precipitation data when using multiplicative adjustment)
 1. `calc_adjustment.py` to calculate the adjustment factors between an *historical* and *reference* dataset
    (in QDC the reference dataset is a future model simulation; in QMBA it is observations)
 1. `calc_quantiles.py` to calculate the quantiles of the *target* data
    (i.e. the data to be adjusted - that's observational data for QDC or model data for QMBA)
 1. `apply_adjustment.py` to apply the adjustment factors to the target data
+1. (optional) `match_mean_change.py` to match up the GCM and QDC mean change 
 
 In order to simplify the process of sequencing those steps
 and making sure the outputs of one step are correctly input into the next,
 a `Makefile` (see the `example_workflows` directory) has been produced.
 The steps involved in using the `Makefile` are:
-1. Create a configuration file based on `config_qdc.mk` or `config_qmba.mk`
-1. Run `make all -f make_ssr.mk CONFIG=config_[method].mk` if SSR is required.
-1. Run `make apply-adjustment CONFIG=config_[method].mk` to implement either QDC or QMBA
+1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdc.mk` or `config_qmba.mk`
+1. Run `make all -f make_ssr.mk CONFIG=my_config.mk` if SSR is required.
+1. Run `make apply-adjustment CONFIG=my_config.mk` to implement either QDC or QMBA
 
 Additional processing steps for QDC
-(e.g. applying standard CIH file metadata)
+(e.g. applying standard CIH file metadata or matching the mean change)
 can be applied using `make_qdc_post-processing.mk`.
 Help information can be viewed by running `make help -f make_qdc_post-processing.mk`.
 
