@@ -84,7 +84,7 @@ In general, QDC and QMBA can be achieved by running the following programs in se
 
 In order to simplify the process of sequencing those steps
 and making sure the outputs of one step are correctly input into the next,
-a `Makefile` (see the `example_workflows` directory) has been produced.
+a `Makefile` has been produced.
 The steps involved in using the `Makefile` are:
 1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdc.mk` or `config_qmba.mk`
 1. Run `make all -f make_ssr.mk CONFIG=my_config.mk` if SSR is required.

@@ -8,7 +8,7 @@ include ${CONFIG}
 PYTHON=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python
 PAPERMILL=/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/papermill
 CODE_DIR=/g/data/wp00/shared_code/qqscale
-TEMPLATE_NOTEBOOK=${CODE_DIR}/example_validation/validation_${METHOD}.ipynb
+TEMPLATE_NOTEBOOK=${CODE_DIR}/validation_${METHOD}.ipynb
 
 ## calc-adjustment: Calculate the QQ-scale adjustment factors
 calc-adjustment : ${AF_PATH}
