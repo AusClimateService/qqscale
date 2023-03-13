@@ -7,11 +7,11 @@ This directory contains command line programs for empirical quantile mapping (a.
 QQ-scaling is traditionally applied in one of two contexts:
 - *Quantile mapping bias adjustment (QMBA)*:
   The difference (or ratio) between an observational dataset and historical model simulation is calculated for each quantile.
-  Those quantile differences are then subtracted from (or ratios multiplied against) model data
+  Those quantile differences are then added to (or ratios multiplied against) model data
   in order to produce a bias corrected model time series.
 - *Quantile delta change (QDC)*:
   The difference (or ratio) between a future and historical model simulation is calculated for each quantile.
-  Those quantile differences are then subtracted from (or ratios multiplied against) an observational dataset
+  Those quantile differences are then added to (or ratios multiplied against) an observational dataset
   in order to produce a statistically downscaled climate projection time series.
   Otherwise known as quantile perturbation.
 
