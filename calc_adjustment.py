@@ -10,11 +10,63 @@ import dask.diagnostics
 import utils
 
 
+def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
+    """Calculate qq-scaling adjustment factors.
+
+    Parameters
+    ----------
+    ds_hist : xarray Dataset
+        Historical data
+    ds_ref : xarray Dataset
+        Reference data
+    hist_var : str
+        Historical variable (i.e. in ds_hist)
+    ref_var : str
+        Reference variable (i.e. in ds_ref)
+    scaling : {'additive', 'multiplicative'}
+        Scaling method
+        
+    Returns
+    -------
+    xarray Dataset
+    """
+
+    hist_units = ds_hist[hist_var].attrs['units']
+    ref_units = ds_ref[ref_var].attrs['units']
+
+    if len(ds_hist['lat']) != len(ds_ref['lat']):
+        ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
+    
+    scaling_methods = {'additive': '+', 'multiplicative': '*'}
+    qm = sdba.EmpiricalQuantileMapping.train(
+        ds_ref[args.ref_var],
+        ds_hist[args.hist_var],
+        nquantiles=100,
+        group='time.month',
+        kind=scaling_methods[scaling]
+    )
+    qm.ds['hist_q'].attrs['units'] = hist_units
+    qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
+    qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
+
+    qm.ds['ref_q'] = utils.get_quantiles(ds_ref[ref_var], qm.ds['quantiles'].data)
+    qm.ds['ref_q'].attrs['units'] = ref_units
+    qm.ds['hist_clim'] = ds_hist[hist_var].mean('time', keep_attrs=True)
+    qm.ds['ref_clim'] = ds_ref[ref_var].mean('time', keep_attrs=True)   
+   
+    qm.ds.attrs['historical_period_start'] = ds_hist['time'].values[0].strftime('%Y-%m-%d')
+    qm.ds.attrs['historical_period_end'] = ds_hist['time'].values[-1].strftime('%Y-%m-%d')
+    qm.ds.attrs['reference_period_start'] = ds_ref['time'].values[0].strftime('%Y-%m-%d')
+    qm.ds.attrs['reference_period_end'] = ds_ref['time'].values[-1].strftime('%Y-%m-%d')
+    qm.ds.attrs['xclim_version'] = xc.__version__
+
+    return qm.ds 
+
+
 def main(args):
     """Run the program."""
     
     dask.diagnostics.ProgressBar().register()
-
     ds_hist = utils.read_data(
         args.hist_files,
         args.hist_var,
@@ -22,8 +74,6 @@ def main(args):
         input_units=args.input_hist_units,
         output_units=args.output_units,
     )
-    hist_units = ds_hist[args.hist_var].attrs['units']
-    
     ds_ref = utils.read_data(
         args.ref_files,
         args.ref_var,
@@ -33,46 +83,9 @@ def main(args):
         input_units=args.input_ref_units,
         output_units=args.output_units,
     )
-    ref_units = ds_ref[args.ref_var].attrs['units']
-
-    if len(ds_hist['lat']) != len(ds_ref['lat']):
-        ds_hist = utils.regrid(ds_hist, ds_ref, variable=args.hist_var)
-    
-    scaling_methods = {'additive': '+', 'multiplicative': '*'}
-    if args.grouping == 'monthly':
-        group_operator = 'time.month'
-        group_axis = 'month'
-    elif args.grouping == '31day':
-        group_operator = sdba.Grouper('time.dayofyear', window=31)
-        group_axis = 'dayofyear'
-    else:
-        raise ValueError(f'Invalid grouping: {args.grouping}')
-
-    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
-    qm = mapping_methods[args.mapping].train(
-        ds_ref[args.ref_var],
-        ds_hist[args.hist_var],
-        nquantiles=100,
-        group=group_operator,
-        kind=scaling_methods[args.scaling]
-    )
-    qm.ds['hist_q'].attrs['units'] = hist_units
-    qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
-    qm.ds = qm.ds.transpose('quantiles', group_axis, 'lat', 'lon')
-
-    if args.grouping == 'monthly':
-        qm.ds['ref_q'] = utils.get_quantiles(ds_ref[args.ref_var], qm.ds['quantiles'].data)
-        qm.ds['ref_q'].attrs['units'] = ref_units
-    qm.ds['hist_clim'] = ds_hist[args.hist_var].mean('time', keep_attrs=True)
-    qm.ds['ref_clim'] = ds_ref[args.ref_var].mean('time', keep_attrs=True)   
-   
-    qm.ds.attrs['history'] = utils.get_new_log()
-    qm.ds.attrs['historical_period_start'] = args.hist_time_bounds[0]
-    qm.ds.attrs['historical_period_end'] = args.hist_time_bounds[1]
-    qm.ds.attrs['reference_period_start'] = args.ref_time_bounds[0]
-    qm.ds.attrs['reference_period_end'] = args.ref_time_bounds[1]
-    qm.ds.attrs['xclim_version'] = xc.__version__
-    qm.ds.to_netcdf(args.output_file)
+    ds_out = train(ds_hist, ds_ref, args.hist_var, args.ref_var, args.scaling)
+    ds_out.attrs['history'] = utils.get_new_log()
+    ds_out.to_netcdf(args.output_file)
 
 
 if __name__ == '__main__':
@@ -129,25 +142,11 @@ if __name__ == '__main__':
         help='Longitude bounds for reference data: (west_bound, east_bound)',
     )
     parser.add_argument(
-        "--mapping",
-        type=str,
-        choices=('qm', 'qdm'),
-        default='qm',
-        help="mapping method (qm = empirical quantile mapping; qdm = quantile delta mapping)",
-    )
-    parser.add_argument(
         "--scaling",
         type=str,
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
-    )
-    parser.add_argument(
-        "--grouping",
-        type=str,
-        choices=('monthly', '31day'),
-        default='monthly',
-        help="Temporal grouping",
     )
     parser.add_argument(
         "--input_hist_units",
