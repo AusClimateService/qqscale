@@ -10,9 +10,10 @@ from xclim import sdba
 import dask.diagnostics
 
 import utils
+import ssr
 
 
-def adjust(ds, var, ds_adjust, da_q=None, ssr=False, ref_time=False):
+def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -28,8 +29,8 @@ def adjust(ds, var, ds_adjust, da_q=None, ssr=False, ref_time=False):
         which adjustment factor to apply to each value in ds.
         Calculated using calc_quantiles.py
         (Typically observational quantiles for quantile delta change)
-    ssr : bool, default False
-        Remove singularity stochastic removal after adjustment
+    reverse_ssr : bool, default False
+        Reverse singularity stochastic removal after adjustment
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
         
@@ -47,7 +48,7 @@ def adjust(ds, var, ds_adjust, da_q=None, ssr=False, ref_time=False):
     if len(ds_adjust['lat']) != len(ds['lat']):
         ds_adjust = utils.regrid(ds_adjust, ds)
 
-    if da_q:
+    if not type(da_q) == type(None):
         ds_adjust['hist_q'] = da_q
 
     qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
@@ -65,8 +66,8 @@ def adjust(ds, var, ds_adjust, da_q=None, ssr=False, ref_time=False):
     qq = qq.rename(var)
     qq = qq.transpose('time', 'lat', 'lon') 
 
-    if ssr:
-        qq = qq.where(qq >= 8.64e-4, 0.0)
+    if reverse_ssr:
+        qq = ssr.reverse_ssr(qq)
 
     qq = qq.to_dataset()    
     if ref_time:
@@ -82,7 +83,6 @@ def main(args):
     """Run the program."""
 
     dask.diagnostics.ProgressBar().register()
-
     ds = utils.read_data(
         args.infiles,
         args.var,
@@ -97,9 +97,9 @@ def main(args):
         da_q = ds_q[args.reference_quantile_var]
     else:
         da_q = None
-
-    qq = adjust(ds, args.var, ds_adjust, da_q=da_q, ssr=args.ssr, ref_time=args.ref_time)
-
+    qq = adjust(
+        ds, args.var, ds_adjust, da_q=da_q, reverse_ssr=args.ssr, ref_time=args.ref_time
+    )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
         args.infiles[0]: ds.attrs['history'],

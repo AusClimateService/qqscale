@@ -47,7 +47,6 @@ def read_data(
     input_units=None,
     output_units=None,
     lon_chunk_size=None,
-    ssr=False,
 ):
     """Read and process an input dataset."""
 
@@ -74,11 +73,6 @@ def read_data(
     if output_units:
         ds[var] = xc.units.convert_units_to(ds[var], output_units)
         ds[var].attrs['units'] = output_units
-        
-    if ssr:
-        threshold = 8.64e-4
-        random_array = (1.0 - np.random.random_sample(ds[var].shape)) * threshold
-        ds[var] = ds[var].where(ds[var] >= threshold, random_array)
         
     chunk_dict = {'time': -1}
     if lon_chunk_size:
