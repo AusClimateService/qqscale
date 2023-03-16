@@ -10,43 +10,48 @@ from xclim import sdba
 import dask.diagnostics
 
 import utils
+import ssr
 
 
-def main(args):
-    """Run the program."""
+def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
+    """Apply qq-scale adjustment factors.
 
-    dask.diagnostics.ProgressBar().register()
+    Parameters
+    ----------
+    ds : xarray Dataset
+        Data to be adjusted
+    var : str
+        Variable to be adjusted (i.e. in ds)
+    ds_adjust : xarray Dataset
+        Adjustment factors calculated using calc_adjustment.adjust
+    da_q : xarray DataArray
+        Replacement for the historical quantiles used to determine
+        which adjustment factor to apply to each value in ds.
+        Calculated using calc_quantiles.py
+        (Typically observational quantiles for quantile delta change)
+    reverse_ssr : bool, default False
+        Reverse singularity stochastic removal after adjustment
+    ref_time : bool, default False
+        Adjust the output time axis so it matches the reference data
+        
+    Returns
+    -------
+    xarray Dataset    
+    """
 
-    ds = utils.read_data(
-        args.infiles,
-        args.var,
-        time_bounds=args.time_bounds,
-        input_units=args.input_units,
-        output_units=args.output_units,
-    )
-    infile_units = ds[args.var].attrs['units']
-    
-    ds_adjust = xr.open_dataset(args.adjustment_file)
     ds_adjust = ds_adjust[['af', 'hist_q']]
-
     af_units = ds_adjust['hist_q'].attrs['units']
+    infile_units = ds[var].attrs['units']    
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment units {af_units}"
 
     if len(ds_adjust['lat']) != len(ds['lat']):
-        if args.output_grid == 'infiles':
-            ds_adjust = utils.regrid(ds_adjust, ds)
-        elif args.output_grid == 'adjustment':
-            ds = utils.regrid(ds, ds_adjust, variable=args.var)
-        else:
-            raise ValueError(f'Invalid requested output grid: {args.output_grid}')
+        ds_adjust = utils.regrid(ds_adjust, ds)
 
-    if args.reference_quantile_file:
-        ds_q = xr.open_dataset(args.reference_quantile_file)
-        ds_adjust['hist_q'] = ds_q[args.reference_quantile_var]
+    if not type(da_q) == type(None):
+        ds_adjust['hist_q'] = da_q
 
-    mapping_methods = {'qm': sdba.EmpiricalQuantileMapping, 'qdm': sdba.QuantileDeltaMapping}
-    qm = mapping_methods[args.mapping].from_dataset(ds_adjust)
+    qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
 
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
@@ -57,26 +62,49 @@ def main(args):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[args.var], extrapolation='constant', interp='linear')
-    qq = qq.rename(args.var)
+    qq = qm.adjust(ds[var], extrapolation='constant', interp='linear')
+    qq = qq.rename(var)
     qq = qq.transpose('time', 'lat', 'lon') 
 
-    if args.ssr:
-        qq = qq.where(qq >= 8.64e-4, 0.0)
+    if reverse_ssr:
+        qq = ssr.reverse_ssr(qq)
 
     qq = qq.to_dataset()    
-
-    if args.ref_time:
+    if ref_time:
         new_start_date = ds_adjust.attrs['reference_period_start'] 
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
         qq['time'] = qq['time'] + time_adjustment
+    qq.attrs['xclim_version'] = xc.__version__
 
+    return qq
+
+
+def main(args):
+    """Run the program."""
+
+    dask.diagnostics.ProgressBar().register()
+    ds = utils.read_data(
+        args.infiles,
+        args.var,
+        time_bounds=args.time_bounds,
+        input_units=args.input_units,
+        output_units=args.output_units,
+    )
+    ds_adjust = xr.open_dataset(args.adjustment_file)
+    ds_adjust = ds_adjust[['af', 'hist_q']]
+    if args.reference_quantile_file:
+        ds_q = xr.open_dataset(args.reference_quantile_file)
+        da_q = ds_q[args.reference_quantile_var]
+    else:
+        da_q = None
+    qq = adjust(
+        ds, args.var, ds_adjust, da_q=da_q, reverse_ssr=args.ssr, ref_time=args.ref_time
+    )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
         args.infiles[0]: ds.attrs['history'],
     }
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    qq.attrs['xclim_version'] = xc.__version__
     qq.to_netcdf(args.outfile)
 
 
@@ -90,7 +118,6 @@ if __name__ == '__main__':
     parser.add_argument("infiles", type=str, nargs='*', help="input data (to be adjusted)")           
     parser.add_argument("var", type=str, help="variable to process")
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
-    parser.add_argument("output_grid", type=str, choices=('infiles', 'adjustment'), help="output_grid")
     parser.add_argument("outfile", type=str, help="output file")
 
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
@@ -102,20 +129,6 @@ if __name__ == '__main__':
         metavar=('START_DATE', 'END_DATE'),
         default=None,
         help="time bounds in YYYY-MM-DD format"
-    )
-    parser.add_argument(
-        "--mapping",
-        type=str,
-        choices=('qm', 'qdm'),
-        default='qm',
-        help="mapping method (qm = empirical quantile mapping; qdm = quantile delta mapping)",
-    )
-    parser.add_argument(
-        "--scaling",
-        type=str,
-        choices=('additive', 'multiplicative'),
-        default='additive',
-        help="scaling method",
     )
     parser.add_argument(
         "--ref_time",

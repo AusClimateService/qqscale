@@ -72,19 +72,27 @@ $ python calc_adjustment.py -h
 
 ## Data processing
   
-In general, QDC and QMBA can be achieved by running the following programs in sequence:
-1. (optional) `apply_ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
+In general, QDC and QMBA can be achieved using the following scripts:
+1. (optional) `ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
    (just for precipitation data when using multiplicative adjustment)
-1. `calc_adjustment.py` to calculate the adjustment factors between an *historical* and *reference* dataset
+1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
    (in QDC the reference dataset is a future model simulation; in QMBA it is observations)
-1. `calc_quantiles.py` to calculate the quantiles of the *target* data
+1. `quantiles.py` to calculate the quantiles of the *target* data
    (i.e. the data to be adjusted - that's observational data for QDC or model data for QMBA)
-1. `apply_adjustment.py` to apply the adjustment factors to the target data
+1. `adjust.py` to apply the adjustment factors to the target data
 1. (optional) `match_mean_change.py` to match up the GCM and QDC mean change 
 
-In order to simplify the process of sequencing those steps
-and making sure the outputs of one step are correctly input into the next,
-a `Makefile` has been produced.
+### Large datasets
+
+For large datasets (e.g. Australia at 5km spatial resolution)
+it is desirable to break QQ-scaling into a number of steps.
+This helps reduce the indcidence of memory errors or large complicated dask task graphs,
+and by producing intermediary files at each step you can avoid repeating some steps in future.
+
+This step-by-step process can be achieved by running the scripts listed above
+(in the order presented) as command line programs.
+A `Makefile` is available to simplify the process of sequencing the steps
+and to make sure the outputs of one step are correctly input into the next.
 The steps involved in using the `Makefile` are:
 1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdc.mk` or `config_qmba.mk`
 1. Run `make all -f make_ssr.mk CONFIG=my_config.mk` if SSR is required.
@@ -94,6 +102,55 @@ Additional processing steps for QDC
 (e.g. applying standard CIH file metadata or matching the mean change)
 can be applied using `make_qdc_post-processing.mk`.
 Help information can be viewed by running `make help -f make_qdc_post-processing.mk`.
+
+### Smaller datasets
+
+When processing a smaller dataset it is also possible to perform the entire QQ-scaling process
+from within a single script/notebook.
+Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_target`) xarray Datasets
+containing the variable of interest (`hist_var`, `ref_var` and `target_var`)
+you can import the relevant functions from the scripts mentioned above.
+For instance,
+a QDC workflow would look something like this:
+
+```python
+
+import ssr
+import train
+import quantiles
+import adjust
+
+
+scaling = 'additive'
+apply_ssr=False  # Use True for precip data
+mean_match = False
+
+if apply_ssr:
+    ds_hist[hist_var] = ssr.apply_ssr(ds_hist[hist_var])
+    ds_ref[ref_var] = ssr.apply_ssr(ds_ref[ref_var])
+    ds_traget[target_var] = ssr.apply_ssr(ds_target[target_var])
+
+ds_adjust = train.train(ds_hist, ds_ref, hist_var, ref_var, scaling)
+ds_target_q = quantiles.quantiles(ds_target, target_var, 100)
+ds_qq = adjust.adjust(
+    ds_target,
+    target_var,
+    ds_adjust,
+    da_q=ds_target_q[target_var],
+    reverse_ssr=apply_ssr,
+    ref_time=True
+)
+
+if mean_match:
+    ds_qq = mean_match_change.match_mean_change(
+        ds_qq,
+        target_var,
+        ds_hist[hist_var],
+        da_ref[ref_var],
+        da_target[target_var],
+        scaling
+    )
+```
 
 ## Questions
 
