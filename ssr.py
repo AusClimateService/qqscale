@@ -86,7 +86,7 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
     )
-    ds[args.var] = ssr(ds[args.var])
+    ds[args.var] = apply_ssr(ds[args.var])
     ds.attrs['history'] = utils.get_new_log()
     ds.to_netcdf(args.outfile)
 
