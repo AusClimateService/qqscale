@@ -95,7 +95,7 @@ def main(args):
     )
     ds_qq_adjusted = match_mean_change(
         ds_qq,
-        qq_var,
+        args.qq_var,
         ds_hist[args.hist_var],
         ds_ref[args.ref_var],
         ds_target[args.qq_var],
