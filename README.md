@@ -122,7 +122,7 @@ import adjust
 
 
 scaling = 'additive'
-apply_ssr=False  # Use True for precip data
+apply_ssr = False  # Use True for precip data
 mean_match = False
 
 if apply_ssr:
