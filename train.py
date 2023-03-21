@@ -53,11 +53,14 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
     qm.ds['ref_q'].attrs['units'] = ref_units
     qm.ds['hist_clim'] = ds_hist[hist_var].mean('time', keep_attrs=True)
     qm.ds['ref_clim'] = ds_ref[ref_var].mean('time', keep_attrs=True)   
-   
-    qm.ds.attrs['historical_period_start'] = ds_hist['time'].values[0].strftime('%Y-%m-%d')
-    qm.ds.attrs['historical_period_end'] = ds_hist['time'].values[-1].strftime('%Y-%m-%d')
-    qm.ds.attrs['reference_period_start'] = ds_ref['time'].values[0].strftime('%Y-%m-%d')
-    qm.ds.attrs['reference_period_end'] = ds_ref['time'].values[-1].strftime('%Y-%m-%d')
+    
+    hist_times = ds_hist['time'].dt.strftime('%Y-%m-%d').values
+    qm.ds.attrs['historical_period_start'] = hist_times[0]
+    qm.ds.attrs['historical_period_end'] = hist_times[-1]
+    ref_times = ds_ref['time'].dt.strftime('%Y-%m-%d').values
+    qm.ds.attrs['reference_period_start'] = ref_times[0]
+    qm.ds.attrs['reference_period_end'] = ref_times[-1]
+
     qm.ds.attrs['xclim_version'] = xc.__version__
 
     return qm.ds 
