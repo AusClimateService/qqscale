@@ -12,8 +12,7 @@ CODE_DIR=/g/data/wp00/shared_code/qqscale
 ## cih-metadata: Apply CIH metadata to the QQ-scaled projection data
 cih-metadata : ${QQ_PATH}
 ${QQ_PATH} :
-	module load nco
-	${PYTHON} /g/data/wp00/shared_code/attribute-editing/define_attributes.py $@ qqscale-cmip6 /g/data/wp00/shared_code/attribute-editing/global_attributes.yml --custom_global_attrs title="QQ Scaled Climate Variables, daily ${REF_VAR}" --del_var_attrs analysis_time analysis_version_number cell_methods frequency length_scale_for_analysis source history bias_adjustment --del_coord_attrs bounds --keep_attrs history xclim_version > metadata_fix.sh
+	${PYTHON} /g/data/wp00/shared_code/attribute-editing/define_attributes.py $@ qqscale-cmip6 /g/data/wp00/shared_code/attribute-editing/global_attributes.yml --del_var_attrs analysis_time analysis_version_number cell_methods frequency length_scale_for_analysis source history bias_adjustment number_of_stations_reporting --del_coord_attrs bounds --keep_attrs history xclim_version > metadata_fix.sh
 	bash metadata_fix.sh
 	rm metadata_fix.sh
 

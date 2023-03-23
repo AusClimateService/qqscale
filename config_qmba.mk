@@ -37,7 +37,8 @@ EXP_PATH=/g/data/tp28/ACS_DRS_v1_AWAP/CSIRO-BOM-ACCESS-CM2/${EXPERIMENT}/r4i1p1f
 
 HIST_FILES_ORIG := $(sort $(wildcard ${HIST_PATH}/*day_198*.nc) $(wildcard ${HIST_PATH}/*day_199*.nc))
 TARGET_FILES_ORIG := $(sort $(wildcard ${HIST_PATH}/*day_200*.nc) $(wildcard ${HIST_PATH}/*day_201*.nc) $(wildcard ${EXP_PATH}/*day_201*.nc))
-REF_FILES_ORIG := $(wildcard /g/data/xv83/agcd-csiro/${REF_VAR}/daily/*_AGCD-CSIRO_r005_*_daily_space-chunked.zarr)
+REF_FILES_ORIG := $(sort $(wildcard /g/data/zv2/agcd/v1/${REF_VAR}/mean/r005/01day/*198*.nc) $(wildcard /g/data/zv2/agcd/v1/${REF_VAR}/mean/r005/01day/*199*.nc))
+#REF_FILES_ORIG := $(wildcard /g/data/xv83/agcd-csiro/${REF_VAR}/daily/*_AGCD-CSIRO_r005_*_daily_space-chunked.zarr)
 
 OUTPUT_HIST_DIR=/g/data/wp00/users/dbi599/npcp
 OUTPUT_REF_DIR=/g/data/wp00/users/dbi599/npcp
