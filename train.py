@@ -39,8 +39,8 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
-        ds_ref[args.ref_var],
-        ds_hist[args.hist_var],
+        ds_ref[ref_var],
+        ds_hist[hist_var],
         nquantiles=100,
         group='time.month',
         kind=scaling_methods[scaling]
