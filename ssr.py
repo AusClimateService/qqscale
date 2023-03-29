@@ -4,6 +4,7 @@ import argparse
 import logging
 
 import numpy as np
+import xarray as xr
 import dask.diagnostics
 
 import utils
@@ -38,6 +39,7 @@ def apply_ssr(da, threshold=8.64e-4):
 
     random_array = (1.0 - np.random.random_sample(da.shape)) * threshold
     da_ssr = da.where(da >= threshold, random_array)
+    da_ssr = da_ssr.where(xr.apply_ufunc(np.isfinite, da))
 
     return da_ssr
 
@@ -70,6 +72,7 @@ def reverse_ssr(da_ssr, threshold=8.64e-4):
     """
 
     da_no_ssr = da_ssr.where(da_ssr >= 8.64e-4, 0.0)
+    da_no_ssr = da_no_ssr.where(xr.apply_ufunc(np.isfinite, da_ssr))
 
     return da_no_ssr
 
