@@ -40,17 +40,20 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     """
 
     ds_adjust = ds_adjust[['af', 'hist_q']]
-    af_units = ds_adjust['hist_q'].attrs['units']
+    af_units = ds_adjust['af'].attrs['units']
     infile_units = ds[var].attrs['units']    
     assert infile_units == af_units, \
-        f"input file units {infile_units} differ from adjustment units {af_units}"
+        f"input file units {infile_units} differ from adjustment factor units {af_units}"
 
     if len(ds_adjust['lat']) != len(ds['lat']):
         ds_adjust = utils.regrid(ds_adjust, ds)
 
     if not type(da_q) == type(None):
         ds_adjust['hist_q'] = da_q
-
+    q_units = ds_adjust['hist_q'].attrs['units']
+    assert infile_units == q_units, \
+        f"input file units {infile_units} differ from quantile units {q_units}"
+   
     qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
 
     hist_q_shape = qm.ds['hist_q'].shape
