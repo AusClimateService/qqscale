@@ -119,6 +119,7 @@ import ssr
 import train
 import quantiles
 import adjust
+import match_mean_change
 
 
 scaling = 'additive'
@@ -142,7 +143,7 @@ ds_qq = adjust.adjust(
 )
 
 if mean_match:
-    ds_qq = mean_match_change.match_mean_change(
+    ds_qq = match_mean_change.match_mean_change(
         ds_qq,
         target_var,
         ds_hist[hist_var],
