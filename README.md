@@ -157,4 +157,4 @@ if mean_match:
 
 Questions or comments are welcome at the GitHub repostory
 associated with the code:  
-https://github.com/climate-resilient-enterprise/qqscale/issues
+https://github.com/climate-innovation-hub/qqscale/issues
