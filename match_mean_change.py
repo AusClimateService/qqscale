@@ -47,7 +47,7 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling):
             ref_hist_clim_ratio = regridder(ref_hist_clim_ratio)
         adjustment_factor = (ref_hist_clim_ratio * target_clim) / qq_clim
         da_qq_adjusted = ds_qq[qq_var] * adjustment_factor
-    elif args.scaling == 'additive':
+    elif scaling == 'additive':
         ref_hist_clim_diff = ref_clim - hist_clim
         if len(ref_hist_clim_diff['lat']) != len(qq_clim['lat']):
             regridder = xe.Regridder(ref_hist_clim_diff, qq_clim, 'bilinear')
