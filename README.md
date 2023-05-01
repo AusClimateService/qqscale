@@ -129,7 +129,7 @@ mean_match = False
 if apply_ssr:
     ds_hist[hist_var] = ssr.apply_ssr(ds_hist[hist_var])
     ds_ref[ref_var] = ssr.apply_ssr(ds_ref[ref_var])
-    ds_traget[target_var] = ssr.apply_ssr(ds_target[target_var])
+    ds_target[target_var] = ssr.apply_ssr(ds_target[target_var])
 
 ds_adjust = train.train(ds_hist, ds_ref, hist_var, ref_var, scaling)
 ds_target_q = quantiles.quantiles(ds_target, target_var, 100)
