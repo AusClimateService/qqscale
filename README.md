@@ -143,7 +143,7 @@ ds_qq = adjust.adjust(
 )
 
 if mean_match:
-    ds_qq = match_mean_change.match_mean_change(
+    ds_qq_mmc = match_mean_change.match_mean_change(
         ds_qq,
         target_var,
         ds_hist[hist_var],
