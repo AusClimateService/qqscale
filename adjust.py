@@ -40,7 +40,7 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     """
 
     ds_adjust = ds_adjust[['af', 'hist_q']]
-    af_units = ds_adjust['af'].attrs['units']
+    af_units = ds_adjust['hist_q'].attrs['units']
     infile_units = ds[var].attrs['units']    
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment factor units {af_units}"
