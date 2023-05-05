@@ -1,4 +1,16 @@
 # Workflow for QDC or QMBA
+#
+#   CONFIG file needs the following variables defined:
+#   - Methods details: SCALING, SSR
+#   - Paths for files that will be created: AF_PATH, TARGET_Q_PATH, QQ_PATH, VALIDATION_NOTEBOOK 
+#   - Directories that need to be created for those files: OUTPUT_REF_DIR, OUTPUT_TARGET_DIR
+#   - Variables: HIST_VAR, REF_VAR, TARGET_VAR
+#   - Input data: HIST_DATA, REF_DATA, TARGET_DATA
+#   - Time bounds: HIST_START, HIST_END, REF_START, REF_END, TARGET_START, TARGET_END
+#   - Units: HIST_UNITS, REF_UNITS, TARGET_UNITS, OUTPUT_UNITS
+#   - Notebook example parameters: EXAMPLE_LAT, EXAMPLE_LON, EXAMPLE_MONTH
+#
+#  See config_qdc.mk and config_qmba.mk for examples.
 
 .PHONY: help
 
