@@ -9,7 +9,7 @@ import xesmf as xe
 import utils
 
 
-def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling):
+def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling, timescale):
     """Match the model and quantile delta mean change.
 
     Parameters
@@ -26,6 +26,8 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling):
         Data that the quantile delta changes were applied to
     scaling : {'additive', 'multiplicative'}
         Scaling method
+    timescale : {'annual', 'monthly'}
+        Timescale for mean matching
         
     Returns
     -------
@@ -33,10 +35,19 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling):
         Quantile delta change dataset adjusted so it matches model mean change    
     """
 
-    hist_clim = da_hist.mean('time', keep_attrs=True)
-    ref_clim = da_ref.mean('time', keep_attrs=True)
-    target_clim = da_target.mean('time', keep_attrs=True)
-    qq_clim = ds_qq[qq_var].mean('time', keep_attrs=True)
+    if timescale == 'monthly':
+        hist_clim = da_hist.groupby('time.month').mean('time', keep_attrs=True)
+        ref_clim = da_ref.groupby('time.month').mean('time', keep_attrs=True)
+        target_clim = da_target.groupby('time.month').mean('time', keep_attrs=True)
+        qq_clim = ds_qq[qq_var].groupby('time.month').mean('time', keep_attrs=True)
+    elif timescale == 'annual':
+        hist_clim = da_hist.mean('time', keep_attrs=True)
+        ref_clim = da_ref.mean('time', keep_attrs=True)
+        target_clim = da_target.mean('time', keep_attrs=True)
+        qq_clim = ds_qq[qq_var].mean('time', keep_attrs=True)
+    else:
+        raise ValueError(f'Invalid mean match timescale: {timescale}')
+
     qq_clim['lat'] = target_clim['lat']
     qq_clim['lon'] = target_clim['lon']
 
@@ -46,17 +57,25 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling):
             regridder = xe.Regridder(ref_hist_clim_ratio, qq_clim, 'bilinear')
             ref_hist_clim_ratio = regridder(ref_hist_clim_ratio)
         adjustment_factor = (ref_hist_clim_ratio * target_clim) / qq_clim
-        da_qq_adjusted = ds_qq[qq_var] * adjustment_factor
+        if timescale == 'monthly':
+            da_qq_adjusted = ds_qq[qq_var].groupby('time.month') * adjustment_factor
+        elif timescale == 'annual':
+            da_qq_adjusted = ds_qq[qq_var] * adjustment_factor
     elif scaling == 'additive':
         ref_hist_clim_diff = ref_clim - hist_clim
         if len(ref_hist_clim_diff['lat']) != len(qq_clim['lat']):
             regridder = xe.Regridder(ref_hist_clim_diff, qq_clim, 'bilinear')
             ref_hist_clim_diff = regridder(ref_hist_clim_diff)
         adjustment_factor = ref_hist_clim_diff - (qq_clim - target_clim)
-        da_qq_adjusted = ds_qq[qq_var] + adjustment_factor
+        if timescale == 'monthly':
+            da_qq_adjusted = ds_qq[qq_var].groupby('time.month') + adjustment_factor
+        elif timescale == 'annual':
+            da_qq_adjusted = ds_qq[qq_var] + adjustment_factor
     else:
         raise ValueError(f'Invalid scaling method: {scaling}')
 
+    if timescale == 'monthly':
+        del da_qq_adjusted['month']
     da_qq_adjusted.attrs = ds_qq[qq_var].attrs
     ds_qq_adjusted = da_qq_adjusted.to_dataset(name=qq_var)
     ds_qq_adjusted.attrs = ds_qq.attrs
@@ -99,7 +118,8 @@ def main(args):
         ds_hist[args.hist_var],
         ds_ref[args.ref_var],
         ds_target[args.qq_var],
-        args.scaling
+        args.scaling,
+        args.timescale
     )
     infile_logs = {args.qq_file: ds_qq.attrs['history']}
     ds_qq_adjusted.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
@@ -156,6 +176,13 @@ if __name__ == '__main__':
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
+    )
+    parser.add_argument(
+        "--timescale",
+        type=str,
+        choices=('annual', 'monthly'),
+        default='annual',
+        help="timescale for mean matching",
     )
     parser.add_argument(
         "--verbose",
