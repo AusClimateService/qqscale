@@ -143,13 +143,15 @@ ds_qq = adjust.adjust(
 )
 
 if mean_match:
+    match_timescale = 'annual'  # can be annual or monthly   
     ds_qq_mmc = match_mean_change.match_mean_change(
         ds_qq,
         target_var,
         ds_hist[hist_var],
         da_ref[ref_var],
         da_target[target_var],
-        scaling
+        scaling,
+        match_timescale
     )
 ```
 
