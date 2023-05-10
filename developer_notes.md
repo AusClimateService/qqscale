@@ -49,6 +49,9 @@ The adjustment factor interpolation is performed by
 [`xclim.sdba.utils.interp_on_quantiles`](https://github.com/Ouranosinc/xclim/blob/master/xclim/sdba/utils.py#L363),
 which in the two dimensional case (e.g. with `time.month` grouping) uses
 [`scipy.interpolate.griddata`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html).
+From playing around with the different interpolation options,
+it appears that the two dimensional interpolation is cyclic
+(e.g. January values are aware of nearby December values).
 
 This quantile delta change approach is described by 
 [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1)
