@@ -39,8 +39,16 @@ and then applies it to that observational value.
 If the value lies beyond the range of values in `hist_q`,
 then the adjustment factor for the first or last quantile is used
 (i.e. `extrapolation="constant"`).
+
 It is also possible to use linear or cubic interpolation (e.g. `interp="linear"`)
 instead of just picking the nearest adjustment factor.
+According to the [documentation](https://xclim.readthedocs.io/en/stable/sdba.html#bias-adjustment-and-downscaling-algorithms),
+the interpolation is done between quantiles (i.e. if a data value falls between two quantiles)
+and also between adjustment factors to avoid discontinuities.
+The adjustment factor interpolation is performed by
+[`xclim.sdba.utils.interp_on_quantiles`](https://github.com/Ouranosinc/xclim/blob/master/xclim/sdba/utils.py#L363),
+which in the two dimensional case (e.g. with `time.month` grouping) uses
+[`scipy.interpolate.griddata`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html).
 
 This quantile delta change approach is described by 
 [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1)
@@ -57,11 +65,11 @@ and [Boe et al (2007)](https://doi.org/10.1002/joc.1602) has a nice schematic (F
 ### Our workflow
 
 The main difference between the typical xclim workflow and the
-[method used at CSIRO](old_code/README.md) is that quantile changes
+[quantile delta change method used at CSIRO](old_code/README.md) is that quantile changes
 are mapped directly from model derived adjustment factors to observations.
 In other words, an adjustment factor is selected for a particular observed value
-based on the nearest (or interpolated surrounding) observed quantile,
-not the nearest historical model quantile (i.e. not `hist_q`).
+based on the linearly interpolated surrounding observed quantiles,
+not the historical model quantiles (i.e. not `hist_q`).
 
 To achieve the CSIRO method,
 you can calculate the observed quantiles using `calc_quantiles.py`
