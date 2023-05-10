@@ -13,7 +13,7 @@ import utils
 import ssr
 
 
-def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
+def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, interp='linear'):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -33,6 +33,8 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
         Reverse singularity stochastic removal after adjustment
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
+    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
+        Method for interpolation of adjustment factors
         
     Returns
     -------
@@ -65,7 +67,7 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[var], extrapolation='constant', interp='linear')
+    qq = qm.adjust(ds[var], extrapolation='constant', interp='nearest')
     qq = qq.rename(var)
     qq = qq.transpose('time', 'lat', 'lon') 
 
