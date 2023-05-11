@@ -47,8 +47,11 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, int
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment factor units {af_units}"
 
-    if len(ds_adjust['lat']) != len(ds['lat']):
-        ds_adjust = utils.regrid(ds_adjust, ds)
+    dims = ds[var].dims
+    spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if spatial_grid:
+        if len(ds_adjust['lat']) != len(ds['lat']):
+            ds_adjust = utils.regrid(ds_adjust, ds)
 
     if not type(da_q) == type(None):
         ds_adjust['hist_q'] = da_q
@@ -69,7 +72,8 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, int
 
     qq = qm.adjust(ds[var], extrapolation='constant', interp='nearest')
     qq = qq.rename(var)
-    qq = qq.transpose('time', 'lat', 'lon') 
+    if spatial_grid:
+        qq = qq.transpose('time', 'lat', 'lon') 
 
     if reverse_ssr:
         qq = ssr.reverse_ssr(qq)

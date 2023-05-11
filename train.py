@@ -33,9 +33,12 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
 
     hist_units = ds_hist[hist_var].attrs['units']
     ref_units = ds_ref[ref_var].attrs['units']
-
-    if len(ds_hist['lat']) != len(ds_ref['lat']):
-        ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
+    
+    dims = ds_hist[hist_var].dims
+    spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if spatial_grid:
+        if len(ds_hist['lat']) != len(ds_ref['lat']):
+            ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
     qm = sdba.EmpiricalQuantileMapping.train(
@@ -46,9 +49,12 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
         kind=scaling_methods[scaling]
     )
     qm.ds['hist_q'].attrs['units'] = hist_units
-    qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
-    qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
-
+    if spatial_grid:
+        qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
+        qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
+    else:
+        qm.ds = qm.ds.transpose('quantiles', 'month')
+        
     qm.ds['ref_q'] = utils.get_quantiles(ds_ref[ref_var], qm.ds['quantiles'].data)
     qm.ds['ref_q'].attrs['units'] = ref_units
     qm.ds['hist_clim'] = ds_hist[hist_var].mean('time', keep_attrs=True)
