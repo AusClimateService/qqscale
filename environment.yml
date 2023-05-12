@@ -3,13 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - xarray
-  - netCDF4
-  - dask
-  - nc-time-axis
   - xclim
   - xesmf
+  - netCDF4
   - cmdline_provenance
   - gitpython
   - pytest
-  - pip

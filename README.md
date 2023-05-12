@@ -21,6 +21,16 @@ Both methods can be achieved using this scripts in this repository (see examples
 
 ## Software environment
 
+The scripts in this respository depend on the following Python libraries:
+[netCDF4](https://unidata.github.io/netcdf4-python/),
+[xclim](https://xclim.readthedocs.io),
+[xesmf](https://xesmf.readthedocs.io),
+[cmdline_provenance](https://cmdline-provenance.readthedocs.io),
+[gitpython](https://gitpython.readthedocs.io),
+and [pytest](https://docs.pytest.org) (if running the tests).
+A copy of the scripts and a software environment with those libraries installed
+can be accessed or created in a number of ways (see below):
+
 ### For members of the CSIRO Climate Innovation Hub...
 
 If you're a member of the `wp00` project on NCI
@@ -59,7 +69,7 @@ pre-installed you'll need to create your own.
 For example:
 
 ```
-$ conda install -c conda-forge xarray netCDF4 dask xclim xesmf cmdline_provenance gitpython
+$ conda install -c conda-forge netCDF4 xclim xesmf cmdline_provenance gitpython
 ```
 
 You can then clone this GitHub repository and run the help option
