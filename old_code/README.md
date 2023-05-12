@@ -21,3 +21,39 @@ Here's the relevant history:
 
 These methods are documented on the [CCiA website](https://www.climatechangeinaustralia.gov.au/en/obtain-data/application-ready-data/scaling-methods/)
 and also in a [CAWCR Technical Report](http://www.bom.gov.au/research/publications/cawcrreports/CTR_034.pdf).
+
+A Climate Innovation Hub technical report describes the methodology used in the Python version as follows:
+
+> Firstly, for each of the model simulated baseline and future periods,
+> for each month of the year,
+> all daily data are ranked from highest to lowest,
+> and then divided equally into 100 bins or “quantiles”.
+> The first quantile contains the first 1% of data values,
+> the second quantile contains the next 1% of data values and so forth.
+> A change factor is then calculated as the difference between the mean of the historical and future data for each quantile. 
+>
+> Then, the equivalent quantiles are calculated using relevant observed (AGCD v1 or ERA5) data
+> (for each month under consideration) over the historical baseline period,
+> and each daily value is assigned to a quantile.
+> Then, the change factor for a given quantile is applied to the corresponding observed daily value
+> for that quantile to produce a future daily value.
+> For example, if the change factor for the 70th quantile of daily precipitation is +10%,
+> and the observed daily precipitation value for the 70th quantile is 50mm,
+> then the future daily value becomes 55mm.
+> Since change factors can vary between month,
+> the seasonal variability in simulated future climate changes is incorporated into the QQ-scaled data. 
+>
+> Finally, some adjustments are applied to the QQ-scaled data
+> to ensure consistency with the GCM-simulated changes in average climate conditions
+> and to ensure that values are physically plausible.
+> Firstly, the QQ scaled data are adjusted so that the change in monthly mean
+> between observations and QQ-scaled data matches the model simulated change in monthly mean.
+> For example, if QQ scaling produces a mean change of +15% for a given month,
+> but the climate model simulates a mean change of +18%,
+> then all daily values are adjusted upward by an extra 3%.
+> Finally, for solar radiation and relative humidity a ‘cap’ or upper limit to the data
+> is introduced at this stage to ensure that solar radiation does not exceed the maximum possible
+> (i.e., clear-sky solar radiation) and that relative humidity does not exceed 100%. 
+
+The only thing this description doesn't mention is the interpolation of change values
+depending on where the individual daily values fell in-between percentile bins.
