@@ -22,13 +22,12 @@ Both methods can be achieved using this scripts in this repository (see examples
 ## Software environment
 
 The scripts in this respository depend on the following Python libraries:
-  - [netCDF4](https://unidata.github.io/netcdf4-python/)
-  - [xclim](https://xclim.readthedocs.io)
-  - [xesmf](https://xesmf.readthedocs.io)
-  - [cmdline_provenance](https://cmdline-provenance.readthedocs.io)
-  - [gitpython](https://gitpython.readthedocs.io)
-  - [pytest](https://docs.pytest.org) (if running the tests)
-
+[netCDF4](https://unidata.github.io/netcdf4-python/),
+[xclim](https://xclim.readthedocs.io),
+[xesmf](https://xesmf.readthedocs.io),
+[cmdline_provenance](https://cmdline-provenance.readthedocs.io),
+[gitpython](https://gitpython.readthedocs.io),
+and [pytest](https://docs.pytest.org) (if running the tests).
 A copy of the scripts and a software environment with those libraries installed
 can be accessed or created in a number of ways (see below):
 
