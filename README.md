@@ -1,5 +1,7 @@
 # qqscale
 
+[![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml)
+
 This directory contains command line programs for empirical quantile mapping (a.k.a. quantile-quantile scaling). 
 
 ## Methods
