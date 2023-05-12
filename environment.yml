@@ -5,6 +5,7 @@ dependencies:
   - python=3.10
   - xclim
   - xesmf
+  - netCDF4
   - cmdline_provenance
   - gitpython
   - pytest
