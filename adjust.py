@@ -70,7 +70,7 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, int
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[var], extrapolation='constant', interp='nearest')
+    qq = qm.adjust(ds[var], extrapolation='constant', interp=interp)
     qq = qq.rename(var)
     if spatial_grid:
         qq = qq.transpose('time', 'lat', 'lon') 
