@@ -9,4 +9,3 @@ dependencies:
   - cmdline_provenance
   - gitpython
   - pytest
-  - pip
