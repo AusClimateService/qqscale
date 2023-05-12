@@ -48,14 +48,18 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling, timesc
     else:
         raise ValueError(f'Invalid mean match timescale: {timescale}')
 
-    qq_clim['lat'] = target_clim['lat']
-    qq_clim['lon'] = target_clim['lon']
+    dims = ds_qq[qq_var].dims
+    spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if spatial_grid:
+        qq_clim['lat'] = target_clim['lat']
+        qq_clim['lon'] = target_clim['lon']
 
     if scaling == 'multiplicative':
         ref_hist_clim_ratio = ref_clim / hist_clim
-        if len(ref_hist_clim_ratio['lat']) != len(qq_clim['lat']):
-            regridder = xe.Regridder(ref_hist_clim_ratio, qq_clim, 'bilinear')
-            ref_hist_clim_ratio = regridder(ref_hist_clim_ratio)
+        if spatial_grid:
+            if len(ref_hist_clim_ratio['lat']) != len(qq_clim['lat']):
+                regridder = xe.Regridder(ref_hist_clim_ratio, qq_clim, 'bilinear')
+                ref_hist_clim_ratio = regridder(ref_hist_clim_ratio)
         adjustment_factor = (ref_hist_clim_ratio * target_clim) / qq_clim
         if timescale == 'monthly':
             da_qq_adjusted = ds_qq[qq_var].groupby('time.month') * adjustment_factor
@@ -63,9 +67,10 @@ def match_mean_change(ds_qq, qq_var, da_hist, da_ref, da_target, scaling, timesc
             da_qq_adjusted = ds_qq[qq_var] * adjustment_factor
     elif scaling == 'additive':
         ref_hist_clim_diff = ref_clim - hist_clim
-        if len(ref_hist_clim_diff['lat']) != len(qq_clim['lat']):
-            regridder = xe.Regridder(ref_hist_clim_diff, qq_clim, 'bilinear')
-            ref_hist_clim_diff = regridder(ref_hist_clim_diff)
+        if spatial_grid:
+            if len(ref_hist_clim_diff['lat']) != len(qq_clim['lat']):
+                regridder = xe.Regridder(ref_hist_clim_diff, qq_clim, 'bilinear')
+                ref_hist_clim_diff = regridder(ref_hist_clim_diff)
         adjustment_factor = ref_hist_clim_diff - (qq_clim - target_clim)
         if timescale == 'monthly':
             da_qq_adjusted = ds_qq[qq_var].groupby('time.month') + adjustment_factor

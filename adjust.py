@@ -13,7 +13,7 @@ import utils
 import ssr
 
 
-def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
+def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, interp='linear'):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -33,6 +33,8 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
         Reverse singularity stochastic removal after adjustment
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
+    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
+        Method for interpolation of adjustment factors
         
     Returns
     -------
@@ -45,8 +47,11 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     assert infile_units == af_units, \
         f"input file units {infile_units} differ from adjustment factor units {af_units}"
 
-    if len(ds_adjust['lat']) != len(ds['lat']):
-        ds_adjust = utils.regrid(ds_adjust, ds)
+    dims = ds[var].dims
+    spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if spatial_grid:
+        if len(ds_adjust['lat']) != len(ds['lat']):
+            ds_adjust = utils.regrid(ds_adjust, ds)
 
     if not type(da_q) == type(None):
         ds_adjust['hist_q'] = da_q
@@ -65,9 +70,10 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False):
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[var], extrapolation='constant', interp='linear')
+    qq = qm.adjust(ds[var], extrapolation='constant', interp=interp)
     qq = qq.rename(var)
-    qq = qq.transpose('time', 'lat', 'lon') 
+    if spatial_grid:
+        qq = qq.transpose('time', 'lat', 'lon') 
 
     if reverse_ssr:
         qq = ssr.reverse_ssr(qq)
