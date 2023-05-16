@@ -15,12 +15,12 @@ Depending on the context, there are few different names for this basic method:
   (either additively or multiplicatively) to observational data in order to produce
   climate projection data for a future time period,
   the method we apply has been referred to as
-  *Quantile Delta Mapping* ([Cannon et al 2015](https://doi.org/10.1175/JCLI-D-14-00754.1)).
+  *Quantile Delta Mapping* (QDM; [Cannon et al 2015](https://doi.org/10.1175/JCLI-D-14-00754.1)).
 - If quantile biases (e.g. between an historical model simulation and observations) are removed
   from model data in order to produce bias corrected model data,
   the method we apply has been referred to as
-  *equidistant CDF matching* (in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
-  *equiratio CDF matching* (in the case of multiplicative bias correction; [Wang and Chem, 2013](https://doi.org/10.1002/asl2.454)).
+  *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
+  *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
 
 As explained by [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1),
 additive/multiplicative Quantile Delta Mapping is actually equivalent to equidistant/equiratio CDF matching.
@@ -94,15 +94,15 @@ $ python calc_adjustment.py -h
 
 ## Data processing
   
-In general, QDC and QMBA can be achieved using the following scripts:
+In general, QDM and/or CDFm can be achieved using the following scripts:
 1. (optional) `ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
    (just for precipitation data when using multiplicative adjustment)
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
-   (in QDC the reference dataset is a future model simulation; in QMBA it is observations)
+   (in QDM the reference dataset is a future model simulation; in CDFm it is observations)
 1. `quantiles.py` to calculate the quantiles of the *target* data
-   (i.e. the data to be adjusted - that's observational data for QDC or model data for QMBA)
+   (i.e. the data to be adjusted - that's observational data for QDM or model data for CDFm)
 1. `adjust.py` to apply the adjustment factors to the target data
-1. (optional) `match_mean_change.py` to match up the GCM and QDC mean change 
+1. (optional) `match_mean_change.py` to match up the model and QDM mean change 
 
 ### Large datasets
 
@@ -116,14 +116,14 @@ This step-by-step process can be achieved by running the scripts listed above
 A `Makefile` is available to simplify the process of sequencing the steps
 and to make sure the outputs of one step are correctly input into the next.
 The steps involved in using the `Makefile` are:
-1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdc.mk` or `config_qmba.mk`
+1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdm.mk` or `config_cdfm.mk`
 1. Run `make all -f make_ssr.mk CONFIG=my_config.mk` if SSR is required.
-1. Run `make apply-adjustment CONFIG=my_config.mk` to implement either QDC or QMBA
+1. Run `make apply-adjustment CONFIG=my_config.mk` to implement either QDM or CDFm
 
-Additional processing steps for QDC
+Additional processing steps for QDM
 (e.g. applying standard CIH file metadata or matching the mean change)
-can be applied using `make_qdc_post-processing.mk`.
-Help information can be viewed by running `make help -f make_qdc_post-processing.mk`.
+can be applied using `make_qdm_post-processing.mk`.
+Help information can be viewed by running `make help -f make_qdm_post-processing.mk`.
 
 ### Smaller datasets
 
@@ -133,7 +133,7 @@ Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_targe
 containing the variable of interest (`hist_var`, `ref_var` and `target_var`)
 you can import the relevant functions from the scripts mentioned above.
 For instance,
-a QDC workflow would look something like this:
+a QDM workflow would look something like this:
 
 ```python
 
