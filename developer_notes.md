@@ -11,8 +11,8 @@ starts by calculating the adjustment factors for each quantile:
 ```python
 from xclim import sdba
 
-QM = sdba.EmpiricalQuantileMapping.train(
-    da_ssp, da_hist, nquantiles=100, group="time.month", kind="+"
+QDM = sdba.QuantileDeltaMapping.train(
+    da_sim, da_hist, nquantiles=100, group="time.month", kind="+"
 )
 ```
 
@@ -20,62 +20,67 @@ The `group` determines the timescale for the adjustment factors
 (see [grouping](https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#Grouping) for options)
 and the `kind` can be additive or multiplicative.
 In this case adjustment factors for each month are calculated by
-taking the difference between the quantiles from a future experiment (`da_ssp`)
+taking the difference between the quantiles from a future experiment (`da_sim`)
 and an historical experiment (`da_hist`).
 
-The resulting xarray Dataset (`QM.ds`) contains two variables:
-adjustment factor (`af`) and historical quantiles (`hist_q`).
+The resulting xarray Dataset (`QDM.ds`) contains the adjustment factors (`af`).
+It can be useful to plot these adjustment factors to understand the climate signal
+between the two experiments.
 
 The next step is to apply the adjustment factors to a dataset of interest.
 
 ```python
-da_qq = QM.adjust(da_obs, extrapolation="constant", interp="nearest") 
+da_qq = QDM.adjust(da_ref, interp="nearest") 
 ```
 
-For each value in the observational dataset (`da_obs`),
-xclim looks up the nearest (`interp="nearest"`) quantile in `hist_q`,
-finds the adjustment factor corresponding to that quantile value in `af`,
-and then applies it to that observational value.
-If the value lies beyond the range of values in `hist_q`,
-then the adjustment factor for the first or last quantile is used
-(i.e. `extrapolation="constant"`).
-
+For each value in the observational dataset (`da_ref`),
+a corresponding quantile is calculated
+(e.g. a 20C day might be the 0.6 quantile)
+and then xclim looks up the nearest (`interp="nearest"`) adjustment factor to that quantile in `af`
+and applies it to that observational value.
 It is also possible to use linear or cubic interpolation (e.g. `interp="linear"`)
 instead of just picking the nearest adjustment factor.
+(See [Wang and Chen (2013)](https://doi.org/10.1002/asl2.454)) for an explanation of why
+non-parametric methods like linear and cubic interpolation are preferred to
+fitting a parametric distribution.)
+
 According to the [documentation](https://xclim.readthedocs.io/en/stable/sdba.html#bias-adjustment-and-downscaling-algorithms),
 the interpolation is done between quantiles (i.e. if a data value falls between two quantiles)
 and also between adjustment factors to avoid discontinuities.
-The adjustment factor interpolation is performed by
+With respect to the latter, the adjustment factor interpolation is performed by
 [`xclim.sdba.utils.interp_on_quantiles`](https://github.com/Ouranosinc/xclim/blob/master/xclim/sdba/utils.py#L363),
 which in the two dimensional case (e.g. with `time.month` grouping) uses
-[`scipy.interpolate.griddata`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html).
+[`scipy.interpolate.griddata`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html)
+to smooth out the two dimensional (quantile, month) `af` field. 
 From playing around with the different interpolation options,
 it appears that the two dimensional interpolation is cyclic
 (e.g. January values are aware of nearby December values).
 
-This quantile delta change approach is described by 
-[Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1)
-and [Boe et al (2007)](https://doi.org/10.1002/joc.1602) has a nice schematic (Figure 2).
+### Same, same
 
-> **More complex methods**
->
-> [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1) also define
-> Detrended Quantile Mapping (DQM) and Quantile Delta Mapping (QDM),
-> both of which build upon the traditional methods.
-> See [`xclim.sdba.DetrendedQuantileMapping` and `xclim.sdba.adjustment.QuantileDeltaMapping`.
+According to [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1),
+Quantile Delta Mapping and equidistant/equiratio CDF matching produce the same result.
 
+In other words,
 
-### Our workflow
+```python
+QDMadd = sdba.QuantileDeltaMapping.train(sim, hist, kind='+')
+future_data = QDMadd.adjust(ref)
+```
+is equivalent to
+```python
+EDCDFm = sdba.QuantileDeltaMapping.train(ref, hist, kind='+')
+future_data = EDCDFm.adjust(sim)
+```
 
-The main difference between the typical xclim workflow and the
-[quantile delta change method used at CSIRO](old_code/README.md) is that quantile changes
-are mapped directly from model derived adjustment factors to observations.
-In other words, an adjustment factor is selected for a particular observed value
-based on the linearly interpolated surrounding observed quantiles,
-not the historical model quantiles (i.e. not `hist_q`).
+and 
+```python
+QDMmul = sdba.QuantileDeltaMapping.train(sim, hist, kind='*')
+future_data = QDMmul.adjust(ref)
+```
+is equivalent to
+```python
+EQCDFm = sdba.QuantileDeltaMapping.train(ref, hist, kind='*')
+future_data = EQCDFm.adjust(sim)
+```
 
-To achieve the CSIRO method,
-you can calculate the observed quantiles using `calc_quantiles.py`
-and then pass those quantiles to `apply_adjustment.py` using the `--reference_quantile_file` option.
-The `apply_adjustment.py` script then replaces `hist_q` with
-the observed quantiles before performing the adjustment.
