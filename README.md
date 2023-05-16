@@ -2,22 +2,32 @@
 
 [![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml)
 
-This directory contains command line programs for empirical quantile mapping (a.k.a. quantile-quantile scaling). 
+This directory contains command line programs for quantile mapping (a.k.a. quantile-quantile scaling). 
 
 ## Methods
 
-QQ-scaling is traditionally applied in one of two contexts:
-- *Quantile mapping bias adjustment (QMBA)*:
-  The difference (or ratio) between an observational dataset and historical model simulation is calculated for each quantile.
-  Those quantile differences are then added to (or ratios multiplied against) model data
-  in order to produce a bias corrected model time series.
-- *Quantile delta change (QDC)*:
-  The difference (or ratio) between a future and historical model simulation is calculated for each quantile.
-  Those quantile differences are then added to (or ratios multiplied against) an observational dataset
-  in order to produce a statistically downscaled climate projection time series.
-  Otherwise known as quantile perturbation.
+The programs in this repository use the
+[bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html) functionality in xclim
+to apply what is essentially the most basic method of quantile mapping used in the literature.
 
-Both methods can be achieved using this scripts in this repository (see examples below).
+Depending on the context, there are few different names for this basic method:
+- If quantile delta changes (e.g. between an historical and future model simulation) are applied
+  (either additively or multiplicatively) to observational data in order to produce
+  climate projection data for a future time period,
+  the method we apply has been referred to as
+  *Quantile Delta Mapping* ([Cannon et al 2015](https://doi.org/10.1175/JCLI-D-14-00754.1)).
+- If quantile biases (e.g. between an historical model simulation and observations) are removed
+  from model data in order to produce bias corrected model data,
+  the method we apply has been referred to as
+  *equidistant CDF matching* (in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
+  *equiratio CDF matching* (in the case of multiplicative bias correction; [Wang and Chem, 2013](https://doi.org/10.1002/asl2.454)).
+
+As explained by [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1),
+additive/multiplicative Quantile Delta Mapping is actually equivalent to equidistant/equiratio CDF matching.
+In other words, you get the same result regardless of whether you apply
+model delta changes to observational data or bias correct model data.
+See the [developer notes](developer_notes.md) for details.
+
 
 ## Software environment
 
