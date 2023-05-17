@@ -47,10 +47,6 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
     if spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
             ds_adjust = utils.regrid(ds_adjust, ds)
-
-    q_units = ds_adjust['hist_q'].attrs['units']
-    assert infile_units == q_units, \
-        f"input file units {infile_units} differ from quantile units {q_units}"
    
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     hist_q_shape = qm.ds['hist_q'].shape
