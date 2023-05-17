@@ -1,4 +1,4 @@
-# Post-processing and analysis of QDC data
+# Post-processing and analysis of QDM data
 
 .PHONY: help
 

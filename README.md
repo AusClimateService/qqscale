@@ -99,8 +99,6 @@ In general, QDM and/or CDFm can be achieved using the following scripts:
    (just for precipitation data when using multiplicative adjustment)
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
    (in QDM the reference dataset is a future model simulation; in CDFm it is observations)
-1. `quantiles.py` to calculate the quantiles of the *target* data
-   (i.e. the data to be adjusted - that's observational data for QDM or model data for CDFm)
 1. `adjust.py` to apply the adjustment factors to the target data
 1. (optional) `match_mean_change.py` to match up the model and QDM mean change 
 
@@ -139,7 +137,6 @@ a QDM workflow would look something like this:
 
 import ssr
 import train
-import quantiles
 import adjust
 import match_mean_change
 
@@ -154,12 +151,10 @@ if apply_ssr:
     ds_target[target_var] = ssr.apply_ssr(ds_target[target_var])
 
 ds_adjust = train.train(ds_hist, ds_ref, hist_var, ref_var, scaling)
-ds_target_q = quantiles.quantiles(ds_target, target_var, 100)
 ds_qq = adjust.adjust(
     ds_target,
     target_var,
     ds_adjust,
-    da_q=ds_target_q[target_var],
     reverse_ssr=apply_ssr,
     ref_time=True
 )
