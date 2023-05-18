@@ -23,7 +23,7 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
     var : str
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
-        Adjustment factors calculated using calc_adjustment.adjust
+        Adjustment factors calculated using train.train
     reverse_ssr : bool, default False
         Reverse singularity stochastic removal after adjustment
     ref_time : bool, default False
@@ -88,7 +88,6 @@ def main(args):
         output_units=args.output_units,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
-    ds_adjust = ds_adjust[['af', 'hist_q']]
     qq = adjust(
         ds, args.var, ds_adjust, reverse_ssr=args.ssr, ref_time=args.ref_time
     )
