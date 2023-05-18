@@ -112,16 +112,16 @@ and by producing intermediary files at each step you can avoid repeating some st
 
 This step-by-step process can be achieved by running the scripts listed above
 (in the order presented) as command line programs.
-A `Makefile` is available to simplify the process of sequencing the steps
+A `Makefile` is available in the `workflows/` directory to simplify the process of sequencing the steps
 and to make sure the outputs of one step are correctly input into the next.
 The steps involved in using the `Makefile` are:
-1. Create a configuration file (e.g. `my_config.mk`) based on `config_qdm.mk` or `config_cdfm.mk`
+1. Create a configuration file (e.g. `my_config.mk`) based on `workflows/config_qdm.mk` or `workflows/config_cdfm.mk`
 1. Run `make all -f make_ssr.mk CONFIG=my_config.mk` if SSR is required.
 1. Run `make apply-adjustment CONFIG=my_config.mk` to implement either QDM or CDFm
 
 Additional processing steps for QDM
 (e.g. applying standard CIH file metadata or matching the mean change)
-can be applied using `make_qdm_post-processing.mk`.
+can be applied using `workflows/make_qdm_post-processing.mk`.
 Help information can be viewed by running `make help -f make_qdm_post-processing.mk`.
 
 #### Performance
