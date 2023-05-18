@@ -1,8 +1,8 @@
-# Quantile delta change configuration
+# Quantile Delta Mapping (QDM) configuration
 
 ## User configured variables
 
-METHOD=qdc
+METHOD=qdm
 SCALING=additive
 OUTPUT_UNITS=C
 #SSR=--ssr
@@ -69,9 +69,6 @@ endif
 
 AF_FILE=${REF_FNAME_VAR}-${METHOD}-${SCALING}-monthly-adjustment-factors_${MODEL}_${EXPERIMENT}_${RUN}_${MODEL_GRID}_${REF_START}0101-${REF_END}1231_wrt_${HIST_START}0101-${HIST_END}1231.nc
 AF_PATH=${OUTPUT_REF_DIR}/${AF_FILE}
-
-TARGET_Q_FILE=${TARGET_FNAME_VAR}-quantiles_${OBS_DATASET}_r005_${TARGET_START}-${TARGET_END}_daily.nc
-TARGET_Q_PATH=${OUTPUT_TARGET_DIR}/${TARGET_Q_FILE}
 
 QQ_BASE=${REF_FNAME_VAR}_day_${MODEL}_${EXPERIMENT}_${RUN}_AUS-r005_${REF_START}0101-${REF_END}1231_${METHOD}-${SCALING}-monthly_${OBS_DATASET}-${TARGET_START}0101-${TARGET_END}1231_historical-${HIST_START}0101-${HIST_END}1231
 QQ_PATH=${OUTPUT_REF_DIR}/${QQ_BASE}.nc

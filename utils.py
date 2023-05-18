@@ -91,7 +91,6 @@ def get_quantiles(da, quantiles, timescale='monthly'):
     outputs hist_q and not others like ref_q.    
     """
 
-    da = da.where(xr.apply_ufunc(np.isfinite, da.compute()))
     if timescale == 'monthly':
         months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         q_list = []

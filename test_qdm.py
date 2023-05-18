@@ -1,5 +1,5 @@
-"""Test application of the quantile delta change method"""
-import pdb
+"""Test quantile delta mapping"""
+
 import pytest
 
 import numpy as np
@@ -58,7 +58,16 @@ def ds_ref(ds_hist):
     ds_ref['time'] = times
     
     return ds_ref
+
+
+@pytest.fixture
+def ref_q(ds_ref):
+    """Calculate reference dataset quantiles."""
     
+    ref_q = quantiles.quantiles(ds_ref, 'tasmax', 100)
+    
+    return ref_q
+
 
 @pytest.fixture
 def ds_target(ds_hist):
@@ -74,20 +83,18 @@ def ds_adjust(ds_hist, ds_ref):
     """Calculate example adjustment factors."""
     
     ds_adjust = train.train(ds_hist, ds_ref, 'tasmax', 'tasmax', 'additive')
-    
+
     return ds_adjust
 
 
 @pytest.fixture
 def ds_qq(ds_target, ds_adjust):
-    """Calculate example QDC dataset."""
+    """Calculate example QDM dataset."""
     
-    ds_target_q = quantiles.quantiles(ds_target, 'tasmax', 100)
     ds_qq = adjust.adjust(
         ds_target,
         'tasmax',
         ds_adjust,
-        da_q=ds_target_q['tasmax'],
         reverse_ssr=False,
         ref_time=True,
         interp='nearest'
@@ -98,7 +105,7 @@ def ds_qq(ds_target, ds_adjust):
 
 @pytest.fixture
 def qq_q(ds_qq):
-    """Calculate example QDC dataset quantiles."""
+    """Calculate example QDM dataset quantiles."""
     
     qq_q = quantiles.quantiles(ds_qq, 'tasmax', 100)
     
@@ -117,12 +124,12 @@ def test_training(ds_adjust):
     for month in range(12):
         perturbation = np.ones(50) + ((month + 1) * 10)
         expected_result[50:, month] = perturbation
-    
+
     assert np.allclose(expected_result, actual_result)
         
 
 @pytest.mark.parametrize("month", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-def test_adjustment(qq_q, ds_adjust, month):
+def test_adjustment(qq_q, ref_q, ds_adjust, month):
     """Test adjustment step.
     
     The quantile changes between ds_hist and ds_ref should match
@@ -132,7 +139,7 @@ def test_adjustment(qq_q, ds_adjust, month):
     target_quantiles = ds_adjust['hist_q'].sel({'month': month}).values
     qq_quantiles = qq_q['tasmax'].sel({'month': month}).values
     hist_quantiles = ds_adjust['hist_q'].sel({'month': month}).values
-    future_quantiles = ds_adjust['ref_q'].sel({'month': month}).values
+    future_quantiles = ref_q['tasmax'].sel({'month': month}).values
 
     qq_quantile_change = qq_quantiles - target_quantiles
     model_quantile_change = future_quantiles - hist_quantiles

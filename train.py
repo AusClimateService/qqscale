@@ -41,7 +41,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
             ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
-    qm = sdba.EmpiricalQuantileMapping.train(
+    qm = sdba.QuantileDeltaMapping.train(
         ds_ref[ref_var],
         ds_hist[hist_var],
         nquantiles=100,
@@ -54,11 +54,6 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
         qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
     else:
         qm.ds = qm.ds.transpose('quantiles', 'month')
-        
-    qm.ds['ref_q'] = utils.get_quantiles(ds_ref[ref_var], qm.ds['quantiles'].data)
-    qm.ds['ref_q'].attrs['units'] = ref_units
-    qm.ds['hist_clim'] = ds_hist[hist_var].mean('time', keep_attrs=True)
-    qm.ds['ref_clim'] = ds_ref[ref_var].mean('time', keep_attrs=True)   
     
     hist_times = ds_hist['time'].dt.strftime('%Y-%m-%d').values
     qm.ds.attrs['historical_period_start'] = hist_times[0]

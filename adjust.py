@@ -13,7 +13,7 @@ import utils
 import ssr
 
 
-def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, interp='linear'):
+def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear'):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -23,12 +23,7 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, int
     var : str
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
-        Adjustment factors calculated using calc_adjustment.adjust
-    da_q : xarray DataArray
-        Replacement for the historical quantiles used to determine
-        which adjustment factor to apply to each value in ds.
-        Calculated using calc_quantiles.py
-        (Typically observational quantiles for quantile delta change)
+        Adjustment factors calculated using train.train
     reverse_ssr : bool, default False
         Reverse singularity stochastic removal after adjustment
     ref_time : bool, default False
@@ -52,15 +47,8 @@ def adjust(ds, var, ds_adjust, da_q=None, reverse_ssr=False, ref_time=False, int
     if spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
             ds_adjust = utils.regrid(ds_adjust, ds)
-
-    if not type(da_q) == type(None):
-        ds_adjust['hist_q'] = da_q
-    q_units = ds_adjust['hist_q'].attrs['units']
-    assert infile_units == q_units, \
-        f"input file units {infile_units} differ from quantile units {q_units}"
    
-    qm = sdba.EmpiricalQuantileMapping.from_dataset(ds_adjust)
-
+    qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
     af_shape = qm.ds['af'].shape
@@ -100,14 +88,8 @@ def main(args):
         output_units=args.output_units,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
-    ds_adjust = ds_adjust[['af', 'hist_q']]
-    if args.reference_quantile_file:
-        ds_q = xr.open_dataset(args.reference_quantile_file)
-        da_q = ds_q[args.reference_quantile_var]
-    else:
-        da_q = None
     qq = adjust(
-        ds, args.var, ds_adjust, da_q=da_q, reverse_ssr=args.ssr, ref_time=args.ref_time
+        ds, args.var, ds_adjust, reverse_ssr=args.ssr, ref_time=args.ref_time
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
@@ -150,18 +132,6 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Reverse Singularity Stochastic Removal when writing outfile',
-    )
-    parser.add_argument(
-        "--reference_quantile_file",
-        type=str,
-        default=None,
-        help="quantile file to refer for adjustment factor mapping",
-    )
-    parser.add_argument(
-        "--reference_quantile_var",
-        type=str,
-        default=None,
-        help="quantile file variable",
     )
     parser.add_argument(
         "--verbose",

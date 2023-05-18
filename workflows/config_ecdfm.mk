@@ -1,8 +1,8 @@
-# Quantile mapping bias adjustment configuration
+# Equi-distant/ratio CDF mapping configuration
 
 ## User configured variables
 
-METHOD=qmba
+METHOD=ecdfm
 SCALING=additive
 OUTPUT_UNITS=C
 #SSR=--ssr
@@ -65,9 +65,6 @@ endif
 
 AF_FILE=${REF_FNAME_VAR}-${METHOD}-${SCALING}-monthly-bias-vs-${OBS_DATASET}_AUS-15_CSIRO-BOM-ACCESS-CM2_historical_r4i1p1f1_BOM-BARPA-R_v1_day_${HIST_START}01-${HIST_END}12_AWAP.nc
 AF_PATH=${OUTPUT_REF_DIR}/${AF_FILE}
-
-TARGET_Q_FILE=${TARGET_FNAME_VAR}-quantiles_AUS-15_CSIRO-BOM-ACCESS-CM2_historical-${EXPERIMENT}_r4i1p1f1_BOM-BARPA-R_v1_day_${TARGET_START}01-${TARGET_END}12_AWAP.nc
-TARGET_Q_PATH=${OUTPUT_TARGET_DIR}/${TARGET_Q_FILE}
 
 QQ_BASE=${REF_FNAME_VAR}_AUS-15_CSIRO-BOM-ACCESS-CM2_historical-${EXPERIMENT}_r4i1p1f1_BOM-BARPA-R_v1_day_${TARGET_START}01-${TARGET_END}12_AWAP_${METHOD}-${SCALING}-monthly-${OBS_DATASET}-${HIST_START}0101-${HIST_END}1231
 QQ_PATH=${OUTPUT_REF_DIR}/${QQ_BASE}.nc

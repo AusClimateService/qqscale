@@ -12,7 +12,7 @@ to apply what is essentially the most basic method of quantile mapping used in t
 
 Depending on the context, there are few different names for this basic method:
 - If quantile delta changes (e.g. between an historical and future model simulation) are applied
-  (either additively or multiplicatively) to observational data in order to produce
+  either additively or multiplicatively to observational data in order to produce
   climate projection data for a future time period,
   the method we apply has been referred to as
   *Quantile Delta Mapping* (QDM; [Cannon et al 2015](https://doi.org/10.1175/JCLI-D-14-00754.1)).
@@ -99,9 +99,8 @@ In general, QDM and/or CDFm can be achieved using the following scripts:
    (just for precipitation data when using multiplicative adjustment)
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
    (in QDM the reference dataset is a future model simulation; in CDFm it is observations)
-1. `quantiles.py` to calculate the quantiles of the *target* data
-   (i.e. the data to be adjusted - that's observational data for QDM or model data for CDFm)
-1. `adjust.py` to apply the adjustment factors to the target data
+1. `adjust.py` to apply the adjustment factors to the *target* data
+   (in QDM the target data is observations; in CDFm it is a model simulation)
 1. (optional) `match_mean_change.py` to match up the model and QDM mean change 
 
 ### Large datasets
@@ -125,6 +124,13 @@ Additional processing steps for QDM
 can be applied using `make_qdm_post-processing.mk`.
 Help information can be viewed by running `make help -f make_qdm_post-processing.mk`.
 
+#### Performance
+
+The adjustment step (`adjust.py`) is the most time and memory intensive.
+Here's some examples of time and memory requirements for different applications:
+- 30 years of daily AGCD data (691 x 886 horizontal grid) running on 1 core: 195GB, 5 hours 
+
+
 ### Smaller datasets
 
 When processing a smaller dataset it is also possible to perform the entire QQ-scaling process
@@ -139,7 +145,6 @@ a QDM workflow would look something like this:
 
 import ssr
 import train
-import quantiles
 import adjust
 import match_mean_change
 
@@ -154,12 +159,10 @@ if apply_ssr:
     ds_target[target_var] = ssr.apply_ssr(ds_target[target_var])
 
 ds_adjust = train.train(ds_hist, ds_ref, hist_var, ref_var, scaling)
-ds_target_q = quantiles.quantiles(ds_target, target_var, 100)
 ds_qq = adjust.adjust(
     ds_target,
     target_var,
     ds_adjust,
-    da_q=ds_target_q[target_var],
     reverse_ssr=apply_ssr,
     ref_time=True
 )
