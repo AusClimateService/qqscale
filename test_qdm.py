@@ -1,4 +1,4 @@
-"""Test application of the quantile delta mapping"""
+"""Test quantile delta mapping"""
 
 import pytest
 
