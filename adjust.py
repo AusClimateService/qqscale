@@ -71,7 +71,10 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
         new_start_date = ds_adjust.attrs['reference_period_start'] 
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
         qq['time'] = qq['time'] + time_adjustment
-    qq.attrs['xclim_version'] = xc.__version__
+
+    qq.attrs['xclim'] = qq[var].attrs['history']
+    del qq[var].attrs['history']
+    del qq[var].attrs['bias_adjustment']
 
     return qq
 
