@@ -92,7 +92,12 @@ def main(args):
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qq = adjust(
-        ds, args.var, ds_adjust, reverse_ssr=args.ssr, ref_time=args.ref_time
+        ds,
+        args.var,
+        ds_adjust,
+        reverse_ssr=args.ssr,
+        ref_time=args.ref_time,
+        interp=args.interp,
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
@@ -129,6 +134,13 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Shift output time axis to match reference dataset',
+    )
+    parser.add_argument(
+        "--interp",
+        type=str,
+        choices=('nearest', 'linear', 'cubic'),
+        default='linear',
+        help="Method for interpolation of adjustment factors",
     )
     parser.add_argument(
         "--ssr",

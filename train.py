@@ -10,7 +10,7 @@ import dask.diagnostics
 import utils
 
 
-def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
+def train(ds_hist, ds_ref, hist_var, ref_var, scaling, nquantiles=100):
     """Calculate qq-scaling adjustment factors.
 
     Parameters
@@ -25,6 +25,8 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
         Reference variable (i.e. in ds_ref)
     scaling : {'additive', 'multiplicative'}
         Scaling method
+    nquantiles : int, default 100
+        Number of quantiles to process 
         
     Returns
     -------
@@ -44,7 +46,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling):
     qm = sdba.QuantileDeltaMapping.train(
         ds_ref[ref_var],
         ds_hist[hist_var],
-        nquantiles=100,
+        nquantiles=nquantiles,
         group='time.month',
         kind=scaling_methods[scaling]
     )
@@ -87,7 +89,14 @@ def main(args):
         input_units=args.input_ref_units,
         output_units=args.output_units,
     )
-    ds_out = train(ds_hist, ds_ref, args.hist_var, args.ref_var, args.scaling)
+    ds_out = train(
+        ds_hist,
+        ds_ref,
+        args.hist_var,
+        args.ref_var,
+        args.scaling,
+        nquantiles=args.nquantiles
+    )
     ds_out.attrs['history'] = utils.get_new_log()
     ds_out.to_netcdf(args.output_file)
 
@@ -144,6 +153,12 @@ if __name__ == '__main__':
         nargs=2,
         default=None,
         help='Longitude bounds for reference data: (west_bound, east_bound)',
+    )
+    parser.add_argument(
+        "--nquantiles",
+        type=int,
+        default=100,
+        help="Number of quantiles to process",
     )
     parser.add_argument(
         "--scaling",
