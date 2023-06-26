@@ -60,7 +60,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     )
     qm.ds = qm.ds.squeeze()
     try:
-        qm.ds = qm.ds.drop('group')
+        qm.ds = qm.ds.drop_vars('group')
     except ValueError:
         pass
     qm.ds['hist_q'].attrs['units'] = hist_units
