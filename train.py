@@ -25,7 +25,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
         Reference variable (i.e. in ds_ref)
     scaling : {'additive', 'multiplicative'}
         Scaling method
-    time_grouping : {'1monthly', '3monthly'} default None
+    time_grouping : {'monthly', '3monthly'} default None
         Time period grouping (default is no grouping)
     nquantiles : int, default 100
         Number of quantiles to process 
@@ -45,7 +45,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
             ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
-    if time_grouping == '1monthly':
+    if time_grouping == 'monthly':
         group = 'time.month'
     elif time_grouping == '3monthly':
         group = sdba.Grouper('time.month', window=3)
@@ -66,6 +66,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     qm.ds['hist_q'].attrs['units'] = hist_units
     if spatial_grid:
         qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
+        qm.ds = qm.ds.transpose('lat', 'lon', ...)
     if 'month' in qm.ds.dims:
         qm.ds = qm.ds.transpose('month', ...)
     qm.ds = qm.ds.transpose('quantiles', ...)
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--time_grouping",
         type=str,
-        choices=('1monthly', '3monthly'),
+        choices=('monthly', '3monthly'),
         default=None,
         help="Time period grouping",
     )
