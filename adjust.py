@@ -60,6 +60,8 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
 
     qq = qm.adjust(ds[var], extrapolation='constant', interp=interp)
     qq = qq.rename(var)
+    if spatial_grid:
+        qq = qq.transpose('lat', 'lon', ...)
     qq = qq.transpose('time', ...) 
 
     if reverse_ssr:
