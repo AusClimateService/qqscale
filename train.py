@@ -10,7 +10,7 @@ import dask.diagnostics
 import utils
 
 
-def train(ds_hist, ds_ref, hist_var, ref_var, scaling, nquantiles=100):
+def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100):
     """Calculate qq-scaling adjustment factors.
 
     Parameters
@@ -25,6 +25,8 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, nquantiles=100):
         Reference variable (i.e. in ds_ref)
     scaling : {'additive', 'multiplicative'}
         Scaling method
+    time_grouping : {'monthly', '3monthly'} default None
+        Time period grouping (default is no grouping)
     nquantiles : int, default 100
         Number of quantiles to process 
         
@@ -43,19 +45,31 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, nquantiles=100):
             ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
+    if time_grouping == 'monthly':
+        group = 'time.month'
+    elif time_grouping == '3monthly':
+        group = sdba.Grouper('time.month', window=3)
+    else:
+        group = 'time'
     qm = sdba.QuantileDeltaMapping.train(
         ds_ref[ref_var],
         ds_hist[hist_var],
         nquantiles=nquantiles,
-        group='time.month',
+        group=group,
         kind=scaling_methods[scaling]
     )
+    qm.ds = qm.ds.squeeze()
+    try:
+        qm.ds = qm.ds.drop_vars('group')
+    except ValueError:
+        pass
     qm.ds['hist_q'].attrs['units'] = hist_units
     if spatial_grid:
         qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
-        qm.ds = qm.ds.transpose('quantiles', 'month', 'lat', 'lon')
-    else:
-        qm.ds = qm.ds.transpose('quantiles', 'month')
+        qm.ds = qm.ds.transpose('lat', 'lon', ...)
+    if 'month' in qm.ds.dims:
+        qm.ds = qm.ds.transpose('month', ...)
+    qm.ds = qm.ds.transpose('quantiles', ...)
     
     hist_times = ds_hist['time'].dt.strftime('%Y-%m-%d').values
     qm.ds.attrs['historical_period_start'] = hist_times[0]
@@ -95,6 +109,7 @@ def main(args):
         args.hist_var,
         args.ref_var,
         args.scaling,
+        time_grouping=args.time_grouping,
         nquantiles=args.nquantiles
     )
     ds_out.attrs['history'] = utils.get_new_log()
@@ -166,6 +181,13 @@ if __name__ == '__main__':
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
+    )
+    parser.add_argument(
+        "--time_grouping",
+        type=str,
+        choices=('monthly', '3monthly'),
+        default=None,
+        help="Time period grouping",
     )
     parser.add_argument(
         "--input_hist_units",

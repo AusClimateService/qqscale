@@ -47,7 +47,7 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
     if spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
             ds_adjust = utils.regrid(ds_adjust, ds)
-   
+
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     hist_q_shape = qm.ds['hist_q'].shape
     hist_q_chunksizes = qm.ds['hist_q'].chunksizes
@@ -61,7 +61,8 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
     qq = qm.adjust(ds[var], extrapolation='constant', interp=interp)
     qq = qq.rename(var)
     if spatial_grid:
-        qq = qq.transpose('time', 'lat', 'lon') 
+        qq = qq.transpose('lat', 'lon', ...)
+    qq = qq.transpose('time', ...) 
 
     if reverse_ssr:
         qq = ssr.reverse_ssr(qq)
