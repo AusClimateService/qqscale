@@ -10,7 +10,7 @@ import dask.diagnostics
 import utils
 
 
-def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100):
+def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100, perform_ssr=False):
     """Calculate qq-scaling adjustment factors.
 
     Parameters
@@ -45,15 +45,24 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
             ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
     
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
+
     if time_grouping == 'monthly':
         group = 'time.month'
     elif time_grouping == '3monthly':
         group = sdba.Grouper('time.month', window=3)
     else:
         group = 'time'
+
+    if perform_ssr:
+        da_ref = utils.apply_ssr(ds_ref[ref_var])
+        da_hist = utils.apply_ssr(ds_hist[hist_var])
+    else:
+        da_ref = ds_ref[ref_var]
+        da_hist = ds_hist[hist_var]
+
     qm = sdba.QuantileDeltaMapping.train(
-        ds_ref[ref_var],
-        ds_hist[hist_var],
+        da_ref,
+        da_hist,
         nquantiles=nquantiles,
         group=group,
         kind=scaling_methods[scaling]
@@ -110,7 +119,8 @@ def main(args):
         args.ref_var,
         args.scaling,
         time_grouping=args.time_grouping,
-        nquantiles=args.nquantiles
+        nquantiles=args.nquantiles,
+        perform_ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
     ds_out.to_netcdf(args.output_file)
@@ -206,6 +216,12 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help="output data units"
+    )
+    parser.add_argument(
+        "--ssr",
+        action="store_true",
+        default=False,
+        help='Apply Singularity Stochastic Removal to input data',
     )
     parser.add_argument(
         "--verbose",

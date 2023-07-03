@@ -95,13 +95,10 @@ $ python calc_adjustment.py -h
 ## Data processing
   
 In general, QDM and/or CDFm can be achieved using the following scripts:
-1. (optional) `ssr.py` to apply Singularity Stochastic Removal (SSR) to the input data
-   (just for precipitation data when using multiplicative adjustment)
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
    (in QDM the reference dataset is a future model simulation; in CDFm it is observations)
 1. `adjust.py` to apply the adjustment factors to the *target* data
    (in QDM the target data is observations; in CDFm it is a model simulation)
-1. (optional) `match_mean_change.py` to match up the model and QDM mean change 
 
 ### Large datasets
 
@@ -130,41 +127,28 @@ a QDM workflow would look something like this:
 
 ```python
 
-import ssr
 import train
 import adjust
-import match_mean_change
 
 
-scaling = 'additive'
-apply_ssr = False  # Use True for precip data
-mean_match = False
-
-if apply_ssr:
-    ds_hist[hist_var] = ssr.apply_ssr(ds_hist[hist_var])
-    ds_ref[ref_var] = ssr.apply_ssr(ds_ref[ref_var])
-    ds_target[target_var] = ssr.apply_ssr(ds_target[target_var])
-
-ds_adjust = train.train(ds_hist, ds_ref, hist_var, ref_var, scaling)
+ds_adjust = train.train(
+    ds_hist,
+    ds_ref,
+    hist_var,
+    ref_var,
+    scaling='additive',
+    time_grouping='monthly',
+    nquantiles=nquantiles,
+    perform_ssr=False,  # Use True for precip data
+)
 ds_qq = adjust.adjust(
     ds_target,
     target_var,
     ds_adjust,
-    reverse_ssr=apply_ssr,
-    ref_time=True
+    perform_ssr=False,  # Use True for precip data
+    ref_time=True,
+    interp='nearest', 
 )
-
-if mean_match:
-    match_timescale = 'annual'  # can be annual or monthly   
-    ds_qq_mmc = match_mean_change.match_mean_change(
-        ds_qq,
-        target_var,
-        ds_hist[hist_var],
-        da_ref[ref_var],
-        da_target[target_var],
-        scaling,
-        match_timescale
-    )
 ```
 
 ## Questions
