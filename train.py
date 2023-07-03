@@ -10,7 +10,7 @@ import dask.diagnostics
 import utils
 
 
-def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100, perform_ssr=False):
+def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100, ssr=False):
     """Calculate qq-scaling adjustment factors.
 
     Parameters
@@ -28,7 +28,9 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     time_grouping : {'monthly', '3monthly'} default None
         Time period grouping (default is no grouping)
     nquantiles : int, default 100
-        Number of quantiles to process 
+        Number of quantiles to process
+    ssr : bool, default False
+        Perform singularity stochastic removal 
         
     Returns
     -------
@@ -53,7 +55,7 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     else:
         group = 'time'
 
-    if perform_ssr:
+    if ssr:
         da_ref = utils.apply_ssr(ds_ref[ref_var])
         da_hist = utils.apply_ssr(ds_hist[hist_var])
     else:
@@ -120,7 +122,7 @@ def main(args):
         args.scaling,
         time_grouping=args.time_grouping,
         nquantiles=args.nquantiles,
-        perform_ssr=args.ssr,
+        ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
     ds_out.to_netcdf(args.output_file)

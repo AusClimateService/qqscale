@@ -82,7 +82,16 @@ def ds_target(ds_hist):
 def ds_adjust(ds_hist, ds_ref):
     """Calculate example adjustment factors."""
     
-    ds_adjust = train.train(ds_hist, ds_ref, 'tasmax', 'tasmax', 'additive', time_grouping='monthly')
+    ds_adjust = train.train(
+        ds_hist,
+        ds_ref,
+        'tasmax',
+        'tasmax',
+        scaling='additive',
+        nquantiles=100,
+        time_grouping='monthly',
+        ssr=False,
+    )
 
     return ds_adjust
 
@@ -95,7 +104,7 @@ def ds_qq(ds_target, ds_adjust):
         ds_target,
         'tasmax',
         ds_adjust,
-        reverse_ssr=False,
+        ssr=False,
         ref_time=True,
         interp='nearest'
     )

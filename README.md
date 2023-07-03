@@ -139,13 +139,13 @@ ds_adjust = train.train(
     scaling='additive',
     time_grouping='monthly',
     nquantiles=nquantiles,
-    perform_ssr=False,  # Use True for precip data
+    ssr=False,  # Use True for precip data
 )
 ds_qq = adjust.adjust(
     ds_target,
     target_var,
     ds_adjust,
-    perform_ssr=False,  # Use True for precip data
+    ssr=False,  # Use True for precip data
     ref_time=True,
     interp='nearest', 
 )

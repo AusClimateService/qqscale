@@ -12,7 +12,7 @@ import dask.diagnostics
 import utils
 
 
-def adjust(ds, var, ds_adjust, perform_ssr=False, ref_time=False, interp='linear'):
+def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='linear'):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -23,7 +23,7 @@ def adjust(ds, var, ds_adjust, perform_ssr=False, ref_time=False, interp='linear
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
         Adjustment factors calculated using train.train
-    perform_ssr : bool, default False
+    ssr : bool, default False
         Perform singularity stochastic removal
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
@@ -57,7 +57,7 @@ def adjust(ds, var, ds_adjust, perform_ssr=False, ref_time=False, interp='linear
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    if perform_ssr:
+    if ssr:
         da = utils.apply_ssr(ds[var])
     else:
         da = ds[var]
@@ -68,7 +68,7 @@ def adjust(ds, var, ds_adjust, perform_ssr=False, ref_time=False, interp='linear
         qq = qq.transpose('lat', 'lon', ...)
     qq = qq.transpose('time', ...) 
 
-    if perform_ssr:
+    if ssr:
         qq = utils.reverse_ssr(qq)
 
     qq = qq.to_dataset()    
@@ -100,7 +100,7 @@ def main(args):
         ds,
         args.var,
         ds_adjust,
-        perform_ssr=args.ssr,
+        ssr=args.ssr,
         ref_time=args.ref_time,
         interp=args.interp,
     )
