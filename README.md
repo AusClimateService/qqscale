@@ -136,9 +136,9 @@ ds_adjust = train.train(
     ds_ref,
     hist_var,
     ref_var,
-    scaling='additive',
+    scaling='additive',  # use multiplicative for precip data
     time_grouping='monthly',
-    nquantiles=nquantiles,
+    nquantiles=100,
     ssr=False,  # Use True for precip data
 )
 ds_qq = adjust.adjust(
