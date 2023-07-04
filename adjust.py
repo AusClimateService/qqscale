@@ -10,10 +10,9 @@ from xclim import sdba
 import dask.diagnostics
 
 import utils
-import ssr
 
 
-def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear'):
+def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='linear'):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -24,8 +23,8 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
         Adjustment factors calculated using train.train
-    reverse_ssr : bool, default False
-        Reverse singularity stochastic removal after adjustment
+    ssr : bool, default False
+        Perform singularity stochastic removal
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
     interp : {'nearest', 'linear', 'cubic'}, default 'linear'
@@ -58,14 +57,19 @@ def adjust(ds, var, ds_adjust, reverse_ssr=False, ref_time=False, interp='linear
     logging.info(f'af array size: {af_shape}')
     logging.info(f'af chunk size: {af_chunksizes}')
 
-    qq = qm.adjust(ds[var], extrapolation='constant', interp=interp)
+    if ssr:
+        da = utils.apply_ssr(ds[var])
+    else:
+        da = ds[var]
+
+    qq = qm.adjust(da, extrapolation='constant', interp=interp)
     qq = qq.rename(var)
     if spatial_grid:
         qq = qq.transpose('lat', 'lon', ...)
     qq = qq.transpose('time', ...) 
 
-    if reverse_ssr:
-        qq = ssr.reverse_ssr(qq)
+    if ssr:
+        qq = utils.reverse_ssr(qq)
 
     qq = qq.to_dataset()    
     if ref_time:
@@ -96,7 +100,7 @@ def main(args):
         ds,
         args.var,
         ds_adjust,
-        reverse_ssr=args.ssr,
+        ssr=args.ssr,
         ref_time=args.ref_time,
         interp=args.interp,
     )
@@ -147,7 +151,7 @@ if __name__ == '__main__':
         "--ssr",
         action="store_true",
         default=False,
-        help='Reverse Singularity Stochastic Removal when writing outfile',
+        help='Perform Singularity Stochastic Removal',
     )
     parser.add_argument(
         "--verbose",

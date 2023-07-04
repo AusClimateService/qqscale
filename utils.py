@@ -6,6 +6,7 @@ import git
 import numpy as np
 import xarray as xr
 import xclim as xc
+from xclim import sdba
 from xclim.sdba import nbutils
 import xesmf as xe
 
@@ -47,6 +48,7 @@ def read_data(
     input_units=None,
     output_units=None,
     lon_chunk_size=None,
+    apply_ssr=False,
 ):
     """Read and process an input dataset."""
 
@@ -82,6 +84,70 @@ def read_data(
     logging.info(f'Chunk size: {ds[var].chunksizes}')
     
     return ds
+
+
+def apply_ssr(da, threshold='8.64e-4 mm day-1'):
+    """Apply Singularity Stochastic Removal.
+
+    Used to avoid divide by zero errors in the analysis of precipitation data.
+    All near-zero values (i.e. < threshold) are set to a small random non-zero value:
+    0 < value <= threshold
+    
+    Parameters
+    ----------
+    da : xarray DataArray
+        Input precipitation data
+    threhsold : str, default '8.64e-4 mm day-1'
+        Threshold for near-zero rainfall
+
+    Returns
+    -------
+    da_ssr : xarray DataArray
+        Input data with ssr applied
+
+    Reference
+    ---------
+    Vrac, M., Noel, T., & Vautard, R. (2016). Bias correction of precipitation
+    through Singularity Stochastic Removal: Because occurrences matter.
+    Journal of Geophysical Research: Atmospheres, 121(10), 5237–5258.
+    https://doi.org/10.1002/2015JD024511
+    """
+
+    da_ssr = sdba.processing.jitter_under_thresh(da, '8.64e-4 mm day-1')
+
+    return da_ssr
+
+
+def reverse_ssr(da_ssr, threshold=8.64e-4):
+    """Reverse Singularity Stochastic Removal.
+
+    SSR is used to avoid divide by zero errors in the analysis of precipitation data.
+    It involves setting near-zero values (i.e. < threshold) to a small non-zero random value: 0 < value <= threshold.
+    This function reverses SSR (commonly at the end of a calculation) by setting all near-zero values (i.e. < threshold) to zero.
+    
+    Parameters
+    ----------
+    da_ssr : xarray DataArray
+        Input precipitation data (that has had SSR applied)
+    threhsold : float, default 8.64e-4 mm
+        Threshold for near-zero rainfall
+
+    Returns
+    -------
+    da_no_ssr : xarray DataArray
+        Input data with ssr reversed
+
+    Reference
+    ---------
+    Vrac, M., Noel, T., & Vautard, R. (2016). Bias correction of precipitation
+    through Singularity Stochastic Removal: Because occurrences matter.
+    Journal of Geophysical Research: Atmospheres, 121(10), 5237–5258.
+    https://doi.org/10.1002/2015JD024511
+    """
+
+    da_no_ssr = da_ssr.where(da_ssr >= threshold, 0.0)
+
+    return da_no_ssr
 
 
 def get_quantiles(da, quantiles, timescale='monthly'):
