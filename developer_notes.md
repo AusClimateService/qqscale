@@ -1,9 +1,9 @@
 ## Developer notes
 
+### xclim implementation
+
 The command line programs in this repository use the
 [bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html) functionality in xclim. 
-
-### Typical workflow
 
 A typical quantile delta change workflow using xclim
 starts by calculating the adjustment factors for each quantile:
@@ -39,10 +39,13 @@ a corresponding quantile is calculated
 and then xclim looks up the nearest (`interp="nearest"`) adjustment factor to that quantile in `af`
 and applies it to that observational value.
 It is also possible to use linear or cubic interpolation (e.g. `interp="linear"`)
-instead of just picking the nearest adjustment factor.
-(See [Wang and Chen (2013)](https://doi.org/10.1002/asl2.454)) for an explanation of why
+instead of just picking the nearest adjustment factor,
+although often it makes very little difference to the end result.
+(See [Wang and Chen (2013)](https://doi.org/10.1002/asl2.454) for an explanation of why
 non-parametric methods like linear and cubic interpolation are preferred to
 fitting a parametric distribution.)
+
+#### Interpolation
 
 According to the [documentation](https://xclim.readthedocs.io/en/stable/sdba.html#bias-adjustment-and-downscaling-algorithms),
 the interpolation is done between quantiles (i.e. if a data value falls between two quantiles)
@@ -55,32 +58,4 @@ to smooth out the two dimensional (quantile, month) `af` field.
 From playing around with the different interpolation options,
 it appears that the two dimensional interpolation is cyclic
 (e.g. January values are aware of nearby December values).
-
-### Same, same
-
-According to [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1),
-Quantile Delta Mapping and equidistant/equiratio CDF matching produce the same result.
-
-In other words,
-
-```python
-QDMadd = sdba.QuantileDeltaMapping.train(sim, hist, kind='+')
-future_data = QDMadd.adjust(ref)
-```
-is equivalent to
-```python
-EDCDFm = sdba.QuantileDeltaMapping.train(ref, hist, kind='+')
-future_data = EDCDFm.adjust(sim)
-```
-
-and 
-```python
-QDMmul = sdba.QuantileDeltaMapping.train(sim, hist, kind='*')
-future_data = QDMmul.adjust(ref)
-```
-is equivalent to
-```python
-EQCDFm = sdba.QuantileDeltaMapping.train(ref, hist, kind='*')
-future_data = EQCDFm.adjust(sim)
-```
 

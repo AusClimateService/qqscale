@@ -22,13 +22,6 @@ Depending on the context, there are few different names for this basic method:
   *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
   *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
 
-As explained by [Cannon et al (2015)](https://doi.org/10.1175/JCLI-D-14-00754.1),
-additive/multiplicative Quantile Delta Mapping is actually equivalent to equidistant/equiratio CDF matching.
-In other words, you get the same result regardless of whether you apply
-model delta changes to observational data or bias correct model data.
-See the [developer notes](developer_notes.md) for details.
-
-
 ## Software environment
 
 The scripts in this respository depend on the following Python libraries:
