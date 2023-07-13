@@ -12,7 +12,7 @@ import dask.diagnostics
 import utils
 
 
-def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='linear'):
+def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
     """Apply qq-scale adjustment factors.
 
     Parameters
