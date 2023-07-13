@@ -22,6 +22,9 @@ Depending on the context, there are few different names for this basic method:
   *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
   *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
 
+See [method_ecdfm.md](method_ecdfm.md) and [method_qdm.md](method_qdm.md) for a detailed description
+of these methods and how they are implemented in the qqscale software.
+
 ## Software environment
 
 The scripts in this respository depend on the following Python libraries:
@@ -86,32 +89,17 @@ $ python calc_adjustment.py -h
 ```
 
 ## Data processing
+
+### Command line
   
-In general, QDM and/or CDFm can be achieved using the following scripts:
+At the command line, QDM and/or ECDFm can be achieved by running the following scripts:
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
-   (in QDM the reference dataset is a future model simulation; in CDFm it is observations)
+   (in QDM the reference dataset is a future model simulation; in ECDFm it is observations)
 1. `adjust.py` to apply the adjustment factors to the *target* data
-   (in QDM the target data is observations; in CDFm it is a model simulation)
+   (in QDM the target data is observations; in ECDFm it is a model simulation)
 
-### Large datasets
+### Jupyter notebook
 
-For large datasets (e.g. Australia at 5km spatial resolution)
-it is desirable to break QQ-scaling into a number of steps.
-This helps reduce the indcidence of memory errors or large complicated dask task graphs,
-and by producing intermediary files at each step you can avoid repeating some steps in future.
-This step-by-step process can be achieved by running the scripts listed above
-(in the order presented) as command line programs.
-
-#### Performance
-
-The adjustment step (`adjust.py`) is the most time and memory intensive.
-Here's some examples of time and memory requirements for different applications:
-- 30 years of daily AGCD data (691 x 886 horizontal grid) running on 1 core: 195GB, 5 hours 
-
-### Smaller datasets
-
-When processing a smaller dataset it is also possible to perform the entire QQ-scaling process
-from within a single script/notebook.
 Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_target`) xarray Datasets
 containing the variable of interest (`hist_var`, `ref_var` and `target_var`)
 you can import the relevant functions from the scripts mentioned above.
@@ -143,6 +131,12 @@ ds_qq = adjust.adjust(
     interp='nearest', 
 )
 ```
+
+### Performance
+
+The adjustment step (`adjust.py`) is the most time and memory intensive.
+Here's some examples of time and memory requirements for different applications:
+- 30 years of daily AGCD data (691 x 886 horizontal grid) running on 1 core: 220GB, 2 hours 
 
 ## Questions
 
