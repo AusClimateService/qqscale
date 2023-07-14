@@ -145,7 +145,7 @@ if __name__ == '__main__':
         "--interp",
         type=str,
         choices=('nearest', 'linear', 'cubic'),
-        default='linear',
+        default='nearest',
         help="Method for interpolation of adjustment factors",
     )
     parser.add_argument(
