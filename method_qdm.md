@@ -41,17 +41,37 @@ There are a number of choices to make when applying QDM:
   so QDM is usually applied without fitting a parametric distribution to the data first.
   Our qqscale software takes a non-parametric / empirical approach.
 - *Downscaling (when and how)*:
-  TODO
+  Model data is usually on a coarser spatial grid than observations.
+  Some authors downscale the model data first (e.g. via simple spatial interpolation or statistical downscaling)
+  and then perform QDM.
+  Others upscale the observations, perform QDM on the model grid and then downscale the result
+  (e.g. [Gergel et al 2023](https://doi.org/10.5194/egusphere-2022-1513)).
+  Our qqscale software takes the most computationally efficient approach,
+  which is to calculate the quantile changes on the model grid,
+  downscale those change factors using bilinear interpolation
+  and then apply them to the observations.
 - *Qunatiles (number and interpolation)*:
   Our qqscale software allows the user to specify
   the number of quantiles to calculate and
-  what interpolation method to use to determine the adjustment factor
-  for target data points that fall between two quantiles.
+  what interpolation method to use to determine the change factor
+  for observed data points that fall between two quantiles.
   The software default is 100 quantiles and nearest neighbour interpolation.
   We've found that linear and cubic interpolation (the other options)
   is much more computationally expensive and produces very similar results to nearest neighbour.
 - *Time grouping*:
-  It is common to bias correct individual seasons or months separately
+  It is common to apply quantile mapping methods to individual seasons or months separately
   to avoid conflating different times of the year
   (e.g. spring and autumn temperatures often occupy the same annual quantile space
-  but may be biased in different ways)... TODO
+  but may change in different ways between an historical and future simulation).
+  When processing temperature data (or indeed any additive application of QDM)
+  we commonly use monthly time grouping for QDM (i.e. process each month separately).
+  We've found that something like a 30-day running window is far more computationally expensive
+  and produces similar results to monthly grouping.
+  When processing precipitation data (a multiplicative application of QDM)
+  we've found ([see rough notebook](https://github.com/climate-innovation-hub/qq-workflows/blob/main/cih_paper/seasonal_cycle.ipynb))
+  that in many locations the model bias in the timing of the seasonal cycle
+  means that monthly time grouping dramatically modifies the climate trend in the data
+  (i.e. the mean change between the future data produced by QDM and the observations
+  is much different than the mean change between the future and historical model simulations).
+  As such, we don't apply any time grouping when applying QDM to precipitation data.
+   
