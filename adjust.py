@@ -27,7 +27,7 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         Perform singularity stochastic removal
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
-    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
+    interp : {'nearest', 'linear', 'cubic'}, default 'nearest'
         Method for interpolation of adjustment factors
         
     Returns
