@@ -12,7 +12,7 @@ import dask.diagnostics
 import utils
 
 
-def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
+def adjust(ds, var, ds_adjust, interp='nearest', ssr=False, ref_time=False, output_tslice=None):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -23,12 +23,15 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
         Adjustment factors calculated using train.train
+    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
+        Method for interpolation of adjustment factors
     ssr : bool, default False
         Perform singularity stochastic removal
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
-    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
-        Method for interpolation of adjustment factors
+    output_tslice : list, default None
+        Return a time slice of the adjusted data
+        Format: ['YYYY-MM-DD', 'YYYY-MM-DD'] 
         
     Returns
     -------
@@ -77,6 +80,10 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
         qq['time'] = qq['time'] + time_adjustment
 
+    if output_tslice:
+        start_date, end_date = output_tslice
+        qq = qq.sel({'time': slice(start_date, end_date)}) 
+
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
@@ -91,7 +98,7 @@ def main(args):
     ds = utils.read_data(
         args.infiles,
         args.var,
-        time_bounds=args.time_bounds,
+        time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
         no_leap=args.no_leap,
@@ -101,9 +108,10 @@ def main(args):
         ds,
         args.var,
         ds_adjust,
+        interp=args.interp,
         ssr=args.ssr,
         ref_time=args.ref_time,
-        interp=args.interp,
+        output_tslice=args.output_tslice,
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
@@ -128,12 +136,20 @@ if __name__ == '__main__':
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
-        "--time_bounds",
+        "--adjustment_tbounds",
         type=str,
         nargs=2,
         metavar=('START_DATE', 'END_DATE'),
         default=None,
-        help="time bounds in YYYY-MM-DD format"
+        help="time bounds over which to calculate quantiles for adjustments [use YYYY-MM-DD format]"
+    )
+    parser.add_argument(
+        "--output_tslice",
+        type=str,
+        nargs=2,
+        metavar=('START_DATE', 'END_DATE'),
+        default=None,
+        help="return a time slice of the adjusted data [use YYYY-MM-DD format]"
     )
     parser.add_argument(
         "--ref_time",
