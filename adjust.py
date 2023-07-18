@@ -12,7 +12,16 @@ import dask.diagnostics
 import utils
 
 
-def adjust(ds, var, ds_adjust, interp='nearest', ssr=False, ref_time=False, output_tslice=None):
+def adjust(
+    ds,
+    var,
+    ds_adjust,
+    spatial_grid='input',
+    interp='nearest',
+    ssr=False,
+    ref_time=False,
+    output_tslice=None
+):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -23,6 +32,8 @@ def adjust(ds, var, ds_adjust, interp='nearest', ssr=False, ref_time=False, outp
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
         Adjustment factors calculated using train.train
+    spatial_grid : {'input', 'af'}, default 'input'
+        Spatial grid for output data (choices are input data or adjustment factor grid)
     interp : {'nearest', 'linear', 'cubic'}, default 'linear'
         Method for interpolation of adjustment factors
     ssr : bool, default False
@@ -45,10 +56,15 @@ def adjust(ds, var, ds_adjust, interp='nearest', ssr=False, ref_time=False, outp
         f"input file units {infile_units} differ from adjustment factor units {af_units}"
 
     dims = ds[var].dims
-    spatial_grid = ('lat' in dims) and ('lon' in dims)
-    if spatial_grid:
+    on_spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if on_spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
-            ds_adjust = utils.regrid(ds_adjust, ds)
+            if spatial_grid == 'input':
+                ds_adjust = utils.regrid(ds_adjust, ds)
+            elif spatial_grid == 'af':
+                ds = utils.regrid(ds, ds_adjust, variable=var)
+        assert len(ds_adjust['lat']) == len(ds['lat'])
+        assert len(ds_adjust['lon']) == len(ds['lon'])
 
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     hist_q_shape = qm.ds['hist_q'].shape
@@ -108,6 +124,7 @@ def main(args):
         ds,
         args.var,
         ds_adjust,
+        spatial_grid=args.spatial_grid,
         interp=args.interp,
         ssr=args.ssr,
         ref_time=args.ref_time,
@@ -118,7 +135,7 @@ def main(args):
         args.infiles[0]: ds.attrs['history'],
     }
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    qq.to_netcdf(args.outfile)
+    qq.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
 
 
 if __name__ == '__main__':
@@ -156,6 +173,13 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Shift output time axis to match reference dataset',
+    )
+    parser.add_argument(
+        "--spatial_grid",
+        type=str,
+        choices=('input', 'af'),
+        default='input',
+        help="Spatial grid for output data (input data or adjustment factor grid)",
     )
     parser.add_argument(
         "--interp",
