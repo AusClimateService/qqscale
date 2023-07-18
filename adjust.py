@@ -34,7 +34,7 @@ def adjust(
         Adjustment factors calculated using train.train
     spatial_grid : {'input', 'af'}, default 'input'
         Spatial grid for output data (choices are input data or adjustment factor grid)
-    interp : {'nearest', 'linear', 'cubic'}, default 'linear'
+    interp : {'nearest', 'linear', 'cubic'}, default 'nearest'
         Method for interpolation of adjustment factors
     ssr : bool, default False
         Perform singularity stochastic removal
@@ -185,7 +185,7 @@ if __name__ == '__main__':
         "--interp",
         type=str,
         choices=('nearest', 'linear', 'cubic'),
-        default='linear',
+        default='nearest',
         help="Method for interpolation of adjustment factors",
     )
     parser.add_argument(
