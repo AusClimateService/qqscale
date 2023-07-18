@@ -12,7 +12,16 @@ import dask.diagnostics
 import utils
 
 
-def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
+def adjust(
+    ds,
+    var,
+    ds_adjust,
+    spatial_grid='input',
+    interp='nearest',
+    ssr=False,
+    ref_time=False,
+    output_tslice=None
+):
     """Apply qq-scale adjustment factors.
 
     Parameters
@@ -23,12 +32,17 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         Variable to be adjusted (i.e. in ds)
     ds_adjust : xarray Dataset
         Adjustment factors calculated using train.train
+    spatial_grid : {'input', 'af'}, default 'input'
+        Spatial grid for output data (choices are input data or adjustment factor grid)
+    interp : {'nearest', 'linear', 'cubic'}, default 'nearest'
+        Method for interpolation of adjustment factors
     ssr : bool, default False
         Perform singularity stochastic removal
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
-    interp : {'nearest', 'linear', 'cubic'}, default 'nearest'
-        Method for interpolation of adjustment factors
+    output_tslice : list, default None
+        Return a time slice of the adjusted data
+        Format: ['YYYY-MM-DD', 'YYYY-MM-DD'] 
         
     Returns
     -------
@@ -42,10 +56,15 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         f"input file units {infile_units} differ from adjustment factor units {af_units}"
 
     dims = ds[var].dims
-    spatial_grid = ('lat' in dims) and ('lon' in dims)
-    if spatial_grid:
+    on_spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if on_spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
-            ds_adjust = utils.regrid(ds_adjust, ds)
+            if spatial_grid == 'input':
+                ds_adjust = utils.regrid(ds_adjust, ds)
+            elif spatial_grid == 'af':
+                ds = utils.regrid(ds, ds_adjust, variable=var)
+        assert len(ds_adjust['lat']) == len(ds['lat'])
+        assert len(ds_adjust['lon']) == len(ds['lon'])
 
     qm = sdba.QuantileDeltaMapping.from_dataset(ds_adjust)
     hist_q_shape = qm.ds['hist_q'].shape
@@ -77,6 +96,10 @@ def adjust(ds, var, ds_adjust, ssr=False, ref_time=False, interp='nearest'):
         time_adjustment = np.datetime64(new_start_date) - qq['time'][0]
         qq['time'] = qq['time'] + time_adjustment
 
+    if output_tslice:
+        start_date, end_date = output_tslice
+        qq = qq.sel({'time': slice(start_date, end_date)}) 
+
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
@@ -91,7 +114,7 @@ def main(args):
     ds = utils.read_data(
         args.infiles,
         args.var,
-        time_bounds=args.time_bounds,
+        time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
         no_leap=args.no_leap,
@@ -101,16 +124,18 @@ def main(args):
         ds,
         args.var,
         ds_adjust,
+        spatial_grid=args.spatial_grid,
+        interp=args.interp,
         ssr=args.ssr,
         ref_time=args.ref_time,
-        interp=args.interp,
+        output_tslice=args.output_tslice,
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
         args.infiles[0]: ds.attrs['history'],
     }
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    qq.to_netcdf(args.outfile)
+    qq.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
 
 
 if __name__ == '__main__':
@@ -128,18 +153,33 @@ if __name__ == '__main__':
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
-        "--time_bounds",
+        "--adjustment_tbounds",
         type=str,
         nargs=2,
         metavar=('START_DATE', 'END_DATE'),
         default=None,
-        help="time bounds in YYYY-MM-DD format"
+        help="time bounds over which to calculate quantiles for adjustments [use YYYY-MM-DD format]"
+    )
+    parser.add_argument(
+        "--output_tslice",
+        type=str,
+        nargs=2,
+        metavar=('START_DATE', 'END_DATE'),
+        default=None,
+        help="return a time slice of the adjusted data [use YYYY-MM-DD format]"
     )
     parser.add_argument(
         "--ref_time",
         action="store_true",
         default=False,
         help='Shift output time axis to match reference dataset',
+    )
+    parser.add_argument(
+        "--spatial_grid",
+        type=str,
+        choices=('input', 'af'),
+        default='input',
+        help="Spatial grid for output data (input data or adjustment factor grid)",
     )
     parser.add_argument(
         "--interp",

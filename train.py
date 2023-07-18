@@ -127,7 +127,11 @@ def main(args):
         ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
-    ds_out.to_netcdf(args.output_file)
+    encoding = {
+        'af': {'least_significant_digit': 2, 'zlib': True},
+        'hist_q': {'least_significant_digit': 2, 'zlib': True},
+    }
+    ds_out.to_netcdf(args.output_file, encoding=encoding)
 
 
 if __name__ == '__main__':
