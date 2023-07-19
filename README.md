@@ -136,7 +136,10 @@ ds_qq = adjust.adjust(
 
 The adjustment step (`adjust.py`) is the most time and memory intensive.
 Here's some examples of time and memory requirements for different applications:
-- 30 years of daily AGCD data (691 x 886 horizontal grid) running on 1 core: 220GB, 2 hours 
+- EDCDFm with 30 years of daily CORDEX and AGCD data (691 x 886 horizontal grid):
+  - Training step: Compute (1 core) requires 250GB and 1hr 30min. Produces 1.3GB adjustment factor file.
+  - Adjustment step: Compute (1 core) requires 185GB and 1hr 50min. Produces output files of approx 200MB per year.
+  - Regridding the target data prior to performing the adjustment makes very little difference to processing time
 
 ## Questions
 
