@@ -36,7 +36,7 @@ is used:
 
 $$x_{m-adjust} = x_{m,p} \times (F_{o,h}^{-1}(F_{m,p}(x_{m,p})) \div F_{m,h}^{-1}(F_{m,p}(x_{m,p})))$$
 
-## Methododological decisions
+## Methodological decisions
 
 There are a number of choices to make when applying EDCDFm or EQCDFm: 
 - *Parametric or non-parametric*:
