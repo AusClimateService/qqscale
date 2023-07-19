@@ -60,8 +60,10 @@ def adjust(
     if on_spatial_grid:
         if len(ds_adjust['lat']) != len(ds['lat']):
             if spatial_grid == 'input':
+                logging.info('Regridding adjustment factors to input data grid')
                 ds_adjust = utils.regrid(ds_adjust, ds)
             elif spatial_grid == 'af':
+                logging.info('Regridding input data to adjustment factor grid')
                 ds = utils.regrid(ds, ds_adjust, variable=var)
         assert len(ds_adjust['lat']) == len(ds['lat'])
         assert len(ds_adjust['lon']) == len(ds['lon'])
