@@ -1,4 +1,4 @@
-## Worked example: NPCP
+# Worked example: NPCP
 
 The [NPCP bias correction intercomparison](https://github.com/AusClimateService/npcp)
 includes a cross validation task that involves producing bias corrected data
@@ -9,29 +9,27 @@ The following example describes how to complete this task using the
 equidistant CDF matching (EDCDFm) bias correction method for a given
 variable (tasmin),
 regional climate model (UQ-DES-CCAM-2105), and
-parent global climate model (CSIRO-ACCESS-ESM1-5):
+parent global climate model (CSIRO-ACCESS-ESM1-5).
 
-
-### Step 1: Training
+## Step 1: Training
 
 The `train.py` command line program can be used to compare historical model data with reference observational data
 in order to produce the bias correction "adjustment factors" needed for the adjustment step.
-
 You can run `python train.py -h` at the command line to view the positional arguments
 and options/flags associated with the program.
-
 To give an example,
-the options/flags for this NPCP task would be as follows...
+the options/flags for the NPCP cross validation task would be as follows...
 
 The `--hist_files` flag is used to specify the historical model data files
 (in this case for odd years from 1980-2019):
 ```
 --hist_files
-/g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc
+/g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc
+/g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc
 /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[1,3,5,7,9]*.nc
 ``` 
 
-The `--ref_files` is used to specify the reference observational data files
+The `--ref_files` flag is used to specify the reference observational data files
 (also odd years from 1980-2019):
 
 ```
@@ -51,75 +49,68 @@ There are also some flags that aren't necessarily needed in this case but can be
 - `--hist_time_bounds 1980-01-01 2019-12-31`: Time bounds for historical period (i.e. for if your input files span a longer time period than required).
 - `--ref_time_bounds 1980-01-01 2019-12-31`: Time bounds for reference period (i.e. for if your input files span a longer time period than required).
 - `--input_hist_units C`, `--input_ref_units C`, `--output_units C`: Specify input and desired output units and the code will convert units if required.
-- `--verbose`: Program progress printed to the screen.
+- `--verbose`: As the program runs it will print progess updates to the screen.
 
 Putting these options together with the positional arguments (the historical variable, reference variable and output adjustment factor file name) looks as follows:
 
 ```
-python train.py tasmin tasmin /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc --hist_files
-/g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc
-/g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[1,3,5,7,9]*.nc --ref_files 
-/g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_19?[1,3,5,7,9]*.nc 
-/g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_200[1,3,5,7,9]*.nc
-/g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_201[1,3,5,7,9]*.nc --hist_time_bounds 1980-01-01 2019-12-31 --ref_time_bounds 1980-01-01 2019-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units C --input_ref_units C --output_units C --verbose  --no_leap
+python train.py tasmin tasmin /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc --hist_files /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[1,3,5,7,9]*.nc --ref_files /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_19?[1,3,5,7,9]*.nc  /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_201[1,3,5,7,9]*.nc --hist_time_bounds 1980-01-01 2019-12-31 --ref_time_bounds 1980-01-01 2019-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units C --input_ref_units C --output_units C --verbose  --no_leap
 ``` 
+See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
 
 See the [performance notes](https://github.com/climate-innovation-hub/qqscale/tree/master#performance)
 for details on the expected time and memory requirements for this training step.
 
-
-### Step 2: Adjustment
+## Step 2: Adjustment
 
 The `adjust.py` command line program can be used to bias correct model data using
 the adjustment factors calculated in the previous step.
-
 You can run `python adjust.py -h` at the command line to view the positional arguments
 and options/flags associated with the program.
 
 The positional arguments for this program are the target model files
-(i.e. the data that needs to be bias corrected),
-
+(i.e. the data that needs to be bias corrected):
 ```
 /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[0,2,4,6,8]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[0,2,4,6,8]*.nc
 /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[0,2,4,6,8]*.nc
 ```
-
-followed by the variable (`tasmin`),
-adjustment factor file,
+followed by the variable:
+```
+tasmin
+```
+adjustment factor file:
 ```
 /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc
 ``` 
 and name of the output bias corrected data file
-(in this case following the file naming convenions of the NPCP project).
+(in this case following the file naming convenions of the NPCP project):
 ```
 /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19800101-20181231-even-years_ecdfm-additive-monthly-q100-nearest-AGCD-19810101-20191231-odd-years.nc
 ``` 
 
 There are a number of options/flags that are also required to complete this task:
-- `--spatial_grid af`: Whether to output data on the adjustment factor (`af`) or input data (`input`) grid. In this case both grids are the same, but in general we want data on the adjustment grid because that's the observational (as opposed to model) grid.
+- `--spatial_grid af`: The flag specifies whether to output data on the adjustment factor (`af`) or input data (`input`) grid. In this case both grids are the same, but in general we want data on the adjustment grid because that's the observational (as opposed to model) grid.
 - `--interp nearest`: The method for interpolating between adjustment factors (see [method_ecdfm.md](method_ecdfm.md) for an explanation of why we prefer nearest neighbour).
 
 There are also some flags that aren't necessarily needed in this case but can be useful:
 - `--adjustment_tbounds 1980-01-01 2019-12-31`: Time bounds to perform the bias correction over (i.e. for if your input files span a longer time period than required).
 - `--input_units C`, `--output_units C`: Specify input and desired output units and the code will convert units if required.
-- `--verbose`: Program progress printed to the screen.
+- `--verbose`: As the program runs it will print progess updates to the screen.
 
 Putting all these positional and options/flags together:
-
 ```
 python adjust.py /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19800101-19801231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19820101-19821231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19840101-19841231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19860101-19861231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19880101-19881231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19900101-19901231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19920101-19921231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19940101-19941231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19960101-19961231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19980101-19981231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20000101-20001231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20020101-20021231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20040101-20041231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20060101-20061231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20080101-20081231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20100101-20101231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20120101-20121231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20140101-20141231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20160101-20161231.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_20180101-20181231.nc tasmin /g/data/xv83/dbi599/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19800101-20181231-even-years_ecdfm-additive-monthly-q100-nearest-AGCD-19810101-20191231-odd-years.nc --adjustment_tbounds 1980-01-01 2018-12-31 --input_units C --output_units C --spatial_grid af  --interp nearest --verbose
 ```
+See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
 
 See the [performance notes](https://github.com/climate-innovation-hub/qqscale/tree/master#performance)
 for details on the expected time and memory requirements for this adjustment step.
-
 
 ## Step 3: Visualise (Optional)
 
 It can be useful to visualise the bias correction process to understand what
 modifications have been made to the original data.
-
-A template visualisation notebook is available at:
+A template visualisation notebook is available at:  
 https://github.com/climate-innovation-hub/qq-workflows/blob/main/validation.ipynb
 
 The [papermill](https://papermill.readthedocs.io) tool can be used to insert
@@ -141,12 +132,10 @@ The result is a new notebook called:
 You can view an example of what such a notebook looks like
 [here](https://github.com/climate-innovation-hub/qq-workflows/blob/main/validation.ipynb).
 
-
 ## Workflow coordination
 
 You can see from steps 1-3 that there are lots of positional arguments and program options/flags to remember,
 which means it can be easy to forget something or make an error.
-
 If you don't already have a process for managing complicated workflows like this,
 using a build tool like Make can be helpful.
 The Makefile at https://github.com/climate-innovation-hub/qq-workflows
@@ -155,14 +144,13 @@ has been built to coordinate the bias correction workflow described above.
 You can run `make help` at the command line to see the help information.
 
 To run steps 1-3 above,
-the command would be,
-
+the command would be:
 ```
 make validation CONFIG=config_file.mk
 ```
 
-Where `config_file.mk` looks something like:
+where `config_file.mk` looks something like:  
 https://github.com/climate-innovation-hub/qq-workflows/blob/main/npcp/config_tas_ecdfm_npcp.mk
 
 Feel free to open an issue at the qq-workflows repository
-if you'd like help creating a configuration file for your workflow.
+if you'd like help creating a configuration file to use make for your workflow.
