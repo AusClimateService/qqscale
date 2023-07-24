@@ -44,11 +44,11 @@ If you're a member of the `wp00` project on NCI
 the easiest way to use the scripts in this directory is to use the cloned copy at `/g/data/wp00/shared_code/qqscale/`.
 They can be run using the Python environment at `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python`.
 
-For example, to view the help information for the `apply_adjustment.py` script
+For example, to view the help information for the `adjust.py` script
 a member of the `wp00` project could run the following:
 
 ```
-$ /g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python /g/data/wp00/shared_code/qqscale/apply_adjustment.py -h
+$ /g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python /g/data/wp00/shared_code/qqscale/adjust.py -h
 ```
 
 ### For members of the Australian Climate Service...
@@ -65,7 +65,7 @@ $ cd qqscale
 You can then run the scripts using the Python environment at `/g/data/xv83/dbi599/miniconda3/envs/qqscale`. e.g.:
 
 ```
-$ /g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python apply_adjustment.py -h
+$ /g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python adjust.py -h
 ```
 
 ### For everyone else...
@@ -85,7 +85,7 @@ For example:
 ```
 $ git clone git@github.com:climate-innovation-hub/qqscale.git
 $ cd qqscale
-$ python calc_adjustment.py -h
+$ python adjust.py -h
 ```
 
 ## Data processing
