@@ -22,7 +22,7 @@ Depending on the context, there are few different names for this basic method:
   *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
   *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
 
-See [method_ecdfm.md](method_ecdfm.md) and [method_qdm.md](method_qdm.md) for a detailed description
+See [docs/method_ecdfm.md](docs/method_ecdfm.md) and [docs/method_qdm.md](docs/method_qdm.md) for a detailed description
 of these methods and how they are implemented in the qqscale software.
 
 ## Software environment
@@ -98,6 +98,8 @@ At the command line, QDM and/or ECDFm can be achieved by running the following s
 1. `adjust.py` to apply the adjustment factors to the *target* data
    (in QDM the target data is observations; in ECDFm it is a model simulation)
 
+See the files named `docs/example_*.md` for detailed worked examples using these two command line programs.
+
 ### Jupyter notebook
 
 Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_target`) xarray Datasets
@@ -136,10 +138,15 @@ ds_qq = adjust.adjust(
 
 The adjustment step (`adjust.py`) is the most time and memory intensive.
 Here's some examples of time and memory requirements for different applications:
-- EDCDFm with 30 years of daily CORDEX and AGCD data (691 x 886 horizontal grid):
-  - Training step: Compute (1 core) requires 250GB and 1hr 30min. Produces 1.3GB adjustment factor file.
-  - Adjustment step: Compute (1 core) requires 185GB and 1hr 50min. Produces output files of approx 200MB per year.
-  - Regridding the target data prior to performing the adjustment makes very little difference to processing time
+
+EDCDFm with 30 years of daily CORDEX and AGCD data (on AUS-05i 691 x 886 horizontal grid):
+- Training step: Compute (1 core) requires 250GB and 1hr 30min. Produces 1.3GB adjustment factor file.
+- Adjustment step: Compute (1 core) requires 185GB and 1hr 50min. Produces output files of approx 200MB per year.
+- Regridding the target data prior to performing the adjustment makes very little difference to processing time.
+
+EDCDFm with 20 years of daily CORDEX and AGCD data (on AUS-20i 171 x 211 horizontal grid):
+- Training step: Compute (1 core) requires 7.3GB and 3min.
+- Adjustment step: Compute (1 core) requires 7.9GB and 4min.
 
 ## Questions
 
