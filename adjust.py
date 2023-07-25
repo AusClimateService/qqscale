@@ -119,7 +119,6 @@ def main(args):
         time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
-        no_leap=args.no_leap,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qq = adjust(
@@ -201,12 +200,6 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to INFO',
-    )
-    parser.add_argument(
-        "--no_leap",
-        action="store_true",
-        default=False,
-        help='Remove leap days',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

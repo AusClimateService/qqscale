@@ -104,8 +104,8 @@ def main(args):
         time_bounds=args.hist_time_bounds,
         input_units=args.input_hist_units,
         output_units=args.output_units,
-        no_leap=args.no_leap,
     )
+    calendar_hist = type(ds_hist['time'].values[0])
     ds_ref = utils.read_data(
         args.ref_files,
         args.ref_var,
@@ -114,7 +114,7 @@ def main(args):
         lon_bounds=args.lon_bounds,
         input_units=args.input_ref_units,
         output_units=args.output_units,
-        no_leap=args.no_leap,
+        output_calendar=calendar_hist,
     )
     ds_out = train(
         ds_hist,
@@ -236,12 +236,6 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to INFO',
-    )
-    parser.add_argument(
-        "--no_leap",
-        action="store_true",
-        default=False,
-        help='Remove leap days',
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

@@ -11,6 +11,25 @@ variable (tasmin),
 regional climate model (UQ-DES-CCAM-2105), and
 parent global climate model (CSIRO-ACCESS-ESM1-5).
 
+> **Shortcut**
+>
+> You'll see in steps 1-3 below that there are lots of
+> positional arguments and program options/flags to remember,
+> which means it can be easy to forget something or make an error.
+>
+> If you don't already have a process for managing complicated workflows like this,
+> using a build tool like Make can be helpful.
+> The Makefile and NPCP configuation file at https://github.com/climate-innovation-hub/qq-workflows
+> have been built to coordinate the bias correction workflow described below.
+>
+> To run steps 1-3 below,
+> you could simply clone the qq-workflows repo and run the following at the command line:
+> ```
+> git clone git@github.com:climate-innovation-hub/qq-workflows.git
+> cd qq-workflows
+> make validation CONFIG=npcp/config_npcp.mk VAR=tasmin TASK=xvalidation RCM_NAME=UQ-DES-CCAM-2105 GCM_NAME=CSIRO-ACCESS-ESM1-5
+> ```
+
 ## Step 1: Training
 
 The `train.py` command line program can be used to compare historical model data with reference observational data
@@ -43,7 +62,6 @@ There are a number of other flags that are also required to complete this task:
 - `--scaling additive`: Additive scaling is typically used for temperature (and `multiplicative` for rainfall).
 - `--time_grouping monthly`: We like to use monthly time grouping (see [method_ecdfm.md](method_ecdfm.md) for an explanation).
 - `--nquantiles 100`: We like to use 100 quantiles.
-- `--no_leap`: The `UQ-DES-CCAM-2105` regional climate model uses a no leap days calendar. This flag adjusts the observational data accordingly. (None of the other RCMs use a leap day calendar and thus this flag is not needed.)
 
 There are also some flags that aren't necessarily needed in this case but can be useful:
 - `--hist_time_bounds 1980-01-01 2019-12-31`: Time bounds for historical period (i.e. for if your input files span a longer time period than required).
@@ -54,7 +72,7 @@ There are also some flags that aren't necessarily needed in this case but can be
 Putting these options together with the positional arguments (the historical variable, reference variable and output adjustment factor file name) looks as follows:
 
 ```
-python train.py tasmin tasmin /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc --hist_files /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[1,3,5,7,9]*.nc --ref_files /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_19?[1,3,5,7,9]*.nc  /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_201[1,3,5,7,9]*.nc --hist_time_bounds 1980-01-01 2019-12-31 --ref_time_bounds 1980-01-01 2019-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units C --input_ref_units C --output_units C --verbose  --no_leap
+python train.py tasmin tasmin /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/ecdfm/task-xvalidation/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_NPCP-20i_CSIRO-ACCESS-ESM1-5_ssp370_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19810101-20191231-odd-years.nc --hist_files /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_19?[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/CSIRO-ACCESS-ESM1-5/UQ-DES-CCAM-2105/raw/task-reference/tasmin_NPCP-20i_CSIRO-ACCESS-ESM1-5_historical_r6i1p1f1_UQ-DES-CCAM-2105_v1_day_201[1,3,5,7,9]*.nc --ref_files /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_19?[1,3,5,7,9]*.nc  /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_200[1,3,5,7,9]*.nc /g/data/ia39/npcp/data/tasmin/observations/AGCD/raw/task-reference/tasmin_NPCP-20i_AGCD_v1-0-1_day_201[1,3,5,7,9]*.nc --hist_time_bounds 1980-01-01 2019-12-31 --ref_time_bounds 1980-01-01 2019-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units C --input_ref_units C --output_units C --verbose
 ``` 
 See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
 
@@ -131,25 +149,7 @@ The result is a new notebook called:
 
 You can view an example of what such a notebook looks like
 [here](https://github.com/climate-innovation-hub/qq-workflows/blob/main/validation.ipynb).
-
-## Workflow coordination
-
-You can see from steps 1-3 that there are lots of positional arguments and program options/flags to remember,
-which means it can be easy to forget something or make an error.
-If you don't already have a process for managing complicated workflows like this,
-using a build tool like Make can be helpful.
-The Makefile at https://github.com/climate-innovation-hub/qq-workflows
-has been built to coordinate the bias correction workflow described above.
-
-You can run `make help` at the command line to see the help information.
-
-To run steps 1-3 above,
-the command would be:
-```
-make validation CONFIG=config_file.mk
-```
-
-where `config_file.mk` looks something like:  
+  
 https://github.com/climate-innovation-hub/qq-workflows/blob/main/npcp/config_tas_ecdfm_npcp.mk
 
 Feel free to open an issue at the qq-workflows repository
