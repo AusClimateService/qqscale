@@ -40,38 +40,55 @@ def profiling_stats(rprof):
     logging.info(f'Peak CPU usage: {max_cpus}%')
 
 
-def convert_to_noleap(ds):
-    """Convert time axis to a no leap calendar"""
+def convert_calendar(ds, output_calendar):
+    """Convert time calendar."""
 
-    ds = ds.sel(time=~((ds['time'].dt.month == 2) & (ds['time'].dt.day == 29)))
+    valid_calendars = {
+        cftime._cftime.DatetimeGregorian: cftime.DatetimeGregorian,
+        cftime._cftime.DatetimeProlepticGregorian: cftime.DatetimeProlepticGregorian,
+        cftime._cftime.DatetimeNoLeap: cftime._cftime.DatetimeNoLeap,
+    }
 
-    new_times = []
-    for old_time in ds['time'].values:
-        new_time = cftime.DatetimeNoLeap(old_time.year, old_time.month, old_time.day, old_time.hour)
-        new_times.append(new_time)
-    time_attrs = ds['time'].attrs
-    ds = ds.assign_coords({'time': new_times})
-    ds['time'].attrs = time_attrs
+    output_calendar_name = str(output_calendar).split('.')[-1][:-2]
+    if output_calendar in valid_calendars:
+        input_calendar_name = str(type(ds['time'].values[0])).split('.')[-1][:-2]
+        output_calendar_name = str(output_calendar).split('.')[-1][:-2]
+        logging.info(f'Convering input {input_calendar_name} calendar to {output_calendar_name}')
 
-    if 'time_bnds' in ds:
-        new_time_bnds = []
-        for old_start, old_end in ds['time_bnds'].values:
-            if (old_start.day == 29) and (old_start.month == 2):
-                old_start_day = 28
-            else:
-                old_start_day = old_start.day
-            new_start = cftime.DatetimeNoLeap(old_start.year, old_start.month, old_start_day, old_start.hour)
-            new_end = cftime.DatetimeNoLeap(old_end.year, old_end.month, old_end.day, old_end.hour)
-            time_diff = new_end - new_start
-            assert time_diff == np.timedelta64(1, 'D')
-            new_time_bnds.append([new_start, new_end])
+        is_noleap = output_calendar == cftime._cftime.DatetimeNoLeap
+        if is_noleap:
+            ds = ds.sel(time=~((ds['time'].dt.month == 2) & (ds['time'].dt.day == 29)))
 
-        da_time_bnds = xr.DataArray(
-            new_time_bnds,
-            dims=ds['time_bnds'].dims,
-            coords={"time": ds['time']},
-        )
-        ds['time_bnds'] = da_time_bnds
+        new_times = []
+        calendar_func = valid_calendars[output_calendar]
+        for old_time in ds['time'].values:
+            new_time = calendar_func(old_time.year, old_time.month, old_time.day, old_time.hour)
+            new_times.append(new_time)
+        time_attrs = ds['time'].attrs
+        ds = ds.assign_coords({'time': new_times})
+        ds['time'].attrs = time_attrs
+
+        if 'time_bnds' in ds:
+            new_time_bnds = []
+            for old_start, old_end in ds['time_bnds'].values:
+                if is_noleap and (old_start.day == 29) and (old_start.month == 2):
+                    old_start_day = 28
+                else:
+                    old_start_day = old_start.day
+                new_start = calendar_func(old_start.year, old_start.month, old_start_day, old_start.hour)
+                new_end = calendar_func(old_end.year, old_end.month, old_end.day, old_end.hour)
+                time_diff = new_end - new_start
+                assert time_diff == np.timedelta64(1, 'D')
+                new_time_bnds.append([new_start, new_end])
+
+            da_time_bnds = xr.DataArray(
+                new_time_bnds,
+                dims=ds['time_bnds'].dims,
+                coords={"time": ds['time']},
+            )
+            ds['time_bnds'] = da_time_bnds
+    else:
+        raise ValueError(f'Conversion to {output_calendar_name} not supported')
 
     return ds
 
@@ -86,9 +103,38 @@ def read_data(
     output_units=None,
     lon_chunk_size=None,
     apply_ssr=False,
-    no_leap=False,
+    output_calendar=None,
 ):
-    """Read and process an input dataset."""
+    """Read and process an input dataset.
+
+    Parameters
+    ----------
+    infiles : list
+        Input files    
+    var : str, optional
+        Variable to read
+    time_bounds : list, optional
+        Time period to extract from infiles [YYYY-MM-DD, YYYY-MM-DD]
+    lat_bnds : list, optional
+        Latitude bounds: [south bound, north bound] 
+    lon_bnds : list, optional
+        Longitude bounds: [west bound, east bound]    
+    input_units : str, optional
+        Units of input data (if not provided will attempt to read file metadata)
+    output_units : str, optional
+        Desired units for output data (conversion will be applied if necessary)
+    lon_chunk_size : int, optional
+        Put this number of longitudes in each data chunk
+    apply_ssr : bool, default False
+        Apply Singularity Stochastic Removal to the data
+    output_calendar : cftime calendar, optional
+        Desired calendar for output data
+
+    Returns
+    -------
+    ds : xarray Dataset
+
+    """
 
     if len(infiles) == 1:
         ds = xr.open_dataset(infiles[0], use_cftime=True)
@@ -108,9 +154,10 @@ def read_data(
     if lon_bounds:
         ds = subset_lon(ds, lon_bounds)
 
-    if no_leap:
-        if not type(ds['time'].values[0]) == cftime._cftime.DatetimeNoLeap:
-            ds = convert_to_noleap(ds)
+    if output_calendar:
+        input_calendar = type(ds['time'].values[0])
+        if input_calendar != output_calendar:
+            ds = convert_calendar(ds, output_calendar)  
 
     if input_units:
         ds[var].attrs['units'] = input_units
