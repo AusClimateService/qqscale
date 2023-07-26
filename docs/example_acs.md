@@ -7,11 +7,11 @@ in 30-year windows using 1985-2014 as a reference period.
 
 Combining the historical and ssp370 experiments,
 the daily CORDEX data spans the period 1960-2100.
-To avoid abrupt changes in the bias corrected data from one analysis window to the next,
-we increment the window 10 years at a time.
+To avoid abrupt changes in the bias corrected data from one 30-year analysis window to the next,
+we keep/archive only the central decade from each window and increment the window 10 years at a time.
 For instance,
-when we process the 2050-2079 window we only keep/archive
-the central decacde (2060-2069),
+when we process the 2050-2079 window we only keep
+the central decacde (2060-2069)
 and then move on and process the 2060-2089 window
 (keeping 2070-2079).
 
@@ -46,7 +46,7 @@ parent global climate model (CMCC-CMCC-ESM2).
 > runs the `make` command for sequential 30-year windows in 10-year increments
 > from 1960 to 2100.
 > 
-> For example, on this case we would run the following to process
+> For example, in this case we would run the following to process
 > the entire 1960-2100 timeseries:
 > ```
 > bash bias_correct_timeseries.sh tasmin BOM-BARPA-R CMCC-CMCC-ESM2
@@ -95,7 +95,7 @@ There are also some flags that aren't necessarily needed in this case but can be
 Putting these options together with the positional arguments (the historical variable, reference variable and output adjustment factor file name) looks as follows:
 
 ```
-/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python /home/599/dbi599/qqscale/train.py tasmin tmin /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_AUS-05i_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_19850101-20141231.nc --hist_files /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_198[5,6,7,8,9]*.nc /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_199*.nc /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_2*.nc --ref_files /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_198[5,6,7,8,9]*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_199*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_200*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_201[0,1,2,3,4]*.nc --hist_time_bounds 1985-01-01 2014-12-31 --ref_time_bounds 1985-01-01 2014-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units K --input_ref_units C --output_units C --verbose 
+python train.py tasmin tmin /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_AUS-05i_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_19850101-20141231.nc --hist_files /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_198[5,6,7,8,9]*.nc /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_199*.nc /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/historical/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_2*.nc --ref_files /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_198[5,6,7,8,9]*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_199*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_200*.nc /g/data/xv83/agcd-csiro/tmin/daily/tmin_AGCD-CSIRO_r005_201[0,1,2,3,4]*.nc --hist_time_bounds 1985-01-01 2014-12-31 --ref_time_bounds 1985-01-01 2014-12-31 --scaling additive --nquantiles 100 --time_grouping monthly --input_hist_units K --input_ref_units C --output_units C --verbose 
 ```
 
 See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
@@ -140,7 +140,7 @@ There are a number of options/flags that are also required to complete this task
 
 Putting all these positional and options/flags together:
 ```
-/g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python /home/599/dbi599/qqscale/adjust.py /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_ssp370_r1i1p1f1_BOM-BARPA-R_v1_day_20[5,6,7]*.nc tasmin /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_AUS-05i_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_19850101-20141231.nc /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-05i_CMCC-CMCC-ESM2_ssp370_r1i1p1f1_BOM-BARPA-R_v1_day_20500101-20791231-from-20500101-20791231_ecdfm-additive-monthly-q100-nearest-AGCD-19850101-20141231.nc --adjustment_tbounds 2050-01-01 2079-12-31 --output_tslice 2060-01-01 2069-12-310. --input_units K --output_units C --spatial_grid af --interp nearest --verbose
+python adjust.py /g/data/ia39/australian-climate-service/release/CORDEX-CMIP6/output/AUS-15/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-15_CMCC-CMCC-ESM2_ssp370_r1i1p1f1_BOM-BARPA-R_v1_day_20[5,6,7]*.nc tasmin /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin-ecdfm-additive-monthly-q100-adjustment-factors_AGCD_AUS-05i_CMCC-CMCC-ESM2_historical_r1i1p1f1_BOM-BARPA-R_v1_day_19850101-20141231.nc /g/data/ia39/australian-climate-service/test-data/CORDEX-CMIP6-ECDFm/output/AUS-05i/BOM/CMCC-CMCC-ESM2/ssp370/r1i1p1f1/BOM-BARPA-R/v1/day/tasmin/tasmin_AUS-05i_CMCC-CMCC-ESM2_ssp370_r1i1p1f1_BOM-BARPA-R_v1_day_20500101-20791231-from-20500101-20791231_ecdfm-additive-monthly-q100-nearest-AGCD-19850101-20141231.nc --adjustment_tbounds 2050-01-01 2079-12-31 --output_tslice 2060-01-01 2069-12-310. --input_units K --output_units C --spatial_grid af --interp nearest --verbose
 ```
 See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
 
