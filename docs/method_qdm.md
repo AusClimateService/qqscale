@@ -74,4 +74,10 @@ There are a number of choices to make when applying QDM:
   (i.e. the mean change between the future data produced by QDM and the observations
   is much different than the mean change between the future and historical model simulations).
   As such, we don't apply any time grouping when applying QDM to precipitation data.
+- *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
+  is used to avoid divide by zero errors in the analysis of precipitation data.
+  All near-zero values (i.e. values less than a very small positive threshold value)
+  are set to a small random non-zero value prior to data processing,
+  and then after QDM has been applied
+  any values less than the threshold are set to zero.
    
