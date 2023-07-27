@@ -6,8 +6,9 @@ for even years from 1980-2019 (i.e. every second year),
 using odd years from 1980-2019 as training data.
 
 The following example describes how to complete this task using the
-equidistant CDF matching (EDCDFm) bias correction method for a given
-variable (tasmin),
+equidistant CDF matching (EDCDFm) bias correction method
+(see [method_ecdfm.md](method_ecdfm.md) for details)
+for a given variable (tasmin),
 regional climate model (UQ-DES-CCAM-2105), and
 parent global climate model (CSIRO-ACCESS-ESM1-5).
 
@@ -67,6 +68,7 @@ There are also some flags that aren't necessarily needed in this case but can be
 - `--hist_time_bounds 1980-01-01 2019-12-31`: Time bounds for historical period (i.e. for if your input files span a longer time period than required).
 - `--ref_time_bounds 1980-01-01 2019-12-31`: Time bounds for reference period (i.e. for if your input files span a longer time period than required).
 - `--input_hist_units C`, `--input_ref_units C`, `--output_units C`: Specify input and desired output units and the code will convert units if required.
+- `--ssr`: If we were processing precipitation data we would use this flag to apply Singularity Stochasitc Removal (see [method_ecdfm.md](method_ecdfm.md) for details).
 - `--verbose`: As the program runs it will print progess updates to the screen.
 
 Putting these options together with the positional arguments (the historical variable, reference variable and output adjustment factor file name) looks as follows:
@@ -114,6 +116,7 @@ There are a number of options/flags that are also required to complete this task
 There are also some flags that aren't necessarily needed in this case but can be useful:
 - `--adjustment_tbounds 1980-01-01 2019-12-31`: Time bounds to perform the bias correction over (i.e. for if your input files span a longer time period than required).
 - `--input_units C`, `--output_units C`: Specify input and desired output units and the code will convert units if required.
+- `--ssr`: As for the training step, if we were processing precipitation data we would use this flag to apply Singularity Stochasitc Removal (see [method_ecdfm.md](method_ecdfm.md) for details).
 - `--verbose`: As the program runs it will print progess updates to the screen.
 
 Putting all these positional and options/flags together:

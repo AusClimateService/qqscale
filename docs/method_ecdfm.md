@@ -69,3 +69,11 @@ There are a number of choices to make when applying EDCDFm or EQCDFm:
   We commonly use monthly time grouping for EDCDFm and EQCDFm (i.e. process each month separately).
   We've found that something like a 30-day running window is far more computationally expensive
   and produces similar results to monthly grouping.
+- *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
+  is used to avoid divide by zero errors in the analysis of precipitation data.
+  All near-zero values (i.e. values less than a very small positive threshold value)
+  are set to a small random non-zero value prior to data processing,
+  and then after the bias correction process is complete
+  any values less than the threshold are set to zero.
+ 
+  
