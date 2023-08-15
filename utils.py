@@ -73,10 +73,18 @@ def convert_calendar(ds, output_calendar):
             for old_start, old_end in ds['time_bnds'].values:
                 if is_noleap and (old_start.day == 29) and (old_start.month == 2):
                     old_start_day = 28
+                    old_start_month = 2
                 else:
                     old_start_day = old_start.day
-                new_start = calendar_func(old_start.year, old_start.month, old_start_day, old_start.hour)
-                new_end = calendar_func(old_end.year, old_end.month, old_end.day, old_end.hour)
+                    old_start_month = old_start.month
+                if is_noleap and (old_end.day == 29) and (old_end.month == 2):
+                    old_end_day = 1
+                    old_end_month = 3
+                else:
+                    old_end_day = old_end.day
+                    old_end_month = old_end.month
+                new_start = calendar_func(old_start.year, old_start_month, old_start_day, old_start.hour)
+                new_end = calendar_func(old_end.year, old_end_month, old_end_day, old_end.hour)
                 time_diff = new_end - new_start
                 assert time_diff == np.timedelta64(1, 'D')
                 new_time_bnds.append([new_start, new_end])
