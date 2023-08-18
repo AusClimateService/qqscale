@@ -144,10 +144,11 @@ def read_data(
 
     """
 
+    use_cftime = True if output_calendar else False
     if len(infiles) == 1:
-        ds = xr.open_dataset(infiles[0], use_cftime=True)
+        ds = xr.open_dataset(infiles[0], use_cftime=use_cftime)
     else:
-        ds = xr.open_mfdataset(infiles, use_cftime=True)
+        ds = xr.open_mfdataset(infiles, use_cftime=use_cftime)
 
     try:
         ds = ds.drop('height')
