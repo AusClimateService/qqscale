@@ -119,6 +119,7 @@ def main(args):
         time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
+        use_cftime=False,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qq = adjust(

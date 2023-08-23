@@ -111,6 +111,7 @@ def read_data(
     output_units=None,
     lon_chunk_size=None,
     apply_ssr=False,
+    use_cftime=True,
     output_calendar=None,
 ):
     """Read and process an input dataset.
@@ -135,6 +136,8 @@ def read_data(
         Put this number of longitudes in each data chunk
     apply_ssr : bool, default False
         Apply Singularity Stochastic Removal to the data
+    use_cftime : bool, default True
+        Use cftime for time axis
     output_calendar : cftime calendar, optional
         Desired calendar for output data
 
@@ -144,7 +147,6 @@ def read_data(
 
     """
 
-    use_cftime = True if output_calendar else False
     if len(infiles) == 1:
         ds = xr.open_dataset(infiles[0], use_cftime=use_cftime)
     else:
