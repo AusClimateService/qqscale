@@ -1,7 +1,9 @@
 """Command line program for applying QQ-scaling adjustment factors."""
-
+import pdb
 import logging
 import argparse
+from datetime import datetime
+from contextlib import suppress
 
 import numpy as np
 import xarray as xr
@@ -10,6 +12,52 @@ from xclim import sdba
 import dask.diagnostics
 
 import utils
+
+
+def apply_cordex_attributes(ds, var, scaling, obs_dataset):
+    """Apply file attributes defined for bias adjusted CORDEX simulations.
+
+    Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
+    """
+
+    ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
+
+    ds.attrs['input_tracking_id'] = ds.attrs['tracking_id']
+    ds.attrs['tracking_id'] = 'unknown'
+
+    ds.attrs['input_institution'] = ds.attrs['institution']
+    ds.attrs['institution'] = 'Australian Climate Service'
+
+    ds.attrs['input_institution_id'] = ds.attrs['institution_id']
+    ds.attrs['institution_id'] = 'ACS'
+
+    ds.attrs['contact'] = 'damien.irving@csiro.au'
+    ds.attrs['project_id'] = 'CORDEX-Adjust'
+    ds.attrs['product'] = 'bias-adjusted-output'
+    ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    with suppress(KeyError):
+        del ds.attrs['date_created']
+        del ds.attrs['date_modified']
+        del: ds.attrs['date_metadata_modified']
+
+    bc_info = 'https://github.com/climate-innovation-hub/qqscale/blob/master/docs/method_ecdfm.md' 
+    if scaling == 'additive':
+        bc_name = 'Equidistant CDF Matching'
+        bc_reference = 'Li H, Sheffield J, & Wood EF (2010). Bias correction of monthly precipitation and temperature fields from Intergovernmental Panel on Climate Change AR4 models using equidistant quantile matching. Journal of Geophysical Research, 115(D10), D10101. https://doi.org/10.1029/2009JD012882'
+    elif scaling == 'multiplicative':
+        bc_name = 'Equiratio CDF Matching'
+        bc_reference = 'Wang L, & Chen W (2014). Equiratio cumulative distribution function matching as an improvement to the equidistant approach in bias correction of precipitation. Atmospheric Science Letters, 15(1), 1–6. https://doi.org/10.1002/asl2.454'
+    ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
+    ds.attrs['bc_method_id'] = 'ecdfm'
+
+    if obs_dataset == 'AGCD':
+        ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233–248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
+        ds.attrs['bc_observation_id'] = 'AGCD'
+
+#    ds.attrs['bc_period'] = 
+#    ds.attrs['bc_info'] = 
+    
+    return ds
 
 
 def adjust(
@@ -42,7 +90,9 @@ def adjust(
         Adjust the output time axis so it matches the reference data
     output_tslice : list, default None
         Return a time slice of the adjusted data
-        Format: ['YYYY-MM-DD', 'YYYY-MM-DD'] 
+        Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
+    cordex_attrs : bool, default False
+        Apply file attributes defined for bias adjusted CORDEX simulations. 
         
     Returns
     -------
@@ -105,6 +155,9 @@ def adjust(
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
+    if cordex_attrs:
+        pdb.set_trace()
+        qq = apply_cordex_attributes(qq, var, scaling, obs_dataset)
 
     return qq
 
@@ -131,6 +184,7 @@ def main(args):
         ssr=args.ssr,
         ref_time=args.ref_time,
         output_tslice=args.output_tslice,
+        cordex_attrs=args.cordex_attrs,
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
@@ -195,6 +249,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Perform Singularity Stochastic Removal',
+    )
+    parser.add_argument(
+        "--cordex_attrs",
+        action="store_true",
+        default=False,
+        help='Apply attributes defined for bias adjusted CORDEX simulations',
     )
     parser.add_argument(
         "--verbose",
