@@ -14,35 +14,42 @@ import dask.diagnostics
 import utils
 
 
-def apply_cordex_attributes(ds, var, scaling, obs_dataset, bc_period):
+def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_period):
     """Apply file attributes defined for bias adjusted CORDEX simulations.
 
     Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
     """
-    pdb.set_trace()
+
+    # Variable attributes
     ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
     with suppress(KeyError):
         del ds[var].attrs['cell_methods']
         del ds[var].attrs['least_significant_digit']
 
-    ds.attrs['input_tracking_id'] = ds.attrs['tracking_id']
+    # Input global attributes to keep
+    keep_attrs = [
+        'CORDEX_domain',
+        'driving_model_id',
+        'driving_model_ensemble_member',
+        'driving_experiment_name',
+        'experiment_id',
+        'rcm_version_id',
+        'model_id'
+    ]
+    for attr in keep_attrs:
+        with suppress(KeyError):
+            ds.attrs[attr] = input_attrs[attr]
+
+    # Input global attributes to modify/overwrite
+    ds.attrs['product'] = 'bias-adjusted-output'
+    ds.attrs['project_id'] = 'CORDEX-Adjust'
+    ds.attrs['contact'] = 'damien.irving@csiro.au'
+    ds.attrs['institution'] = 'Australian Climate Service'
+    ds.attrs['institute_id'] = 'ACS'
+    ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     ds.attrs['tracking_id'] = 'unknown'
 
-    ds.attrs['input_institution'] = ds.attrs['institution']
-    ds.attrs['institution'] = 'Australian Climate Service'
-
-    ds.attrs['input_institute_id'] = ds.attrs['institute_id']
-    ds.attrs['institute_id'] = 'ACS'
-
-    ds.attrs['contact'] = 'damien.irving@csiro.au'
-    ds.attrs['project_id'] = 'CORDEX-Adjust'
-    ds.attrs['product'] = 'bias-adjusted-output'
-    ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    with suppress(KeyError):
-        del ds.attrs['date_created']
-        del ds.attrs['date_modified']
-        del ds.attrs['date_metadata_modified']
-
+    # New global attributes
     bc_info = 'https://github.com/climate-innovation-hub/qqscale/blob/master/docs/method_ecdfm.md' 
     if scaling == 'additive':
         bc_name = 'Equidistant CDF Matching'
@@ -52,16 +59,17 @@ def apply_cordex_attributes(ds, var, scaling, obs_dataset, bc_period):
         bc_reference = 'Wang L, & Chen W (2014). Equiratio cumulative distribution function matching as an improvement to the equidistant approach in bias correction of precipitation. Atmospheric Science Letters, 15(1), 1–6. https://doi.org/10.1002/asl2.454'
     ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
     ds.attrs['bc_method_id'] = 'ecdfm'
-
     if obs_dataset == 'AGCD':
         ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233–248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
         ds.attrs['bc_observation_id'] = 'AGCD'
     else:
         raise ValueError('Unrecognised obs dataset: {obs_dataset}')
-
     ds.attrs['bc_period'] = bc_period 
     ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'
-    
+    ds.attrs['bc_period'] = bc_period 
+    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'    
+    #ds.attrs['input_tracking_id'] = input_attrs['tracking_id']
+
     return ds
 
 
@@ -158,7 +166,6 @@ def adjust(
         start_date, end_date = output_tslice
         qq = qq.sel({'time': slice(start_date, end_date)}) 
 
-    qq.attrs = ds.attrs
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
@@ -168,7 +175,7 @@ def adjust(
         bc_period = f'{ref_start}-{ref_end}'
         scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
         obs_dataset = cordex_attrs
-        qq = apply_cordex_attributes(qq, var, scaling, obs_dataset, bc_period)
+        qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period)
 
     return qq
 
