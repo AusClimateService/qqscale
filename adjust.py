@@ -14,13 +14,16 @@ import dask.diagnostics
 import utils
 
 
-def apply_cordex_attributes(ds, var, scaling, obs_dataset):
+def apply_cordex_attributes(ds, var, scaling, obs_dataset, bc_period):
     """Apply file attributes defined for bias adjusted CORDEX simulations.
 
     Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
     """
-
+    pdb.set_trace()
     ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
+    with suppress(KeyError):
+        del ds[var].attrs['cell_methods']
+        del ds[var].attrs['least_significant_digit']
 
     ds.attrs['input_tracking_id'] = ds.attrs['tracking_id']
     ds.attrs['tracking_id'] = 'unknown'
@@ -28,8 +31,8 @@ def apply_cordex_attributes(ds, var, scaling, obs_dataset):
     ds.attrs['input_institution'] = ds.attrs['institution']
     ds.attrs['institution'] = 'Australian Climate Service'
 
-    ds.attrs['input_institution_id'] = ds.attrs['institution_id']
-    ds.attrs['institution_id'] = 'ACS'
+    ds.attrs['input_institute_id'] = ds.attrs['institute_id']
+    ds.attrs['institute_id'] = 'ACS'
 
     ds.attrs['contact'] = 'damien.irving@csiro.au'
     ds.attrs['project_id'] = 'CORDEX-Adjust'
@@ -38,7 +41,7 @@ def apply_cordex_attributes(ds, var, scaling, obs_dataset):
     with suppress(KeyError):
         del ds.attrs['date_created']
         del ds.attrs['date_modified']
-        del: ds.attrs['date_metadata_modified']
+        del ds.attrs['date_metadata_modified']
 
     bc_info = 'https://github.com/climate-innovation-hub/qqscale/blob/master/docs/method_ecdfm.md' 
     if scaling == 'additive':
@@ -53,9 +56,11 @@ def apply_cordex_attributes(ds, var, scaling, obs_dataset):
     if obs_dataset == 'AGCD':
         ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233–248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
         ds.attrs['bc_observation_id'] = 'AGCD'
+    else:
+        raise ValueError('Unrecognised obs dataset: {obs_dataset}')
 
-#    ds.attrs['bc_period'] = 
-#    ds.attrs['bc_info'] = 
+    ds.attrs['bc_period'] = bc_period 
+    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'
     
     return ds
 
@@ -68,7 +73,8 @@ def adjust(
     interp='nearest',
     ssr=False,
     ref_time=False,
-    output_tslice=None
+    output_tslice=None,
+    cordex_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
 
@@ -91,8 +97,8 @@ def adjust(
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    cordex_attrs : bool, default False
-        Apply file attributes defined for bias adjusted CORDEX simulations. 
+    cordex_attrs : {'AGCD'}, optional
+        Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
     Returns
     -------
@@ -152,12 +158,17 @@ def adjust(
         start_date, end_date = output_tslice
         qq = qq.sel({'time': slice(start_date, end_date)}) 
 
+    qq.attrs = ds.attrs
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
     if cordex_attrs:
-        pdb.set_trace()
-        qq = apply_cordex_attributes(qq, var, scaling, obs_dataset)
+        ref_start = ds_adjust.attrs['reference_period_start'][0:4]
+        ref_end = ds_adjust.attrs['reference_period_end'][0:4]
+        bc_period = f'{ref_start}-{ref_end}'
+        scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
+        obs_dataset = cordex_attrs
+        qq = apply_cordex_attributes(qq, var, scaling, obs_dataset, bc_period)
 
     return qq
 
@@ -173,8 +184,11 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
         use_cftime=False,
+        lat_bounds=[-32, -30],
+        lon_bounds=[135, 138],
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
+    ds_adjust = ds_adjust.sel({'lat': slice(-32, -30), 'lon': slice(135, 138)})
     qq = adjust(
         ds,
         args.var,
@@ -252,9 +266,10 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--cordex_attrs",
-        action="store_true",
-        default=False,
-        help='Apply attributes defined for bias adjusted CORDEX simulations',
+        type=str,
+        choices=('AGCD'),
+        default=None,
+        help='Apply attributes defined for bias adjusted CORDEX simulations for given obs dataset',
     )
     parser.add_argument(
         "--verbose",
