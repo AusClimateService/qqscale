@@ -194,11 +194,8 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
         use_cftime=False,
-        lat_bounds=[-32, -30],
-        lon_bounds=[135, 138],
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
-    ds_adjust = ds_adjust.sel({'lat': slice(-32, -30), 'lon': slice(135, 138)})
     qq = adjust(
         ds,
         args.var,
