@@ -1,5 +1,5 @@
 """Command line program for applying QQ-scaling adjustment factors."""
-import pdb
+
 import logging
 import argparse
 from datetime import datetime
@@ -14,7 +14,7 @@ import dask.diagnostics
 import utils
 
 
-def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_period):
+def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_period, spatial_grid):
     """Apply file attributes defined for bias adjusted CORDEX simulations.
 
     Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
@@ -24,11 +24,9 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
     ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
     with suppress(KeyError):
         del ds[var].attrs['cell_methods']
-        del ds[var].attrs['least_significant_digit']
 
     # Input global attributes to keep
     keep_attrs = [
-        'CORDEX_domain',
         'driving_model_id',
         'driving_model_ensemble_member',
         'driving_experiment_name',
@@ -39,6 +37,11 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
     for attr in keep_attrs:
         with suppress(KeyError):
             ds.attrs[attr] = input_attrs[attr]
+    if spatial_grid == 'input':
+       with suppress(KeyError):
+           ds.attrs['CORDEX_domain'] = input_attrs['CORDEX_domain']
+    elif obs_dataset == 'AGCD':
+       ds.attrs['CORDEX_domain'] = 'AUS-05i'
 
     # Input global attributes to modify/overwrite
     ds.attrs['product'] = 'bias-adjusted-output'
@@ -60,7 +63,7 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
     ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
     ds.attrs['bc_method_id'] = 'ecdfm'
     if obs_dataset == 'AGCD':
-        ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233–248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
+        ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233-248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
         ds.attrs['bc_observation_id'] = 'AGCD'
     else:
         raise ValueError('Unrecognised obs dataset: {obs_dataset}')
@@ -164,7 +167,7 @@ def adjust(
 
     if output_tslice:
         start_date, end_date = output_tslice
-        qq = qq.sel({'time': slice(start_date, end_date)}) 
+        qq = qq.sel({'time': slice(start_date, end_date)})
 
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
@@ -175,7 +178,7 @@ def adjust(
         bc_period = f'{ref_start}-{ref_end}'
         scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
         obs_dataset = cordex_attrs
-        qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period)
+        qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period, spatial_grid)
 
     return qq
 
