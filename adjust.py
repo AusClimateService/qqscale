@@ -2,6 +2,8 @@
 
 import logging
 import argparse
+from datetime import datetime
+from contextlib import suppress
 
 import numpy as np
 import xarray as xr
@@ -12,6 +14,68 @@ import dask.diagnostics
 import utils
 
 
+def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_period, spatial_grid):
+    """Apply file attributes defined for bias adjusted CORDEX simulations.
+
+    Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
+    """
+
+    # Variable attributes
+    ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
+    with suppress(KeyError):
+        del ds[var].attrs['cell_methods']
+
+    # Input global attributes to keep
+    keep_attrs = [
+        'driving_model_id',
+        'driving_model_ensemble_member',
+        'driving_experiment_name',
+        'experiment_id',
+        'rcm_version_id',
+        'model_id'
+    ]
+    for attr in keep_attrs:
+        with suppress(KeyError):
+            ds.attrs[attr] = input_attrs[attr]
+    if spatial_grid == 'input':
+       with suppress(KeyError):
+           ds.attrs['CORDEX_domain'] = input_attrs['CORDEX_domain']
+    elif obs_dataset == 'AGCD':
+       ds.attrs['CORDEX_domain'] = 'AUS-05i'
+
+    # Input global attributes to modify/overwrite
+    ds.attrs['product'] = 'bias-adjusted-output'
+    ds.attrs['project_id'] = 'CORDEX-Adjust'
+    ds.attrs['contact'] = 'damien.irving@csiro.au'
+    ds.attrs['institution'] = 'Australian Climate Service'
+    ds.attrs['institute_id'] = 'ACS'
+    ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    ds.attrs['tracking_id'] = 'unknown'
+
+    # New global attributes
+    bc_info = 'https://github.com/climate-innovation-hub/qqscale/blob/master/docs/method_ecdfm.md' 
+    if scaling == 'additive':
+        bc_name = 'Equidistant CDF Matching'
+        bc_reference = 'Li H, Sheffield J, & Wood EF (2010). Bias correction of monthly precipitation and temperature fields from Intergovernmental Panel on Climate Change AR4 models using equidistant quantile matching. Journal of Geophysical Research, 115(D10), D10101. https://doi.org/10.1029/2009JD012882'
+    elif scaling == 'multiplicative':
+        bc_name = 'Equiratio CDF Matching'
+        bc_reference = 'Wang L, & Chen W (2014). Equiratio cumulative distribution function matching as an improvement to the equidistant approach in bias correction of precipitation. Atmospheric Science Letters, 15(1), 1–6. https://doi.org/10.1002/asl2.454'
+    ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
+    ds.attrs['bc_method_id'] = 'ecdfm'
+    if obs_dataset == 'AGCD':
+        ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233-248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
+        ds.attrs['bc_observation_id'] = 'AGCD'
+    else:
+        raise ValueError('Unrecognised obs dataset: {obs_dataset}')
+    ds.attrs['bc_period'] = bc_period 
+    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'
+    ds.attrs['bc_period'] = bc_period 
+    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'    
+    #ds.attrs['input_tracking_id'] = input_attrs['tracking_id']
+
+    return ds
+
+
 def adjust(
     ds,
     var,
@@ -20,7 +84,8 @@ def adjust(
     interp='nearest',
     ssr=False,
     ref_time=False,
-    output_tslice=None
+    output_tslice=None,
+    cordex_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
 
@@ -42,7 +107,9 @@ def adjust(
         Adjust the output time axis so it matches the reference data
     output_tslice : list, default None
         Return a time slice of the adjusted data
-        Format: ['YYYY-MM-DD', 'YYYY-MM-DD'] 
+        Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
+    cordex_attrs : {'AGCD'}, optional
+        Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
     Returns
     -------
@@ -100,11 +167,18 @@ def adjust(
 
     if output_tslice:
         start_date, end_date = output_tslice
-        qq = qq.sel({'time': slice(start_date, end_date)}) 
+        qq = qq.sel({'time': slice(start_date, end_date)})
 
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
+    if cordex_attrs:
+        ref_start = ds_adjust.attrs['reference_period_start'][0:4]
+        ref_end = ds_adjust.attrs['reference_period_end'][0:4]
+        bc_period = f'{ref_start}-{ref_end}'
+        scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
+        obs_dataset = cordex_attrs
+        qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period, spatial_grid)
 
     return qq
 
@@ -131,6 +205,7 @@ def main(args):
         ssr=args.ssr,
         ref_time=args.ref_time,
         output_tslice=args.output_tslice,
+        cordex_attrs=args.cordex_attrs,
     )
     infile_logs = {
         args.adjustment_file: ds_adjust.attrs['history'],
@@ -195,6 +270,13 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Perform Singularity Stochastic Removal',
+    )
+    parser.add_argument(
+        "--cordex_attrs",
+        type=str,
+        choices=('AGCD'),
+        default=None,
+        help='Apply attributes defined for bias adjusted CORDEX simulations for given obs dataset',
     )
     parser.add_argument(
         "--verbose",
