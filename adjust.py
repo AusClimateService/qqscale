@@ -152,6 +152,8 @@ def adjust(
 
     qq = qm.adjust(da, extrapolation='constant', interp=interp)
     qq = qq.rename(var)
+    qq['lat'] = ds['lat']
+    qq['lon'] = ds['lon']
     if on_spatial_grid:
         qq = qq.transpose('lat', 'lon', ...)
     qq = qq.transpose('time', ...) 

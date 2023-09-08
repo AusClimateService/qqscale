@@ -148,9 +148,15 @@ def read_data(
     """
 
     if len(infiles) == 1:
-        ds = xr.open_dataset(infiles[0], use_cftime=use_cftime)
+        try:
+            ds = xr.open_dataset(infiles[0], use_cftime=use_cftime)
+        except ValueError:
+            ds = xr.open_dataset(infiles[0])
     else:
-        ds = xr.open_mfdataset(infiles, use_cftime=use_cftime)
+        try:
+            ds = xr.open_mfdataset(infiles, use_cftime=use_cftime)
+        except ValueError:
+            ds = xr.open_mfdataset(infiles)
 
     try:
         ds = ds.drop('height')
