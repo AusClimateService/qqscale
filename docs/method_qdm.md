@@ -68,7 +68,7 @@ There are a number of choices to make when applying QDM:
   We've found that something like a 30-day running window is far more computationally expensive
   and produces similar results to monthly grouping.
   When processing precipitation data (a multiplicative application of QDM)
-  we've found ([see rough notebook](https://github.com/climate-innovation-hub/qq-workflows/blob/main/cih_paper/seasonal_cycle.ipynb))
+  we've found ([see rough notebook](https://github.com/climate-innovation-hub/qq-workflows/blob/main/qdm-vs-ecdfm/seasonal_cycle.ipynb))
   that in many locations the model bias in the timing of the seasonal cycle
   means that monthly time grouping dramatically modifies the climate trend in the data
   (i.e. the mean change between the future data produced by QDM and the observations
