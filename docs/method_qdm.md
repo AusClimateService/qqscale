@@ -50,14 +50,6 @@ There are a number of choices to make when applying QDM:
   which is to calculate the quantile changes on the model grid,
   downscale those change factors using bilinear interpolation
   and then apply them to the observations.
-- *Qunatiles (number and interpolation)*:
-  Our qqscale software allows the user to specify
-  the number of quantiles to calculate and
-  what interpolation method to use to determine the change factor
-  for observed data points that fall between two quantiles.
-  The software default is 100 quantiles and nearest neighbour interpolation.
-  We've found that linear and cubic interpolation (the other options)
-  is much more computationally expensive and produces very similar results to nearest neighbour.
 - *Time grouping*:
   It is common to apply quantile mapping methods to individual seasons or months separately
   to avoid conflating different times of the year
@@ -74,6 +66,18 @@ There are a number of choices to make when applying QDM:
   (i.e. the mean change between the future data produced by QDM and the observations
   is much different than the mean change between the future and historical model simulations).
   As such, we don't apply any time grouping when applying QDM to precipitation data.
+- *Qunatiles (number and interpolation)*:
+  Our qqscale software allows the user to specify
+  the number of quantiles to calculate and
+  what interpolation method to use to determine the change factor
+  for data points that fall between two quantiles.
+  We've found that it's best to have approximately 10 data values between each quanite.
+  If you're processing 30 years of daily data,
+  that means 100 quantiles if the time grouping is monthly
+  or 1000 quantiles if no time grouping is applied. 
+  We've found that linear and cubic interpolation produce slighty better results
+  than nearest neighbour but are much more computationally expensive,
+  so nearest neightbour is often a preferable choice.
 - *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
   is used to avoid divide by zero errors in the analysis of precipitation data.
   All near-zero values (i.e. values less than a very small positive threshold value)
