@@ -77,7 +77,7 @@ There are a number of choices to make when applying QDM:
   or 1000 quantiles if no time grouping is applied. 
   We've found that linear and cubic interpolation produce slighty better results
   than nearest neighbour but are much more computationally expensive,
-  so nearest neightbour is often a preferable choice.
+  so nearest neightbour can be a preferable compromise when processing large datasets.
 - *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
   is used to avoid divide by zero errors in the analysis of precipitation data.
   All near-zero values (i.e. values less than a very small positive threshold value)
