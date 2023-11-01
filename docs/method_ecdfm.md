@@ -52,14 +52,6 @@ There are a number of choices to make when applying EDCDFm or EQCDFm:
   perform the bias correction on the model grid
   and then downscale the bias corrected model data.
   Our qqscale software does the former and downscales the model data first using bilinear interpolation.
-- *Qunatiles (number and interpolation)*:
-  Our qqscale software allows the user to specify
-  the number of quantiles to calculate and
-  what interpolation method to use to determine the bias correction
-  for target data points that fall between two quantiles.
-  The software default is 100 quantiles and nearest neighbour interpolation.
-  We've found that linear and cubic interpolation (the other options)
-  is much more computationally expensive and produces very similar results to nearest neighbour.
 - *Time grouping*:
   It is common to bias correct individual seasons or months separately
   to avoid conflating different times of the year
@@ -69,6 +61,18 @@ There are a number of choices to make when applying EDCDFm or EQCDFm:
   We commonly use monthly time grouping for EDCDFm and EQCDFm (i.e. process each month separately).
   We've found that something like a 30-day running window is far more computationally expensive
   and produces similar results to monthly grouping.
+- *Qunatiles (number and interpolation)*:
+  Our qqscale software allows the user to specify
+  the number of quantiles to calculate and
+  what interpolation method to use to determine the bias correction
+  for target data points that fall between two quantiles.
+  We've found that it's best to have approximately 10 data values between each quanite.
+  If you're processing 30 years of daily data,
+  that means 100 quantiles if the time grouping is monthly
+  or 1000 quantiles if no time grouping is applied. 
+  We've found that linear and cubic interpolation produce slighty better results
+  than nearest neighbour but are much more computationally expensive,
+  so nearest neightbour can be a preferable compromise when processing large datasets.
 - *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
   is used to avoid divide by zero errors in the analysis of precipitation data.
   All near-zero values (i.e. values less than a very small positive threshold value)
