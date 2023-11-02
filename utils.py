@@ -137,7 +137,7 @@ def convert_units(da, target_units):
         ("megajoule/meter2", "W m-2"): joules_to_watts,
     }
     try:
-        da = xclim.units.convert_units_to(da, target_units)
+        da = xc.units.convert_units_to(da, target_units)
     except Exception as e:
         var_attrs = da.attrs
         conversion = (da.attrs["units"], target_units)
