@@ -101,6 +101,55 @@ def convert_calendar(ds, output_calendar):
     return ds
 
 
+def joules_to_watts(da):
+    """Convert from Joules to Watts"""
+
+    input_units = da.attrs["units"]
+    input_freq = xr.infer_freq(da.indexes['time'][0:3])[0]
+    assert input_freq == 'D'
+
+    if (input_units[0] == 'M') or (input_units[0:4] == 'mega'):
+        da = da * 1e6
+    seconds_in_day = 60 * 60 * 24
+    da = da / seconds_in_day
+
+    return da
+
+
+def convert_units(da, target_units):
+    """Convert units.
+
+    Parameters
+    ----------
+    da : xarray DataArray
+        Input array containing a units attribute
+    target_units : str
+        Units to convert to
+
+    Returns
+    -------
+    da : xarray DataArray
+       Array with converted units
+    """
+
+    custom_conversions = {
+        ("MJ m-2", "W m-2"): joules_to_watts,
+        ("megajoule/meter2", "W m-2"): joules_to_watts,
+    }
+    try:
+        da = xclim.units.convert_units_to(da, target_units)
+    except Exception as e:
+        var_attrs = da.attrs
+        conversion = (da.attrs["units"], target_units)
+        if conversion in custom_conversions:
+            da = custom_conversions[conversion](da)
+            da.attrs = var_attrs
+        else:
+            raise e
+
+    return da
+
+
 def read_data(
     infiles,
     var,
@@ -163,6 +212,11 @@ def read_data(
     except ValueError:
         pass
 
+    if 'latitude' in ds.dims:
+        ds = ds.rename({'latitude': 'lat'})
+    if 'longitude' in ds.dims:
+        ds = ds.rename({'longitude': 'lon'})
+
     if time_bounds:
         start_date, end_date = time_bounds
         ds = ds.sel({'time': slice(start_date, end_date)})        
@@ -179,7 +233,7 @@ def read_data(
     if input_units:
         ds[var].attrs['units'] = input_units
     if output_units:
-        ds[var] = xc.units.convert_units_to(ds[var], output_units)
+        ds[var] = convert_units(ds[var], output_units)
         ds[var].attrs['units'] = output_units
         
     chunk_dict = {'time': -1}
