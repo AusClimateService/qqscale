@@ -209,10 +209,11 @@ def main(args):
         output_tslice=args.output_tslice,
         cordex_attrs=args.cordex_attrs,
     )
-    infile_logs = {
-        args.adjustment_file: ds_adjust.attrs['history'],
-        args.infiles[0]: ds.attrs['history'],
-    }
+    infile_logs = {}
+    if 'history' in ds_adjust.attrs:
+        infile_logs[args.adjustment_file] = ds_adjust.attrs['history']
+    if 'history' in ds.attrs:
+        infile_logs[args.infiles[0]] = ds.attrs['history']
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
     qq.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
 
