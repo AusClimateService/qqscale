@@ -83,7 +83,10 @@ def adjust(
     spatial_grid='input',
     interp='nearest',
     ssr=False,
+    max_af=None,
     ref_time=False,
+    output_max=None,
+    output_min=None,
     output_tslice=None,
     cordex_attrs=None,
 ):
@@ -103,8 +106,14 @@ def adjust(
         Method for interpolation of adjustment factors
     ssr : bool, default False
         Perform singularity stochastic removal
+    max_af : float, optional
+        Maximum limit for adjustment factors
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
+    output_max : float or xarray DataArray
+        Maximum valid value for output data (data is clipped to this value)
+    output_min : float or xarray DataArray
+        Minimum valid value for output data (data is clipped to this value)
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
@@ -150,6 +159,9 @@ def adjust(
     else:
         da = ds[var]
 
+    if max_af:
+        ds_adjust['af'] = ds_adjust['af'].where(ds_adjust['af'] < max_af, max_af)
+
     qq = qm.adjust(da, extrapolation='constant', interp=interp)
     qq = qq.rename(var)
     if on_spatial_grid:
@@ -160,6 +172,15 @@ def adjust(
 
     if ssr:
         qq = utils.reverse_ssr(qq)
+
+    if output_max is not None:
+#        if type(output_max) == xr.core.dataarray.DataArray:
+#            if on_spatial_grid and (spatial_grid == 'af'):
+#                logging.info('Regridding output max data to adjustment factor grid')
+#                output_max = utils.regrid(output_max, ds_adjust, variable=var)
+        qq = qq.where(qq < output_max, output_max) 
+    if output_min is not None:
+        qq = qq.where(qq > output_min, output_min) 
 
     qq = qq.to_dataset()    
     if ref_time:
@@ -198,6 +219,18 @@ def main(args):
         use_cftime=False,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
+    if args.outmax_files is not None:
+        outmax_ds = utils.read_data(
+            args.outmax_files,
+            args.outmax_var,
+            time_bounds=args.adjustment_tbounds,
+            input_units=args.input_units,
+            output_units=args.output_units,
+            use_cftime=False,
+        )
+        output_max = outmax_ds[args.outmax_var]
+    else:
+        output_max = args.outmax_value
     qq = adjust(
         ds,
         args.var,
@@ -205,7 +238,10 @@ def main(args):
         spatial_grid=args.spatial_grid,
         interp=args.interp,
         ssr=args.ssr,
+        max_af=args.max_af,
         ref_time=args.ref_time,
+        output_max=output_max,
+        output_min=args.outmin_value,
         output_tslice=args.output_tslice,
         cordex_attrs=args.cordex_attrs,
     )
@@ -269,10 +305,41 @@ if __name__ == '__main__':
         help="Method for interpolation of adjustment factors",
     )
     parser.add_argument(
+        "--max_af",
+        type=float,
+        default=None,
+        help="Maximum limit for adjustment factors",
+    )
+    parser.add_argument(
         "--ssr",
         action="store_true",
         default=False,
         help='Perform Singularity Stochastic Removal',
+    )
+    parser.add_argument(
+        "--outmax_files",
+        nargs='*',
+        type=str,
+        default=None,
+        help="Files containing maximum valid values for output data",
+    )
+    parser.add_argument(
+        "--outmax_var",
+        type=str,
+        default=None,
+        help="Variable of interest in outmax_file",
+    )
+    parser.add_argument(
+        "--outmax_value",
+        type=float,
+        default=None,
+        help="Maximum valid value for output data",
+    )
+    parser.add_argument(
+        "--outmin_value",
+        type=float,
+        default=None,
+        help="Minimum valid value for output data",
     )
     parser.add_argument(
         "--cordex_attrs",
