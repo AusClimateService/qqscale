@@ -85,8 +85,9 @@ def adjust(
     ssr=False,
     max_af=None,
     ref_time=False,
-    output_max=None,
-    output_min=None,
+    valid_min=None,
+    valid_max=None,
+    outmax_da=None,
     output_tslice=None,
     cordex_attrs=None,
 ):
@@ -110,10 +111,12 @@ def adjust(
         Maximum limit for adjustment factors
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
-    output_max : float or xarray DataArray
-        Maximum valid value for output data (data is clipped to this value)
-    output_min : float or xarray DataArray
-        Minimum valid value for output data (data is clipped to this value)
+    valid_min : float
+        Minimum valid value (input and output data is clipped to this value)
+    valid_max : float
+        Maximum valid value (input and output data is clipped to this value)
+    outmax_da : xarray DataArray
+        Array of valid maximum values for output data (e.g. clear sky radiation) 
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
@@ -172,15 +175,15 @@ def adjust(
 
     if ssr:
         qq = utils.reverse_ssr(qq)
+        
+    if (valid_min is not None) or (valid_max is not None):
+        qq = qq.clip(min=valid_min, max=valid_max, keep_attrs=True) 
 
-    if output_max is not None:
-#        if type(output_max) == xr.core.dataarray.DataArray:
-#            if on_spatial_grid and (spatial_grid == 'af'):
-#                logging.info('Regridding output max data to adjustment factor grid')
-#                output_max = utils.regrid(output_max, ds_adjust, variable=var)
-        qq = qq.where(qq < output_max, output_max) 
-    if output_min is not None:
-        qq = qq.where(qq > output_min, output_min) 
+    if outmax_da is not None:
+        if on_spatial_grid and (spatial_grid == 'af'):
+            logging.info('Regridding outmax data to adjustment factor grid')
+            outmax_da = utils.regrid(outmax_da, ds_adjust)
+            qq = qq.where(qq < outmax_da, outmax_da) 
 
     qq = qq.to_dataset()    
     if ref_time:
@@ -217,6 +220,8 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
         use_cftime=False,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
     if args.outmax_files is not None:
@@ -228,9 +233,9 @@ def main(args):
             output_units=args.output_units,
             use_cftime=False,
         )
-        output_max = outmax_ds[args.outmax_var]
+        outmax_da = outmax_ds[args.outmax_var]
     else:
-        output_max = args.outmax_value
+        outmax_da = None
     qq = adjust(
         ds,
         args.var,
@@ -240,8 +245,9 @@ def main(args):
         ssr=args.ssr,
         max_af=args.max_af,
         ref_time=args.ref_time,
-        output_max=output_max,
-        output_min=args.outmin_value,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
+        outmax_da=outmax_da,
         output_tslice=args.output_tslice,
         cordex_attrs=args.cordex_attrs,
     )
@@ -317,6 +323,18 @@ if __name__ == '__main__':
         help='Perform Singularity Stochastic Removal',
     )
     parser.add_argument(
+        "--valid_min",
+        type=float,
+        default=None,
+        help="Minimum valid value",
+    )
+    parser.add_argument(
+        "--valid_max",
+        type=float,
+        default=None,
+        help="Maximum valid value",
+    )
+    parser.add_argument(
         "--outmax_files",
         nargs='*',
         type=str,
@@ -328,18 +346,6 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help="Variable of interest in outmax_file",
-    )
-    parser.add_argument(
-        "--outmax_value",
-        type=float,
-        default=None,
-        help="Maximum valid value for output data",
-    )
-    parser.add_argument(
-        "--outmin_value",
-        type=float,
-        default=None,
-        help="Minimum valid value for output data",
     )
     parser.add_argument(
         "--cordex_attrs",

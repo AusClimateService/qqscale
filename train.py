@@ -104,6 +104,8 @@ def main(args):
         time_bounds=args.hist_time_bounds,
         input_units=args.input_hist_units,
         output_units=args.output_units,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
     )
     calendar_hist = type(ds_hist['time'].values[0])
     ds_ref = utils.read_data(
@@ -115,6 +117,8 @@ def main(args):
         input_units=args.input_ref_units,
         output_units=args.output_units,
         output_calendar=calendar_hist,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
     )
     ds_out = train(
         ds_hist,
@@ -224,6 +228,18 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help="output data units"
+    )
+    parser.add_argument(
+        "--valid_min",
+        type=float,
+        default=None,
+        help="Minimum valid value",
+    )
+    parser.add_argument(
+        "--valid_max",
+        type=float,
+        default=None,
+        help="Maximum valid value",
     )
     parser.add_argument(
         "--ssr",
