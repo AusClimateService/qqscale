@@ -87,7 +87,6 @@ def adjust(
     ref_time=False,
     valid_min=None,
     valid_max=None,
-    outmax_da=None,
     output_tslice=None,
     cordex_attrs=None,
 ):
@@ -115,8 +114,6 @@ def adjust(
         Minimum valid value (input and output data is clipped to this value)
     valid_max : float
         Maximum valid value (input and output data is clipped to this value)
-    outmax_da : xarray DataArray
-        Array of valid maximum values for output data (e.g. clear sky radiation) 
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
@@ -179,12 +176,6 @@ def adjust(
     if (valid_min is not None) or (valid_max is not None):
         qq = qq.clip(min=valid_min, max=valid_max, keep_attrs=True) 
 
-    if outmax_da is not None:
-        if on_spatial_grid and (spatial_grid == 'af'):
-            logging.info('Regridding outmax data to adjustment factor grid')
-            outmax_da = utils.regrid(outmax_da, ds_adjust)
-            qq = qq.where(qq < outmax_da, outmax_da) 
-
     qq = qq.to_dataset()    
     if ref_time:
         new_start_date = ds_adjust.attrs['reference_period_start'] 
@@ -224,18 +215,6 @@ def main(args):
         valid_max=args.valid_max,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
-    if args.outmax_files is not None:
-        outmax_ds = utils.read_data(
-            args.outmax_files,
-            args.outmax_var,
-            time_bounds=args.adjustment_tbounds,
-            input_units=args.input_units,
-            output_units=args.output_units,
-            use_cftime=False,
-        )
-        outmax_da = outmax_ds[args.outmax_var]
-    else:
-        outmax_da = None
     qq = adjust(
         ds,
         args.var,
@@ -247,7 +226,6 @@ def main(args):
         ref_time=args.ref_time,
         valid_min=args.valid_min,
         valid_max=args.valid_max,
-        outmax_da=outmax_da,
         output_tslice=args.output_tslice,
         cordex_attrs=args.cordex_attrs,
     )
@@ -333,19 +311,6 @@ if __name__ == '__main__':
         type=float,
         default=None,
         help="Maximum valid value",
-    )
-    parser.add_argument(
-        "--outmax_files",
-        nargs='*',
-        type=str,
-        default=None,
-        help="Files containing maximum valid values for output data",
-    )
-    parser.add_argument(
-        "--outmax_var",
-        type=str,
-        default=None,
-        help="Variable of interest in outmax_file",
     )
     parser.add_argument(
         "--cordex_attrs",
