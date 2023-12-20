@@ -162,6 +162,8 @@ def read_data(
     apply_ssr=False,
     use_cftime=True,
     output_calendar=None,
+    valid_min=None,
+    valid_max=None,
 ):
     """Read and process an input dataset.
 
@@ -189,6 +191,10 @@ def read_data(
         Use cftime for time axis
     output_calendar : cftime calendar, optional
         Desired calendar for output data
+    valid_min : float, optional
+        Clip data to valid minimum value
+    valid_max : float, optional
+        Clip data to valid maximum value
 
     Returns
     -------
@@ -235,7 +241,10 @@ def read_data(
     if output_units:
         ds[var] = convert_units(ds[var], output_units)
         ds[var].attrs['units'] = output_units
-        
+
+    if (valid_min is not None) or (valid_max is not None):
+        ds[var] = ds[var].clip(min=valid_min, max=valid_max, keep_attrs=True)
+
     chunk_dict = {'time': -1}
     if lon_chunk_size:
         chunk_dict['lon'] = lon_chunk_size

@@ -83,7 +83,10 @@ def adjust(
     spatial_grid='input',
     interp='nearest',
     ssr=False,
+    max_af=None,
     ref_time=False,
+    valid_min=None,
+    valid_max=None,
     output_tslice=None,
     cordex_attrs=None,
 ):
@@ -103,8 +106,14 @@ def adjust(
         Method for interpolation of adjustment factors
     ssr : bool, default False
         Perform singularity stochastic removal
+    max_af : float, optional
+        Maximum limit for adjustment factors
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
+    valid_min : float
+        Minimum valid value (input and output data is clipped to this value)
+    valid_max : float
+        Maximum valid value (input and output data is clipped to this value)
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
@@ -150,6 +159,9 @@ def adjust(
     else:
         da = ds[var]
 
+    if max_af:
+        ds_adjust['af'] = ds_adjust['af'].where(ds_adjust['af'] < max_af, max_af)
+
     qq = qm.adjust(da, extrapolation='constant', interp=interp)
     qq = qq.rename(var)
     if on_spatial_grid:
@@ -160,6 +172,9 @@ def adjust(
 
     if ssr:
         qq = utils.reverse_ssr(qq)
+        
+    if (valid_min is not None) or (valid_max is not None):
+        qq = qq.clip(min=valid_min, max=valid_max, keep_attrs=True) 
 
     qq = qq.to_dataset()    
     if ref_time:
@@ -196,6 +211,8 @@ def main(args):
         input_units=args.input_units,
         output_units=args.output_units,
         use_cftime=False,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
     )
     ds_adjust = xr.open_dataset(args.adjustment_file)
     qq = adjust(
@@ -205,7 +222,10 @@ def main(args):
         spatial_grid=args.spatial_grid,
         interp=args.interp,
         ssr=args.ssr,
+        max_af=args.max_af,
         ref_time=args.ref_time,
+        valid_min=args.valid_min,
+        valid_max=args.valid_max,
         output_tslice=args.output_tslice,
         cordex_attrs=args.cordex_attrs,
     )
@@ -269,10 +289,28 @@ if __name__ == '__main__':
         help="Method for interpolation of adjustment factors",
     )
     parser.add_argument(
+        "--max_af",
+        type=float,
+        default=None,
+        help="Maximum limit for adjustment factors",
+    )
+    parser.add_argument(
         "--ssr",
         action="store_true",
         default=False,
         help='Perform Singularity Stochastic Removal',
+    )
+    parser.add_argument(
+        "--valid_min",
+        type=float,
+        default=None,
+        help="Minimum valid value",
+    )
+    parser.add_argument(
+        "--valid_max",
+        type=float,
+        default=None,
+        help="Maximum valid value",
     )
     parser.add_argument(
         "--cordex_attrs",
