@@ -2,12 +2,15 @@
 
 import argparse
 import logging
+import dask.diagnostics
 
 import utils
 
 
 def main(args):
     """Run the program."""
+
+    dask.diagnostics.ProgressBar().register()
 
     ds = utils.read_data(args.infile, args.var)
     max_ds = utils.read_data(
