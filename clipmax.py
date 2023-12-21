@@ -2,7 +2,10 @@
 
 import argparse
 import logging
+
+import dask
 import dask.diagnostics
+import xarray as xr
 
 import utils
 
@@ -30,7 +33,7 @@ def main(args):
     max_ds['time'] = ds['time']
     max_da = max_ds[args.maxvar]
 
-    ds[args.var] = ds[args.var].where(ds[args.var] < max_da, max_da)
+    ds[args.var] = xr.apply_ufunc(dask.array.minimum, ds[args.var], max_da, keep_attrs=True, dask='allowed')
 
     infile_logs = {}
     if 'history' in ds.attrs:
