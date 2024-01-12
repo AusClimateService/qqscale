@@ -39,7 +39,10 @@ def main(args):
     if 'history' in ds.attrs:
         infile_logs[args.infile] = ds.attrs['history']
     ds.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    ds.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
+    if args.compress:
+        ds.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
+    else:
+        ds.to_netcdf(args.outfile)
 
 
 if __name__ == '__main__':
@@ -54,6 +57,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--maxfiles", type=str, nargs='*', help="data files containing maximum valid values")
     parser.add_argument("--maxvar", type=str, help="variable in maxfiles")
+    parser.add_argument("--compress", action="store_true", default=False, help="compress the output data file")
 
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)

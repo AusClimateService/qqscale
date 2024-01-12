@@ -131,11 +131,14 @@ def main(args):
         ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
-    encoding = {
-        'af': {'least_significant_digit': 2, 'zlib': True},
-        'hist_q': {'least_significant_digit': 2, 'zlib': True},
-    }
-    ds_out.to_netcdf(args.output_file, encoding=encoding)
+    if args.compress:
+        encoding = {
+            'af': {'least_significant_digit': 2, 'zlib': True},
+            'hist_q': {'least_significant_digit': 2, 'zlib': True},
+        }
+        ds_out.to_netcdf(args.output_file, encoding=encoding)
+    else:
+        ds_out.to_netcdf(args.output_file)
 
 
 if __name__ == '__main__':
@@ -252,6 +255,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to INFO',
+    )
+    parser.add_argument(
+        "--compress",
+        action="store_true",
+        default=False,
+        help="compress the output data file"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

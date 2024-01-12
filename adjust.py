@@ -235,7 +235,13 @@ def main(args):
     if 'history' in ds.attrs:
         infile_logs[args.infiles[0]] = ds.attrs['history']
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    qq.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
+    if args.compress:
+        qq.to_netcdf(
+            args.outfile,
+            encoding={args.var: {'least_significant_digit': 2, 'zlib': True}}
+        )
+    else:
+        qq.to_netcdf(args.outfile)
 
 
 if __name__ == '__main__':
@@ -324,6 +330,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help='Set logging level to INFO',
+    )
+    parser.add_argument(
+        "--compress",
+        action="store_true",
+        default=False,
+        help="compress the output data file"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
