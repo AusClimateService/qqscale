@@ -3,11 +3,17 @@
 import argparse
 import logging
 
+import dask
+import dask.diagnostics
+import xarray as xr
+
 import utils
 
 
 def main(args):
     """Run the program."""
+
+    dask.diagnostics.ProgressBar().register()
 
     ds = utils.read_data(args.infile, args.var)
     max_ds = utils.read_data(
@@ -27,13 +33,16 @@ def main(args):
     max_ds['time'] = ds['time']
     max_da = max_ds[args.maxvar]
 
-    ds[args.var] = ds[args.var].where(ds[args.var] < max_da, max_da)
+    ds[args.var] = xr.apply_ufunc(dask.array.minimum, ds[args.var], max_da, keep_attrs=True, dask='allowed')
 
     infile_logs = {}
     if 'history' in ds.attrs:
         infile_logs[args.infile] = ds.attrs['history']
     ds.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
-    ds.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
+    if args.compress:
+        ds.to_netcdf(args.outfile, encoding={args.var: {'least_significant_digit': 2, 'zlib': True}})
+    else:
+        ds.to_netcdf(args.outfile)
 
 
 if __name__ == '__main__':
@@ -48,6 +57,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--maxfiles", type=str, nargs='*', help="data files containing maximum valid values")
     parser.add_argument("--maxvar", type=str, help="variable in maxfiles")
+    parser.add_argument("--compress", action="store_true", default=False, help="compress the output data file")
 
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
