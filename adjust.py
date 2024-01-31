@@ -196,6 +196,10 @@ def adjust(
         scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
         obs_dataset = cordex_attrs
         qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period, spatial_grid)
+    try:
+        qq['time'].encoding['units'] = ds['time'].encoding['units']
+    except KeyError:
+        pass
 
     return qq
 
