@@ -42,6 +42,8 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
            ds.attrs['CORDEX_domain'] = input_attrs['CORDEX_domain']
     elif obs_dataset == 'AGCD':
        ds.attrs['CORDEX_domain'] = 'AUS-05i'
+    elif obs_dataset == 'BARRA-R2':
+       ds.attrs['CORDEX_domain'] = 'AUS-11i'
 
     # Input global attributes to modify/overwrite
     ds.attrs['product'] = 'bias-adjusted-output'
@@ -65,6 +67,9 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
     if obs_dataset == 'AGCD':
         ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233-248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
         ds.attrs['bc_observation_id'] = 'AGCD'
+    elif obs_dataset == 'BARRA-R2':
+        ds.attrs['bc_observation'] = 'Bureau of Meteorology Atmospheric high-resolution Regional Reanalysis for Australia, version 2; Su, Chun-Hsu, Dharssi, Imtiaz, Le Marshall, John, Le, Tan, Rennie, Susan, Smith, Andy, Stassen, Christian, Steinle, Peter, Torrance, Joshua, Wang, Carl, Warren, Rob A and Australia. Bureau of Meteorology, issuing body. BARRA2 : development of the next-generation Australian regional atmospheric reanalysis, Bureau Research Report 067, Melbourne, Victoria: Bureau of Meteorology, 2022. Web. 4 November 2022 http://nla.gov.au/nla.obj-3100682359'
+        ds.attrs['bc_observation_id'] = 'BARRA-R2'
     else:
         raise ValueError('Unrecognised obs dataset: {obs_dataset}')
     ds.attrs['bc_period'] = bc_period 
