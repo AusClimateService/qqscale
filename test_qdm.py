@@ -98,7 +98,7 @@ def ds_adjust(ds_hist, ds_ref):
 
 @pytest.fixture
 def ds_qq(ds_target, ds_adjust):
-    """Calculate example QDM dataset."""
+    """Calculate example QDC dataset."""
     
     ds_qq = adjust.adjust(
         ds_target,
@@ -114,7 +114,7 @@ def ds_qq(ds_target, ds_adjust):
 
 @pytest.fixture
 def qq_q(ds_qq):
-    """Calculate example QDM dataset quantiles."""
+    """Calculate example QDC dataset quantiles."""
     
     qq_q = quantiles.quantiles(ds_qq, 'tasmax', 100)
     
