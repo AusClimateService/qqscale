@@ -47,8 +47,7 @@ There are a number of choices to make when implementing QDC:
   Model data is usually on a coarser spatial grid than observations.
   Some authors downscale the model data first (e.g. via simple spatial interpolation or statistical downscaling)
   and then perform QDC.
-  Others upscale the observations, perform QDC on the model grid and then downscale the result
-  (e.g. [Gergel et al 2023](https://doi.org/10.5194/egusphere-2022-1513)).
+  Others upscale the observations, perform QDC on the model grid and then downscale the result.
   Our qqscale software takes the most computationally efficient approach,
   which is to calculate the quantile changes on the model grid,
   downscale those change factors using bilinear interpolation
