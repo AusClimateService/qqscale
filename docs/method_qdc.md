@@ -15,10 +15,10 @@ For instance, if an observed historical temperature of $25^{\circ}$ Celsius corr
 the difference between the median value in the future and historical model data
 is added to that observed historical temperature in order to obtain the projected future temperature.
 
-This quantile delta change approach
-(QDC; [Olsson et al 2009](https://doi.org/10.1016/j.atmosres.2009.01.015);
+This *quantile delta change* (QDC) approach
+([Olsson et al 2009](https://doi.org/10.1016/j.atmosres.2009.01.015);
 [Willems & Vrac 2011](https://doi.org/10.1016/j.jhydrol.2011.02.030))
-and is expressed mathematically as follows:
+is expressed mathematically as follows:
 
 $$x_{o,p} = x_{o,h} + F_{m,p}^{-1}(F_{o,h}(x_{o,h})) - F_{m,h}^{-1}(F_{o,h}(x_{o,h}))$$
 
@@ -34,6 +34,12 @@ For variables like precipitation, multiplicative as opposed to additive mapping 
 to avoid the possibility of producing future values less than zero:
 
 $$x_{o,p} = x_{o,h} \times (F_{m,p}^{-1}(F_{o,h}(x_{o,h})) \div F_{m,h}^{-1}(F_{o,h}(x_{o,h})))$$
+
+In the Climate Change in Australia project,
+the quantile delta change approach
+(referred to as [quantile-quantile scaling](https://www.climatechangeinaustralia.gov.au/en/obtain-data/application-ready-data/scaling-methods/)
+in that project)
+was used to produce application ready climate data.
 
 
 ## Methodological decisions
