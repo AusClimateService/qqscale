@@ -2,27 +2,25 @@
 
 [![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml)
 
-This directory contains command line programs for quantile mapping (a.k.a. quantile-quantile scaling). 
+This directory contains command line programs for applying quantile mapping. 
 
 ## Methods
 
 The programs in this repository use the
-[bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html) functionality in xclim
-to apply what is essentially the most basic method of quantile mapping used in the literature.
+[bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html)
+functionality in xclim to apply quantile mapping.
 
-Depending on the context, there are few different names for this basic method:
-- If quantile delta changes (e.g. between an historical and future model simulation) are applied
+Depending on the context, there are two different ways the programs can be used:
+- To apply *quantile delta changes* (QDC) between an historical and future model simulation
   either additively or multiplicatively to observational data in order to produce
-  climate projection data for a future time period,
-  the method we apply has been referred to as
-  *Quantile Delta Mapping* (QDM; [Cannon et al 2015](https://doi.org/10.1175/JCLI-D-14-00754.1)).
-- If quantile biases (e.g. between an historical model simulation and observations) are removed
-  from model data in order to produce bias corrected model data,
-  the method we apply has been referred to as
+  climate projection data for a future time period.
+- To remove quantile biases between an historical model simulation and observations
+  from model data in order to produce bias corrected model data.
+  This has been referred to as
   *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
   *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
 
-See [docs/method_ecdfm.md](docs/method_ecdfm.md) and [docs/method_qdm.md](docs/method_qdm.md) for a detailed description
+See [docs/method_ecdfm.md](docs/method_ecdfm.md) and [docs/method_qdc.md](docs/method_qdc.md) for a detailed description
 of these methods and how they are implemented in the qqscale software.
 
 ## Software environment
@@ -92,11 +90,11 @@ $ python adjust.py -h
 
 ### Command line
   
-At the command line, QDM and/or ECDFm can be achieved by running the following scripts:
+At the command line, QDC and/or ECDFm can be achieved by running the following scripts:
 1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
-   (in QDM the reference dataset is a future model simulation; in ECDFm it is observations)
+   (in QDC the reference dataset is a future model simulation; in ECDFm it is observations)
 1. `adjust.py` to apply the adjustment factors to the *target* data
-   (in QDM the target data is observations; in ECDFm it is a model simulation)
+   (in QDC the target data is observations; in ECDFm it is a model simulation)
 
 See the files named `docs/example_*.md` for detailed worked examples using these two command line programs.
 
@@ -106,7 +104,7 @@ Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_targe
 containing the variable of interest (`hist_var`, `ref_var` and `target_var`)
 you can import the relevant functions from the scripts mentioned above.
 For instance,
-a QDM workflow would look something like this:
+a QDC workflow would look something like this:
 
 ```python
 
