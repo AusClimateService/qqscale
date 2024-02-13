@@ -6,8 +6,8 @@ by applying relative changes simulated by CMIP6 global climate models
 to observational data.
 
 The following example describes how to produce projections data
-for the 2056-2085 period using the quantile delta mapping method
-(see [method_qdm.md](method_qdm.md) for details)
+for the 2056-2085 period using the quantile delta change method
+(see [method_qdc.md](method_qdc.md) for details)
 for a given variable (pr),
 global climate model (ACCESS-ESM1-5),
 model experiment (ssp370),
@@ -69,12 +69,12 @@ There are a number of other flags that are also required to complete this task:
 - `--verbose`: As the program runs it will print progess updates to the screen.
 
 We would use the `--time_grouping monthly` for temperature data but no time grouping for precipitation
-(see [method_qdm.md](method_qdm.md) for an explanation).
+(see [method_qdc.md](method_qdc.md) for an explanation).
 
 Putting these options together with the positional arguments (the historical variable, reference variable and output adjustment factor file name) looks as follows:
 
 ```
-python train.py pr pr /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdm-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc --hist_files /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19500101-19991231.nc /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc --ref_files /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20650101-21001231.nc --hist_time_bounds 1995-01-01 2014-12-31 --ref_time_bounds 2056-01-01 2085-12-31 --scaling multiplicative --nquantiles 100 --input_hist_units "kg m-2 s-1" --input_ref_units "kg m-2 s-1" --output_units "mm day-1" --verbose --ssr
+python train.py pr pr /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdc-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc --hist_files /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19500101-19991231.nc /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc --ref_files /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20650101-21001231.nc --hist_time_bounds 1995-01-01 2014-12-31 --ref_time_bounds 2056-01-01 2085-12-31 --scaling multiplicative --nquantiles 100 --input_hist_units "kg m-2 s-1" --input_ref_units "kg m-2 s-1" --output_units "mm day-1" --verbose --ssr
 ```
 
 See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
@@ -100,27 +100,27 @@ precip
 ```
 adjustment factor file:
 ```
-/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdm-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc
+/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdc-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc
 ```
 and name of the output file
 (in this case following the CIH
 [file naming convenions](https://github.com/climate-innovation-hub/.github/blob/main/drs-qq-cmip6.md)):
 ```
-/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdm-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc
+/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdc-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc
 ```
 
 There are a number of options/flags that are also required to complete this task:
 - `--spatial_grid input`: The flag specifies whether to output data on the adjustment factor (`af`) or input data (`input`) grid. We want data on the input AGCD grid.
-- `--interp nearest`: The method for interpolating between adjustment factors (see [method_qdm.md](method_qdm.md) for an explanation of why we prefer nearest neighbour).
+- `--interp nearest`: The method for interpolating between adjustment factors (see [method_qdc.md](method_qdc.md) for an explanation of why we prefer nearest neighbour).
 - `--input_units "mm day-1"`, `--output_units "mm day-1"`: Specify input and desired output units and the code will convert units if required.
 - `--adjustment_tbounds 1990-01-01 2019-12-31`: Time bounds for the data to be adjusted.
-- `--ssr`: Apply Singularity Stochasitc Removal (for precipitation data only; see [method_qdm.md](method_qdm.md) for details).
+- `--ssr`: Apply Singularity Stochasitc Removal (for precipitation data only; see [method_qdc.md](method_qdc.md) for details).
 - `--ref_time`: Apply the time axis from the reference (future) data to the output data.
 - `--verbose`: As the program runs it will print progess updates to the screen.
 
 Putting all these positional and options/flags together:
 ```
-python adjust.py /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr precip /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdm-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdm-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc --adjustment_tbounds 1990-01-01 2019-12-31 --input_units "mm day-1" --output_units "mm day-1" --spatial_grid input --interp nearest --verbose --ssr --ref_time
+python adjust.py /g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr precip /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdc-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdc-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc --adjustment_tbounds 1990-01-01 2019-12-31 --input_units "mm day-1" --output_units "mm day-1" --spatial_grid input --interp nearest --verbose --ssr --ref_time
 ```
 See the [software environment instructions](https://github.com/climate-innovation-hub/qqscale/tree/master#software-environment) for details on the python environment.
 
@@ -142,12 +142,12 @@ the example workflow described about can be visualised by running the following 
 command line:
 
 ```
-papermill -p adjustment_file /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdm-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc -p qq_file /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdm-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc -r hist_files "/g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19500101-19991231.nc /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc" -r ref_files "/g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20650101-21001231.nc" -r target_files "/g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr" -r hist_time_bounds "1995-01-01 2014-12-31" -r ref_time_bounds "2056-01-01 2085-12-31" -r target_time_bounds "1990-01-01 2019-12-31" -p hist_units "kg m-2 s-1" -p ref_units "kg m-2 s-1" -p target_units "mm day-1" -p output_units "mm day-1" -p hist_var pr -p ref_var pr -p target_var precip -p scaling multiplicative validation.ipynb /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdm-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.ipynb
+papermill -p adjustment_file /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/v20191115/pr-qdc-multiplicative-monthly-q100-adjustment-factors_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20560101-20851231_wrt_19950101-20141231.nc -p qq_file /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdc-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.nc -r hist_files "/g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_19500101-19991231.nc /g/data/fs38/publications/CMIP6/CMIP/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc" -r ref_files "/g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20150101-20641231.nc /g/data/fs38/publications/CMIP6/ScenarioMIP/CSIRO/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/gn/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_gn_20650101-21001231.nc" -r target_files "/g/data/xv83/agcd-csiro/precip/daily/precip-total_AGCD-CSIRO_r005_19000101-20220405_daily_space-chunked.zarr" -r hist_time_bounds "1995-01-01 2014-12-31" -r ref_time_bounds "2056-01-01 2085-12-31" -r target_time_bounds "1990-01-01 2019-12-31" -p hist_units "kg m-2 s-1" -p ref_units "kg m-2 s-1" -p target_units "mm day-1" -p output_units "mm day-1" -p hist_var pr -p ref_var pr -p target_var precip -p scaling multiplicative validation.ipynb /g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdc-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.ipynb
 ```
 
 The result is a new notebook called: 
 ```
-/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdm-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.ipynb
+/g/data/wp00/data/QQ-CMIP6/ACCESS-ESM1-5/ssp370/r1i1p1f1/day/pr/v20191115/pr_day_ACCESS-ESM1-5_ssp370_r1i1p1f1_AUS-r005_20560101-20851231_qdc-multiplicative-monthly-q100-nearest_AGCD-19900101-20191231_historical-19950101-20141231.ipynb
 ```
 
 You can view an example of what such a notebook looks like
