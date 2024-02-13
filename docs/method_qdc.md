@@ -15,7 +15,7 @@ For instance, if an observed historical temperature of $25^{\circ}$ Celsius corr
 the difference between the median value in the future and historical model data
 is added to that observed historical temperature in order to obtain the projected future temperature.
 
-This is commonly referred to as the quantile delta change approach
+This quantile delta change approach
 (QDC; [Olsson et al 2009](https://doi.org/10.1016/j.atmosres.2009.01.015);
 [Willems & Vrac 2011](https://doi.org/10.1016/j.jhydrol.2011.02.030))
 and is expressed mathematically as follows:
