@@ -29,6 +29,8 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
         Time period grouping (default is no grouping)
     nquantiles : int, default 100
         Number of quantiles to process
+    spatial_grid : {'hist', 'ref'}, default 'hist'
+        Spatial grid for output data (hist or ref grid)
     ssr : bool, default False
         Perform singularity stochastic removal 
         
@@ -41,11 +43,20 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     ref_units = ds_ref[ref_var].attrs['units']
     
     dims = ds_hist[hist_var].dims
-    spatial_grid = ('lat' in dims) and ('lon' in dims)
-    if spatial_grid:
+    on_spatial_grid = ('lat' in dims) and ('lon' in dims)
+    if on_spatial_grid:
         if len(ds_hist['lat']) != len(ds_ref['lat']):
-            ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
-    
+            if spatial_grid == 'ref':
+                ds_hist = utils.regrid(ds_hist, ds_ref, variable=hist_var)
+                logging.info('Regridding hist data to ref grid')
+                spatial_coords = {'lat': ds_ref['lat'], 'lon': ds_ref['lon']}
+            elif spatial_grid == 'hist':
+                ds_ref = utils.regrid(ds_ref, ds_hist, variable=ref_var)
+                logging.info('Regridding ref data to hist grid')
+                spatial_coords = {'lat': ds_hist['lat'], 'lon': ds_hist['lon']}
+        assert len(ds_hist['lat']) == len(ds_ref['lat'])
+        assert len(ds_hist['lon']) == len(ds_ref['lon'])    
+
     scaling_methods = {'additive': '+', 'multiplicative': '*'}
 
     if time_grouping == 'monthly':
@@ -75,8 +86,8 @@ def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquan
     except ValueError:
         pass
     qm.ds['hist_q'].attrs['units'] = hist_units
-    if spatial_grid:
-        qm.ds = qm.ds.assign_coords({'lat': ds_ref['lat'], 'lon': ds_ref['lon']}) #xclim strips lat/lon attributes
+    if on_spatial_grid:
+        qm.ds = qm.ds.assign_coords(spatial_coords) #xclim strips lat/lon attributes
         qm.ds = qm.ds.transpose('lat', 'lon', ...)
     if 'month' in qm.ds.dims:
         qm.ds = qm.ds.transpose('month', ...)
@@ -213,6 +224,13 @@ if __name__ == '__main__':
         choices=('monthly', '3monthly'),
         default=None,
         help="Time period grouping",
+    )
+    parser.add_argument(
+        "--spatial_grid",
+        type=str,
+        choices=('hist', 'ref'),
+        default='hist',
+        help="Spatial grid for output data (hist or ref grid)",
     )
     parser.add_argument(
         "--input_hist_units",

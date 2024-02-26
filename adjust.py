@@ -64,7 +64,7 @@ def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_perio
         bc_reference = 'Wang L, & Chen W (2014). Equiratio cumulative distribution function matching as an improvement to the equidistant approach in bias correction of precipitation. Atmospheric Science Letters, 15(1), 1–6. https://doi.org/10.1002/asl2.454'
     ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
     ds.attrs['bc_method_id'] = 'ecdfm'
-    if obs_dataset == 'AGCD':
+    if 'AGCD' in obs_dataset:
         ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233-248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
         ds.attrs['bc_observation_id'] = 'AGCD'
     elif obs_dataset == 'BARRA-R2':
@@ -122,7 +122,7 @@ def adjust(
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    cordex_attrs : {'AGCD'}, optional
+    cordex_attrs : {'AGCD', 'AGCA-AGCD', 'BARRA-R2'}, optional
         Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
     Returns
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--cordex_attrs",
         type=str,
-        choices=('AGCD'),
+        choices=('AGCD', 'AGCA-AGCD', 'BARRA-R2'),
         default=None,
         help='Apply attributes defined for bias adjusted CORDEX simulations for given obs dataset',
     )
