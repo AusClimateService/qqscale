@@ -10,7 +10,17 @@ import dask.diagnostics
 import utils
 
 
-def train(ds_hist, ds_ref, hist_var, ref_var, scaling, time_grouping=None, nquantiles=100, ssr=False):
+def train(
+    ds_hist,
+    ds_ref,
+    hist_var,
+    ref_var,
+    scaling,
+    time_grouping=None,
+    nquantiles=100,
+    spatial_grid='hist',
+    ssr=False
+):
     """Calculate qq-scaling adjustment factors.
 
     Parameters
@@ -139,6 +149,7 @@ def main(args):
         args.scaling,
         time_grouping=args.time_grouping,
         nquantiles=args.nquantiles,
+        spatial_grid=args.spatial_grid,
         ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
