@@ -64,6 +64,8 @@ def train(
                 ds_ref = utils.regrid(ds_ref, ds_hist, variable=ref_var)
                 logging.info('Regridding ref data to hist grid')
                 spatial_coords = {'lat': ds_hist['lat'], 'lon': ds_hist['lon']}
+        else:
+            spatial_coords = {'lat': ds_ref['lat'], 'lon': ds_ref['lon']}
         assert len(ds_hist['lat']) == len(ds_ref['lat'])
         assert len(ds_hist['lon']) == len(ds_ref['lon'])    
 
