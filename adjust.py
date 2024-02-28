@@ -93,6 +93,7 @@ def adjust(
     valid_min=None,
     valid_max=None,
     output_tslice=None,
+    output_tunits=None,
     cordex_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
@@ -122,6 +123,8 @@ def adjust(
     output_tslice : list, default None
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
+    output_tunits : str, default None
+        Time units for output file (e.g. 'days since 1950-01-01')
     cordex_attrs : {'AGCD', 'AGCA-AGCD', 'BARRA-R2'}, optional
         Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
@@ -201,10 +204,8 @@ def adjust(
         scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
         obs_dataset = cordex_attrs
         qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period, spatial_grid)
-    try:
-        qq['time'].encoding['units'] = ds['time'].encoding['units']
-    except KeyError:
-        pass
+    if output_tunits:
+        qq['time'].encoding['units'] = output_tunits
 
     return qq
 
@@ -223,7 +224,15 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
     )
+
+    if args.output_time_units:
+        output_tunits = args.output_time_units
+    else:
+        ds1 = xr.open_dataset(args.infiles[0])
+        output_tunits = ds1['time'].encoding['units']
+
     ds_adjust = xr.open_dataset(args.adjustment_file)
+    
     qq = adjust(
         ds,
         args.var,
@@ -236,6 +245,7 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
         output_tslice=args.output_tslice,
+        output_tunits=output_tunits,
         cordex_attrs=args.cordex_attrs,
     )
     infile_logs = {}
@@ -326,6 +336,12 @@ if __name__ == '__main__':
         type=float,
         default=None,
         help="Maximum valid value",
+    )
+    parser.add_argument(
+        "--output_time_units",
+        type=str,
+        default=None,
+        help="""Time units for output file (e.g. 'days since 1950-01-01')""",
     )
     parser.add_argument(
         "--cordex_attrs",
