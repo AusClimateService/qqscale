@@ -1,5 +1,6 @@
 """Command line program for applying QQ-scaling adjustment factors."""
 
+import yaml
 import logging
 import argparse
 from datetime import datetime
@@ -14,69 +15,91 @@ import dask.diagnostics
 import utils
 
 
-def apply_cordex_attributes(ds, var, input_attrs, scaling, obs_dataset, bc_period, spatial_grid):
-    """Apply file attributes defined for bias adjusted CORDEX simulations.
+def unpack_dict(input_dict):
+    """Get the key and value from a single-item dictionary."""
 
-    Source: http://is-enes-data.github.io/CORDEX_adjust_drs.pdf
+    key = list(input_dict.keys())[0]
+    value = input_dict[key]
+
+    return key, value
+
+
+def amend_attributes(ds, input_var, input_attrs, metadata_file):
+    """Amend file attributes.
+
+    Parameters
+    ----------
+    ds : xarray Dataset
+        Dataset to be amended
+    input_var : str
+        Variable in ds
+    input_attrs : dict
+        Global attributes from the original input data file
+    metadata_file : str
+        Path to YAML file with user defined attributes
+
+    Notes
+    -----
+    The metadata_file can specify global attributes to keep
+    (all input file global attributes are removed by default)
+    and to create/overwrite.
+
+    It can also specify variable attributes to remove
+    (all input variable attributes are kept by default)
+    or create/overwrite.
+
+    An example metadata YAML file looks like:
+
+    global_keep:
+      - domain
+      - domain_id
+    global_overwrite:
+      - product: bias-adjusted-output
+      - project_id: CORDEX-Adjust
+    var_remove:
+      - precip:
+        - frequency
+        - length_scale_for_analysis
+    var_overwrite:
+      - precip:
+        - long_name: "precipitation rate"
     """
 
+    with open(metadata_file, 'r') as reader:
+        metadata_dict = yaml.load(reader, Loader=yaml.BaseLoader)
+
+    valid_keys = ['global_keep', 'global_overwrite', 'var_remove', 'var_overwrite']
+    for key in metadata_dict.keys():
+        if key not in valid_keys:
+            raise KeyError(f"Invalid metadata key: {key}")
+
     # Variable attributes
-    ds[var].attrs['long_name'] = 'Bias-Adjusted ' + ds[var].attrs['long_name']
-    with suppress(KeyError):
-        del ds[var].attrs['cell_methods']
+    if 'var_remove' in metadata_dict:
+        for remove_dict in metadata_dict['var_remove']:
+            var, attrs_to_remove = unpack_dict(remove_dict)
+            for attr in attrs_to_remove:
+                with suppress(KeyError):
+                    del ds[var].attrs[attr]
+    if 'var_overwrite' in metadata_dict:
+        for var_dict in metadata_dict['var_overwrite']:
+            var, overwrite_list = unpack_dict(var_dict)
+            for overwrite_dict in overwrite_list:
+                key, value = unpack_dict(overwrite_dict)
+                with suppress(KeyError):
+                    ds[var].attrs[key] = value
 
-    # Input global attributes to keep
-    keep_attrs = [
-        'driving_model_id',
-        'driving_model_ensemble_member',
-        'driving_experiment_name',
-        'experiment_id',
-        'rcm_version_id',
-        'model_id'
-    ]
-    for attr in keep_attrs:
-        with suppress(KeyError):
-            ds.attrs[attr] = input_attrs[attr]
-    if spatial_grid == 'input':
-       with suppress(KeyError):
-           ds.attrs['CORDEX_domain'] = input_attrs['CORDEX_domain']
-    elif obs_dataset == 'AGCD':
-       ds.attrs['CORDEX_domain'] = 'AUS-05i'
-    elif obs_dataset == 'BARRA-R2':
-       ds.attrs['CORDEX_domain'] = 'AUS-11i'
-
-    # Input global attributes to modify/overwrite
-    ds.attrs['product'] = 'bias-adjusted-output'
-    ds.attrs['project_id'] = 'CORDEX-Adjust'
-    ds.attrs['contact'] = 'damien.irving@csiro.au'
-    ds.attrs['institution'] = 'Australian Climate Service'
-    ds.attrs['institute_id'] = 'ACS'
+    # Global attributes
+    if 'global_keep' in metadata_dict:
+        for attr in metadata_dict['global_keep']:
+            with suppress(KeyError):
+                ds.attrs[attr] = input_attrs[attr]
+    if 'global_overwrite' in metadata_dict:
+        for overwrite_dict in metadata_dict['global_overwrite']:
+            key, value = unpack_dict(overwrite_dict)
+            ds.attrs[key] = value 
+            if value == 'ecdfm':
+                ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
     ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    ds.attrs['tracking_id'] = 'unknown'
-
-    # New global attributes
-    bc_info = 'https://github.com/climate-innovation-hub/qqscale/blob/master/docs/method_ecdfm.md' 
-    if scaling == 'additive':
-        bc_name = 'Equidistant CDF Matching'
-        bc_reference = 'Li H, Sheffield J, & Wood EF (2010). Bias correction of monthly precipitation and temperature fields from Intergovernmental Panel on Climate Change AR4 models using equidistant quantile matching. Journal of Geophysical Research, 115(D10), D10101. https://doi.org/10.1029/2009JD012882'
-    elif scaling == 'multiplicative':
-        bc_name = 'Equiratio CDF Matching'
-        bc_reference = 'Wang L, & Chen W (2014). Equiratio cumulative distribution function matching as an improvement to the equidistant approach in bias correction of precipitation. Atmospheric Science Letters, 15(1), 1–6. https://doi.org/10.1002/asl2.454'
-    ds.attrs['bc_method'] = f'{bc_name}; {bc_info}; {bc_reference}'
-    ds.attrs['bc_method_id'] = 'ecdfm'
-    if obs_dataset == 'AGCD':
-        ds.attrs['bc_observation'] = 'Australian Gridded Climate Data, version 1-0-1; https://dx.doi.org/10.25914/hjqj-0x55; Jones D, Wang W, & Fawcett R (2009). High-quality spatial climate datasets for Australia. Australian Meteorological and Oceanographic Journal, 58, 233-248. http://www.bom.gov.au/jshess/docs/2009/jones_hres.pdf'
-        ds.attrs['bc_observation_id'] = 'AGCD'
-    elif obs_dataset == 'BARRA-R2':
-        ds.attrs['bc_observation'] = 'Bureau of Meteorology Atmospheric high-resolution Regional Reanalysis for Australia, version 2;  https://doi.org/10.25914/1X6G-2V48; Su, C.-H., Rennie, S., Dharssi, I., Torrance, J., Smith, A., Le, T., Steinle, P., Stassen, C., Warren, R. A., Wang, C., and Le Marshall, J. (2022), BARRA2: Development of the next-generation Australian regional atmospheric reanalysis, Bureau Research Report 067, accessed online http://www.bom.gov.au/research/publications/researchreports/BRR-067.pdf'
-        ds.attrs['bc_observation_id'] = 'BARRA-R2'
-    else:
-        raise ValueError('Unrecognised obs dataset: {obs_dataset}')
-    ds.attrs['bc_period'] = bc_period 
-    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'
-    ds.attrs['bc_period'] = bc_period 
-    ds.attrs['bc_info'] = f'ecdfm-{obs_dataset}-{bc_period}'    
-    #ds.attrs['input_tracking_id'] = input_attrs['tracking_id']
 
     return ds
 
@@ -93,7 +116,8 @@ def adjust(
     valid_min=None,
     valid_max=None,
     output_tslice=None,
-    cordex_attrs=None,
+    output_tunits=None,
+    outfile_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
 
@@ -115,14 +139,16 @@ def adjust(
         Maximum limit for adjustment factors
     ref_time : bool, default False
         Adjust the output time axis so it matches the reference data
-    valid_min : float
+    valid_min : float, optional
         Minimum valid value (input and output data is clipped to this value)
-    valid_max : float
+    valid_max : float, optional
         Maximum valid value (input and output data is clipped to this value)
-    output_tslice : list, default None
+    output_tslice : list, optional
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    cordex_attrs : {'AGCD'}, optional
+    output_tunits : str, optional
+        Time units for output file (e.g. 'days since 1950-01-01')
+    outfile_attrs : str, optional
         Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
     Returns
@@ -194,17 +220,12 @@ def adjust(
     qq.attrs['xclim'] = qq[var].attrs['history']
     del qq[var].attrs['history']
     del qq[var].attrs['bias_adjustment']
-    if cordex_attrs:
-        ref_start = ds_adjust.attrs['reference_period_start'][0:4]
-        ref_end = ds_adjust.attrs['reference_period_end'][0:4]
-        bc_period = f'{ref_start}-{ref_end}'
-        scaling = 'additive' if '+' in qq.attrs['xclim'] else 'multiplicative'
-        obs_dataset = cordex_attrs
-        qq = apply_cordex_attributes(qq, var, ds.attrs, scaling, obs_dataset, bc_period, spatial_grid)
-    try:
-        qq['time'].encoding['units'] = ds['time'].encoding['units']
-    except KeyError:
-        pass
+    with suppress(KeyError):
+        del qq[var].attrs['cell_methods']
+    if outfile_attrs:
+        qq = amend_attributes(qq, var, ds.attrs, outfile_attrs)
+    if output_tunits:
+        qq['time'].encoding['units'] = output_tunits
 
     return qq
 
@@ -216,6 +237,7 @@ def main(args):
     ds = utils.read_data(
         args.infiles,
         args.var,
+        rename_var=args.rename_var,
         time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
@@ -223,10 +245,19 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
     )
+    var = args.rename_var if args.rename_var else args.var
+
+    if args.output_time_units:
+        output_tunits = args.output_time_units
+    else:
+        ds1 = xr.open_dataset(args.infiles[0])
+        output_tunits = ds1['time'].encoding['units']
+
     ds_adjust = xr.open_dataset(args.adjustment_file)
+
     qq = adjust(
         ds,
-        args.var,
+        var,
         ds_adjust,
         spatial_grid=args.spatial_grid,
         interp=args.interp,
@@ -236,7 +267,8 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
         output_tslice=args.output_tslice,
-        cordex_attrs=args.cordex_attrs,
+        output_tunits=output_tunits,
+        outfile_attrs=args.outfile_attrs,
     )
     infile_logs = {}
     if 'history' in ds_adjust.attrs:
@@ -247,7 +279,7 @@ def main(args):
     if args.compress:
         qq.to_netcdf(
             args.outfile,
-            encoding={args.var: {'least_significant_digit': 2, 'zlib': True}}
+            encoding={var: {'least_significant_digit': 2, 'zlib': True}}
         )
     else:
         qq.to_netcdf(args.outfile)
@@ -265,6 +297,7 @@ if __name__ == '__main__':
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
     parser.add_argument("outfile", type=str, help="output file")
 
+    parser.add_argument("--rename_var", type=str, default=None, help='rename var to value of rename_var')
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
@@ -328,11 +361,16 @@ if __name__ == '__main__':
         help="Maximum valid value",
     )
     parser.add_argument(
-        "--cordex_attrs",
+        "--output_time_units",
         type=str,
-        choices=('AGCD'),
         default=None,
-        help='Apply attributes defined for bias adjusted CORDEX simulations for given obs dataset',
+        help="""Time units for output file (e.g. 'days since 1950-01-01')""",
+    )
+    parser.add_argument(
+        "--outfile_attrs",
+        type=str,
+        default=None,
+        help='YAML file with outfile attributes',
     )
     parser.add_argument(
         "--verbose",
