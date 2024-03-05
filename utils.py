@@ -152,7 +152,8 @@ def convert_units(da, target_units):
 
 def read_data(
     infiles,
-    var,
+    input_var,
+    rename_var=None,
     time_bounds=None,
     lat_bounds=None,
     lon_bounds=None,
@@ -171,8 +172,10 @@ def read_data(
     ----------
     infiles : list
         Input files    
-    var : str, optional
-        Variable to read
+    input_var : str, optional
+        Variable to read from infiles
+    rename_var : str, optional
+        Rename var to value of rename_var
     time_bounds : list, optional
         Time period to extract from infiles [YYYY-MM-DD, YYYY-MM-DD]
     lat_bnds : list, optional
@@ -218,6 +221,12 @@ def read_data(
     except ValueError:
         pass
 
+    if rename_var:
+        ds = ds.rename({input_var: rename_var})
+        var = rename_var
+    else:
+        var = input_var
+        
     if 'latitude' in ds.dims:
         ds = ds.rename({'latitude': 'lat'})
     if 'longitude' in ds.dims:
