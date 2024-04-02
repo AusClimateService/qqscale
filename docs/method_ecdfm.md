@@ -9,7 +9,7 @@ in order to produce a "bias corrected" model time series.
 
 Many bias correction procedures are quantile based,
 meaning the model data are corrected on a quantile by quantile basis.
-In *equidistant cumulative density function matching* (ECDFm; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)),
+In *equidistant cumulative density function matching* (EDCDFm; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)),
 the transfer function represents the distance (i.e. arithmetic difference)
 between the observations and model for each quantile of the training period.
 Those differences are then added to the target model data
