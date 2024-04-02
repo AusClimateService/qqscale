@@ -74,7 +74,7 @@ There are a number of choices to make when implementing QDC:
   (i.e. the mean change between the future data produced by QDC and the observations
   is much different than the mean change between the future and historical model simulations).
   As such, we don't apply any time grouping when applying QDC to precipitation data.
-- *Qunatiles (number and interpolation)*:
+- *Qunatiles*:
   Our qqscale software allows the user to specify
   the number of quantiles to calculate.
   We've found that it's best to have approximately 10 data values between each quanite.
