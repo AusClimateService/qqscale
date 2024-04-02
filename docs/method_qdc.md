@@ -76,16 +76,19 @@ There are a number of choices to make when implementing QDC:
   As such, we don't apply any time grouping when applying QDC to precipitation data.
 - *Qunatiles (number and interpolation)*:
   Our qqscale software allows the user to specify
-  the number of quantiles to calculate and
-  what interpolation method to use to determine the change factor
-  for data points that fall between two quantiles.
+  the number of quantiles to calculate.
   We've found that it's best to have approximately 10 data values between each quanite.
   If you're processing 30 years of daily data,
   that means 100 quantiles if the time grouping is monthly
   or 1000 quantiles if no time grouping is applied. 
-  We've found that linear and cubic interpolation produce slighty better results
-  than nearest neighbour but are much more computationally expensive,
-  so nearest neightbour can be a preferable compromise when processing large datasets.
+- *Adjustment factor smoothing*:
+  By default, the delta change applied to each observational data point is the closest value from the array of adjustment factors.
+  For example, it might be a 12 (months) by 100 (quantiles) array of adjustment factors.
+  Linear or cubic interpolation / smoothing of the adjustment factors can be optionally applied along the time (e.g. month) axis.
+  For example, the adjustment factor for a observational data point from 29 July that corresponds to the 0.651 quantile
+  could be a linear combination of the adjustment factors for the nearest quantile (0.65) from both July and August.
+  We've found that linear and cubic interpolation along the time axis produce slighty better results
+  than no smoothing at all but can be more computationally expensive.
 - *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
   is used to avoid divide by zero errors in the analysis of precipitation data.
   All near-zero values (i.e. values less than a very small positive threshold value)
