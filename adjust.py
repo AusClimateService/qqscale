@@ -99,7 +99,7 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
             ds.attrs[key] = value 
             if value == 'ecdfm':
                 ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
-    ds.attrs['creation_date'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    ds.attrs['creation_date'] = datetime.now().isoformat()
 
     return ds
 
