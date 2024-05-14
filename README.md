@@ -2,13 +2,13 @@
 
 [![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml)
 
-This directory contains command line programs for applying quantile mapping. 
+This directory contains command line programs for applying quantile scaling. 
 
 ## Methods
 
 The programs in this repository use the
 [bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html)
-functionality in xclim to apply quantile mapping.
+functionality in xclim to apply quantile scaling.
 
 Depending on the context, there are two different ways the programs can be used:
 - To apply *quantile delta changes* (QDC) between an historical and future model simulation
