@@ -35,20 +35,6 @@ and [pytest](https://docs.pytest.org) (if running the tests).
 A copy of the scripts and a software environment with those libraries installed
 can be accessed or created in a number of ways (see below):
 
-### For members of the CSIRO Climate Innovation Hub...
-
-If you're a member of the `wp00` project on NCI
-(i.e. if you're part of the CSIRO Climate Innovation Hub),
-the easiest way to use the scripts in this directory is to use the cloned copy at `/g/data/wp00/shared_code/qqscale/`.
-They can be run using the Python environment at `/g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python`.
-
-For example, to view the help information for the `adjust.py` script
-a member of the `wp00` project could run the following:
-
-```
-$ /g/data/wp00/users/dbi599/miniconda3/envs/cih/bin/python /g/data/wp00/shared_code/qqscale/adjust.py -h
-```
-
 ### For members of the Australian Climate Service...
 
 If you're a member of the `xv83` project on NCI
@@ -81,7 +67,7 @@ on one of the command line programs to check that everything is working.
 For example:
 
 ```
-$ git clone git@github.com:climate-innovation-hub/qqscale.git
+$ git clone git@github.com:AusClimateService/qqscale.git
 $ cd qqscale
 $ python adjust.py -h
 ```
@@ -150,4 +136,4 @@ EDCDFm with 20 years of daily CORDEX and AGCD data (on AUS-20i 171 x 211 horizon
 
 Questions or comments are welcome at the GitHub repostory
 associated with the code:  
-https://github.com/climate-innovation-hub/qqscale/issues
+https://github.com/AusClimateService/qqscale/issues
