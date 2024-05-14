@@ -15,15 +15,6 @@ import dask.diagnostics
 import utils
 
 
-def unpack_dict(input_dict):
-    """Get the key and value from a single-item dictionary."""
-
-    key = list(input_dict.keys())[0]
-    value = input_dict[key]
-
-    return key, value
-
-
 def amend_attributes(ds, input_var, input_attrs, metadata_file):
     """Amend file attributes.
 
@@ -75,18 +66,19 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
 
     # Variable attributes
     if 'var_remove' in metadata_dict:
-        for remove_dict in metadata_dict['var_remove']:
-            var, attrs_to_remove = unpack_dict(remove_dict)
-            for attr in attrs_to_remove:
+        for var, attrs in metadata_dict['var_remove'].items():
+            if type(attrs) == str:
                 with suppress(KeyError):
-                    del ds[var].attrs[attr]
+                    del ds[var].attrs[attrs]
+            else:
+                for attr in attrs:
+                    with suppress(KeyError):
+                        del ds[var].attrs[attr]
     if 'var_overwrite' in metadata_dict:
-        for var_dict in metadata_dict['var_overwrite']:
-            var, overwrite_list = unpack_dict(var_dict)
-            for overwrite_dict in overwrite_list:
-                key, value = unpack_dict(overwrite_dict)
+        for var, attr_dict in metadata_dict['var_overwrite'].items():
+            for attr, value in attr_dict.items():
                 with suppress(KeyError):
-                    ds[var].attrs[key] = value
+                    ds[var].attrs[attr] = value
 
     # Global attributes
     if 'global_keep' in metadata_dict:
@@ -94,9 +86,8 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
             with suppress(KeyError):
                 ds.attrs[attr] = input_attrs[attr]
     if 'global_overwrite' in metadata_dict:
-        for overwrite_dict in metadata_dict['global_overwrite']:
-            key, value = unpack_dict(overwrite_dict)
-            ds.attrs[key] = value 
+        for attr, value in metadata_dict['global_overwrite'].items():
+            ds.attrs[attr] = value 
             if value == 'ecdfm':
                 with suppress(KeyError):
                     ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
