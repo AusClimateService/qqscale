@@ -98,7 +98,8 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
             key, value = unpack_dict(overwrite_dict)
             ds.attrs[key] = value 
             if value == 'ecdfm':
-                ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
+                with suppress(KeyError):
+                    ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
     ds.attrs['creation_date'] = datetime.now().isoformat()
 
     return ds
