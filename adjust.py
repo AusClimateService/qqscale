@@ -73,14 +73,10 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
                 ds = ds.rename({old_var: new_var})
 
     if 'var_remove' in metadata_dict:
-        for var, attrs in metadata_dict['var_remove'].items():
-            if type(attrs) == str:
-                with suppress(KeyError):
-                    del ds[var].attrs[attrs]
-            else:
-                for attr in attrs:
-                    with suppress(KeyError):
-                        del ds[var].attrs[attr]
+        for var, attr_list in metadata_dict['var_remove'].items():
+             for attr in attr_list:
+                 with suppress(KeyError):
+                     del ds[var].attrs[attr]
     if 'var_overwrite' in metadata_dict:
         for var, attr_dict in metadata_dict['var_overwrite'].items():
             for attr, value in attr_dict.items():
