@@ -155,14 +155,17 @@ def main(args):
         ssr=args.ssr,
     )
     ds_out.attrs['history'] = utils.get_new_log()
+
+    encoding = {}
+    outfile_vars = list(ds_out.coords) + list(ds_out.keys())
+    for outfile_var in outfile_vars:
+        encoding[outfile_var] = {'_FillValue': None}
     if args.compress:
-        encoding = {
-            'af': {'least_significant_digit': 2, 'zlib': True},
-            'hist_q': {'least_significant_digit': 2, 'zlib': True},
-        }
-        ds_out.to_netcdf(args.output_file, encoding=encoding)
-    else:
-        ds_out.to_netcdf(args.output_file)
+        encoding['af']['least_significant_digit'] = 2
+        encoding['af']['zlib'] = True
+        encoding['hist_q']['least_significant_digit'] = 2
+        encoding['hist_q']['zlib'] = True
+    ds_out.to_netcdf(args.output_file, encoding=encoding)
 
 
 if __name__ == '__main__':

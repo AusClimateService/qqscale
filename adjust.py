@@ -41,6 +41,8 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
 
     An example metadata YAML file looks like:
 
+    rename:
+      - precip : pr
     global_keep:
       - domain
       - domain_id
@@ -48,23 +50,28 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
       - product: bias-adjusted-output
       - project_id: CORDEX-Adjust
     var_remove:
-      - precip:
+      - pr:
         - frequency
         - length_scale_for_analysis
     var_overwrite:
-      - precip:
+      - pr:
         - long_name: "precipitation rate"
     """
 
     with open(metadata_file, 'r') as reader:
         metadata_dict = yaml.load(reader, Loader=yaml.BaseLoader)
 
-    valid_keys = ['global_keep', 'global_overwrite', 'var_remove', 'var_overwrite']
+    valid_keys = ['rename', 'global_keep', 'global_overwrite', 'var_remove', 'var_overwrite']
     for key in metadata_dict.keys():
         if key not in valid_keys:
             raise KeyError(f"Invalid metadata key: {key}")
 
     # Variable attributes
+    if 'rename' in metadata_dict:
+        for old_var, new_var in metadata_dict['rename'].items():
+            with suppress(ValueError):
+                ds = ds.rename({old_var: new_var})
+
     if 'var_remove' in metadata_dict:
         for var, attrs in metadata_dict['var_remove'].items():
             if type(attrs) == str:
@@ -240,7 +247,7 @@ def main(args):
     var = args.rename_var if args.rename_var else args.var
 
     if args.output_time_units:
-        output_tunits = args.output_time_units
+        output_tunits = args.output_time_units.replace('_', ' ')
     else:
         ds1 = xr.open_dataset(args.infiles[0])
         output_tunits = ds1['time'].encoding['units']
@@ -265,16 +272,18 @@ def main(args):
     infile_logs = {}
     if 'history' in ds_adjust.attrs:
         infile_logs[args.adjustment_file] = ds_adjust.attrs['history']
-    if 'history' in ds.attrs:
+    if args.keep_history and ('history' in ds.attrs):
         infile_logs[args.infiles[0]] = ds.attrs['history']
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
+
+    encoding = {}
+    outfile_vars = list(qq.coords) + list(qq.keys())
+    for outfile_var in outfile_vars:
+        encoding[outfile_var] = {'_FillValue': None}
     if args.compress:
-        qq.to_netcdf(
-            args.outfile,
-            encoding={var: {'least_significant_digit': 2, 'zlib': True}}
-        )
-    else:
-        qq.to_netcdf(args.outfile)
+        encoding[var]['least_significant_digit'] = 2
+        encoding[var]['zlib'] = True
+    qq.to_netcdf(args.outfile, encoding=encoding)
 
 
 if __name__ == '__main__':
@@ -356,7 +365,7 @@ if __name__ == '__main__':
         "--output_time_units",
         type=str,
         default=None,
-        help="""Time units for output file (e.g. 'days since 1950-01-01')""",
+        help="""Time units for output file (e.g. 'days_since_1950-01-01')""",
     )
     parser.add_argument(
         "--outfile_attrs",
@@ -375,6 +384,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help="compress the output data file"
+    )
+    parser.add_argument(
+        "--keep_history",
+        action="store_true",
+        default=False,
+        help="append to the history attribute of the input files"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
