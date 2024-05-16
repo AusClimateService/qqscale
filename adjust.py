@@ -15,15 +15,6 @@ import dask.diagnostics
 import utils
 
 
-def unpack_dict(input_dict):
-    """Get the key and value from a single-item dictionary."""
-
-    key = list(input_dict.keys())[0]
-    value = input_dict[key]
-
-    return key, value
-
-
 def amend_attributes(ds, input_var, input_attrs, metadata_file):
     """Amend file attributes.
 
@@ -50,6 +41,8 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
 
     An example metadata YAML file looks like:
 
+    rename:
+      - precip : pr
     global_keep:
       - domain
       - domain_id
@@ -57,36 +50,38 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
       - product: bias-adjusted-output
       - project_id: CORDEX-Adjust
     var_remove:
-      - precip:
+      - pr:
         - frequency
         - length_scale_for_analysis
     var_overwrite:
-      - precip:
+      - pr:
         - long_name: "precipitation rate"
     """
 
     with open(metadata_file, 'r') as reader:
         metadata_dict = yaml.load(reader, Loader=yaml.BaseLoader)
 
-    valid_keys = ['global_keep', 'global_overwrite', 'var_remove', 'var_overwrite']
+    valid_keys = ['rename', 'global_keep', 'global_overwrite', 'var_remove', 'var_overwrite']
     for key in metadata_dict.keys():
         if key not in valid_keys:
             raise KeyError(f"Invalid metadata key: {key}")
 
     # Variable attributes
+    if 'rename' in metadata_dict:
+        for old_var, new_var in metadata_dict['rename'].items():
+            with suppress(ValueError):
+                ds = ds.rename({old_var: new_var})
+
     if 'var_remove' in metadata_dict:
-        for remove_dict in metadata_dict['var_remove']:
-            var, attrs_to_remove = unpack_dict(remove_dict)
-            for attr in attrs_to_remove:
-                with suppress(KeyError):
-                    del ds[var].attrs[attr]
+        for var, attr_list in metadata_dict['var_remove'].items():
+             for attr in attr_list:
+                 with suppress(KeyError):
+                     del ds[var].attrs[attr]
     if 'var_overwrite' in metadata_dict:
-        for var_dict in metadata_dict['var_overwrite']:
-            var, overwrite_list = unpack_dict(var_dict)
-            for overwrite_dict in overwrite_list:
-                key, value = unpack_dict(overwrite_dict)
+        for var, attr_dict in metadata_dict['var_overwrite'].items():
+            for attr, value in attr_dict.items():
                 with suppress(KeyError):
-                    ds[var].attrs[key] = value
+                    ds[var].attrs[attr] = value
 
     # Global attributes
     if 'global_keep' in metadata_dict:
@@ -94,9 +89,8 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
             with suppress(KeyError):
                 ds.attrs[attr] = input_attrs[attr]
     if 'global_overwrite' in metadata_dict:
-        for overwrite_dict in metadata_dict['global_overwrite']:
-            key, value = unpack_dict(overwrite_dict)
-            ds.attrs[key] = value 
+        for attr, value in metadata_dict['global_overwrite'].items():
+            ds.attrs[attr] = value 
             if value == 'ecdfm':
                 with suppress(KeyError):
                     ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
@@ -117,7 +111,6 @@ def adjust(
     valid_min=None,
     valid_max=None,
     output_tslice=None,
-    output_tunits=None,
     outfile_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
@@ -147,8 +140,6 @@ def adjust(
     output_tslice : list, optional
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    output_tunits : str, optional
-        Time units for output file (e.g. 'days since 1950-01-01')
     outfile_attrs : str, optional
         Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
@@ -225,8 +216,6 @@ def adjust(
         del qq[var].attrs['cell_methods']
     if outfile_attrs:
         qq = amend_attributes(qq, var, ds.attrs, outfile_attrs)
-    if output_tunits:
-        qq['time'].encoding['units'] = output_tunits
 
     return qq
 
@@ -248,12 +237,6 @@ def main(args):
     )
     var = args.rename_var if args.rename_var else args.var
 
-    if args.output_time_units:
-        output_tunits = args.output_time_units
-    else:
-        ds1 = xr.open_dataset(args.infiles[0])
-        output_tunits = ds1['time'].encoding['units']
-
     ds_adjust = xr.open_dataset(args.adjustment_file)
 
     qq = adjust(
@@ -268,22 +251,25 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
         output_tslice=args.output_tslice,
-        output_tunits=output_tunits,
         outfile_attrs=args.outfile_attrs,
     )
     infile_logs = {}
     if 'history' in ds_adjust.attrs:
         infile_logs[args.adjustment_file] = ds_adjust.attrs['history']
-    if 'history' in ds.attrs:
+    if args.keep_history and ('history' in ds.attrs):
         infile_logs[args.infiles[0]] = ds.attrs['history']
     qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
+
+    encoding = {}
+    outfile_vars = list(qq.coords) + list(qq.keys())
+    for outfile_var in outfile_vars:
+        encoding[outfile_var] = {'_FillValue': None}
     if args.compress:
-        qq.to_netcdf(
-            args.outfile,
-            encoding={var: {'least_significant_digit': 2, 'zlib': True}}
-        )
-    else:
-        qq.to_netcdf(args.outfile)
+        encoding[var]['least_significant_digit'] = 2
+        encoding[var]['zlib'] = True
+    if args.output_time_units:
+        encoding['time']['units'] = args.output_time_units.replace('_', ' ')
+    qq.to_netcdf(args.outfile, encoding=encoding)
 
 
 if __name__ == '__main__':
@@ -365,7 +351,7 @@ if __name__ == '__main__':
         "--output_time_units",
         type=str,
         default=None,
-        help="""Time units for output file (e.g. 'days since 1950-01-01')""",
+        help="""Time units for output file (e.g. 'days_since_1950-01-01')""",
     )
     parser.add_argument(
         "--outfile_attrs",
@@ -384,6 +370,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help="compress the output data file"
+    )
+    parser.add_argument(
+        "--keep_history",
+        action="store_true",
+        default=False,
+        help="append to the history attribute of the input files"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
