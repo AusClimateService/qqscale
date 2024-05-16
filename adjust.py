@@ -111,7 +111,6 @@ def adjust(
     valid_min=None,
     valid_max=None,
     output_tslice=None,
-    output_tunits=None,
     outfile_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
@@ -141,8 +140,6 @@ def adjust(
     output_tslice : list, optional
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    output_tunits : str, optional
-        Time units for output file (e.g. 'days since 1950-01-01')
     outfile_attrs : str, optional
         Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
@@ -219,8 +216,6 @@ def adjust(
         del qq[var].attrs['cell_methods']
     if outfile_attrs:
         qq = amend_attributes(qq, var, ds.attrs, outfile_attrs)
-    if output_tunits:
-        qq['time'].encoding['units'] = output_tunits
 
     return qq
 
@@ -242,12 +237,6 @@ def main(args):
     )
     var = args.rename_var if args.rename_var else args.var
 
-    if args.output_time_units:
-        output_tunits = args.output_time_units.replace('_', ' ')
-    else:
-        ds1 = xr.open_dataset(args.infiles[0])
-        output_tunits = ds1['time'].encoding['units']
-
     ds_adjust = xr.open_dataset(args.adjustment_file)
 
     qq = adjust(
@@ -262,7 +251,6 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
         output_tslice=args.output_tslice,
-        output_tunits=output_tunits,
         outfile_attrs=args.outfile_attrs,
     )
     infile_logs = {}
@@ -279,6 +267,8 @@ def main(args):
     if args.compress:
         encoding[var]['least_significant_digit'] = 2
         encoding[var]['zlib'] = True
+    if args.output_time_units:
+        encoding['time']['units'] = args.output_time_units.replace('_', ' ')
     qq.to_netcdf(args.outfile, encoding=encoding)
 
 
