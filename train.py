@@ -154,7 +154,12 @@ def main(args):
         spatial_grid=args.spatial_grid,
         ssr=args.ssr,
     )
-    ds_out.attrs['history'] = utils.get_new_log()
+
+    if args.short_history:
+        unique_dirnames = utils.get_unique_dirnames(args.hist_files + args.ref_files)
+    else:
+        unique_dirnames = []
+    ds_out.attrs['history'] = utils.get_new_log(wildcard_prefixes=unique_dirnames)
 
     encoding = {}
     outfile_vars = list(ds_out.coords) + list(ds_out.keys())
@@ -295,6 +300,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help="compress the output data file"
+    )
+    parser.add_argument(
+        "--short_history",
+        action='store_true',
+        default=False,
+        help="Use wildcards to shorten the file lists in output_file history attribute",
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

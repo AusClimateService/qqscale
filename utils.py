@@ -1,5 +1,6 @@
 """Utility functions"""
 
+import os
 import logging
 
 import cftime
@@ -14,7 +15,13 @@ import xesmf as xe
 import cmdline_provenance as cmdprov
 
 
-def get_new_log(infile_logs={}):
+def get_unique_dirnames(file_list):
+    """Get a list of unique dirnames from a file list"""
+
+    return list(set(map(os.path.dirname, file_list)))
+
+
+def get_new_log(infile_logs={}, wildcard_prefixes=[]):
     """Generate command log for output file."""
 
     try:
@@ -25,6 +32,7 @@ def get_new_log(infile_logs={}):
     new_log = cmdprov.new_log(
         infile_logs=infile_logs,
         code_url=repo_url,
+        wildcard_prefixes=wildcard_prefixes,
     )
 
     return new_log
