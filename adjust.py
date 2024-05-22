@@ -268,15 +268,12 @@ def main(args):
         wildcard_prefixes=unique_dirnames,
     )
 
-    encoding = {}
-    outfile_vars = list(qq.coords) + list(qq.keys())
-    for outfile_var in outfile_vars:
-        encoding[outfile_var] = {'_FillValue': None}
-    if args.compress:
-        encoding[var]['least_significant_digit'] = 2
-        encoding[var]['zlib'] = True
-    if args.output_time_units:
-        encoding['time']['units'] = args.output_time_units.replace('_', ' ')
+    encoding = utils.get_outfile_encoding(
+        qq,
+        var,
+        time_units=args.output_time_units,
+        compress=args.compress,
+    )
     qq.to_netcdf(args.outfile, encoding=encoding)
 
 
