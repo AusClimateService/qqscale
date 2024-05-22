@@ -43,11 +43,13 @@ def get_new_log(infile_logs={}, wildcard_prefixes=[]):
     try:
         repo = git.Repo()
         repo_url = repo.remotes[0].url.split(".git")[0]
+        commit_hash = str(repo.heads[0].commit)
+        code_info = f'{repo_url}, {commit_hash[0:7]}'
     except (git.exc.InvalidGitRepositoryError, NameError):
-        repo_url = None
+        code_info = None
     new_log = cmdprov.new_log(
         infile_logs=infile_logs,
-        code_url=repo_url,
+        code_url=code_info,
         wildcard_prefixes=wildcard_prefixes,
     )
 
