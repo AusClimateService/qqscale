@@ -1,5 +1,6 @@
 """Utility functions"""
 
+import os
 import logging
 
 import cftime
@@ -14,17 +15,42 @@ import xesmf as xe
 import cmdline_provenance as cmdprov
 
 
-def get_new_log(infile_logs={}):
+def get_outfile_encoding(ds, var, time_units=None, compress=False):
+    """Define output file encoding."""
+
+    encoding = {}
+    ds_vars = list(ds.coords) + list(ds.keys())
+    for ds_var in ds_vars:
+        encoding[ds_var] = {'_FillValue': None}
+    if compress:
+        encoding[var]['least_significant_digit'] = 2
+        encoding[var]['zlib'] = True
+    if time_units:
+        encoding['time']['units'] = time_units.replace('_', ' ')
+
+    return encoding
+
+
+def get_unique_dirnames(file_list):
+    """Get a list of unique dirnames from a file list"""
+
+    return list(set(map(os.path.dirname, file_list)))
+
+
+def get_new_log(infile_logs={}, wildcard_prefixes=[]):
     """Generate command log for output file."""
 
     try:
         repo = git.Repo()
         repo_url = repo.remotes[0].url.split(".git")[0]
+        commit_hash = str(repo.heads[0].commit)
+        code_info = f'{repo_url}, {commit_hash[0:7]}'
     except (git.exc.InvalidGitRepositoryError, NameError):
-        repo_url = None
+        code_info = None
     new_log = cmdprov.new_log(
         infile_logs=infile_logs,
-        code_url=repo_url,
+        code_url=code_info,
+        wildcard_prefixes=wildcard_prefixes,
     )
 
     return new_log

@@ -253,22 +253,27 @@ def main(args):
         output_tslice=args.output_tslice,
         outfile_attrs=args.outfile_attrs,
     )
+
     infile_logs = {}
     if 'history' in ds_adjust.attrs:
         infile_logs[args.adjustment_file] = ds_adjust.attrs['history']
     if args.keep_history and ('history' in ds.attrs):
         infile_logs[args.infiles[0]] = ds.attrs['history']
-    qq.attrs['history'] = utils.get_new_log(infile_logs=infile_logs)
+    if args.short_history:
+        unique_dirnames = utils.get_unique_dirnames(args.infiles)
+    else:
+        unique_dirnames = []
+    qq.attrs['history'] = utils.get_new_log(
+        infile_logs=infile_logs,
+        wildcard_prefixes=unique_dirnames,
+    )
 
-    encoding = {}
-    outfile_vars = list(qq.coords) + list(qq.keys())
-    for outfile_var in outfile_vars:
-        encoding[outfile_var] = {'_FillValue': None}
-    if args.compress:
-        encoding[var]['least_significant_digit'] = 2
-        encoding[var]['zlib'] = True
-    if args.output_time_units:
-        encoding['time']['units'] = args.output_time_units.replace('_', ' ')
+    encoding = utils.get_outfile_encoding(
+        qq,
+        var,
+        time_units=args.output_time_units,
+        compress=args.compress,
+    )
     qq.to_netcdf(args.outfile, encoding=encoding)
 
 
@@ -376,6 +381,12 @@ if __name__ == '__main__':
         action="store_true",
         default=False,
         help="append to the history attribute of the input files"
+    )
+    parser.add_argument(
+        "--short_history",
+        action='store_true',
+        default=False,
+        help="Use wildcards to shorten the file lists in output_file history attribute",
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
