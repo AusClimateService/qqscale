@@ -1,5 +1,6 @@
 """Utility functions"""
 
+import sys
 import os
 import logging
 
@@ -41,7 +42,7 @@ def get_new_log(infile_logs={}, wildcard_prefixes=[]):
     """Generate command log for output file."""
 
     try:
-        repo = git.Repo()
+        repo = git.Repo(sys.path[0])
         repo_url = repo.remotes[0].url.split(".git")[0]
         commit_hash = str(repo.heads[0].commit)
         code_info = f'{repo_url}, {commit_hash[0:7]}'
