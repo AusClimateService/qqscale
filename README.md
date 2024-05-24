@@ -39,17 +39,13 @@ can be accessed or created in a number of ways (see below):
 
 If you're a member of the `xv83` project on NCI
 (i.e. if you're part of the Australian Climate Service),
-you'll need to clone this GitHub repository.
+you have access the code and an appropriate conda environment
+at `/g/data/xv83/quantile-mapping`.
+
+You can therefore run the scripts as follows. e.g.:
 
 ```
-$ git clone git@github.com:climate-innovation-hub/qqscale.git
-$ cd qqscale
-```
-
-You can then run the scripts using the Python environment at `/g/data/xv83/dbi599/miniconda3/envs/qqscale`. e.g.:
-
-```
-$ /g/data/xv83/dbi599/miniconda3/envs/qqscale/bin/python adjust.py -h
+$ /g/data/xv83/quantile-mapping/miniconda3/envs/quantile-mapping/bin/python /g/data/xv83/quantile-mapping/qqscale/adjust.py -h
 ```
 
 ### For everyone else...
