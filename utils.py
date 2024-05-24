@@ -45,7 +45,7 @@ def get_new_log(infile_logs={}, wildcard_prefixes=[]):
         repo = git.Repo(sys.path[0])
         repo_url = repo.remotes[0].url.split(".git")[0]
         commit_hash = str(repo.heads[0].commit)
-        code_info = f'{repo_url}, {commit_hash[0:7]}'
+        code_info = f'{repo_url}, commit {commit_hash[0:7]}'
     except (git.exc.InvalidGitRepositoryError, NameError):
         code_info = None
     new_log = cmdprov.new_log(
@@ -243,10 +243,12 @@ def read_data(
         except ValueError:
             ds = xr.open_mfdataset(infiles)
 
-    try:
-        ds = ds.drop('height')
-    except ValueError:
-        pass
+    drop_coords = ['sigma', 'level_height', 'model_level_number']
+    for coord in drop_coords:
+        try:
+            ds = ds.drop(coord)
+        except ValueError:
+            pass
 
     if rename_var:
         ds = ds.rename({input_var: rename_var})
