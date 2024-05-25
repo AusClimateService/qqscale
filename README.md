@@ -45,7 +45,7 @@ at `/g/data/xv83/quantile-mapping`.
 You can therefore run the scripts as follows. e.g.:
 
 ```
-$ /g/data/xv83/quantile-mapping/miniconda3/envs/quantile-mapping/bin/python /g/data/xv83/quantile-mapping/qqscale/adjust.py -h
+$ /g/data/xv83/quantile-mapping/miniconda3/envs/qq-workflows/bin/python /g/data/xv83/quantile-mapping/qqscale/adjust.py -h
 ```
 
 ### For everyone else...
