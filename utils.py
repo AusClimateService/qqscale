@@ -243,7 +243,7 @@ def read_data(
         except ValueError:
             ds = xr.open_mfdataset(infiles)
 
-    drop_coords = ['sigma', 'level_height', 'model_level_number']
+    drop_coords = ['height', 'sigma', 'level_height', 'model_level_number']
     for coord in drop_coords:
         try:
             ds = ds.drop(coord)
