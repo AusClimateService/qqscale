@@ -129,6 +129,7 @@ def main(args):
         output_units=args.output_units,
         valid_min=args.valid_min,
         valid_max=args.valid_max,
+        drop_vars=args.hist_drop_vars,
     )
     calendar_hist = type(ds_hist['time'].values[0])
     ds_ref = utils.read_data(
@@ -142,6 +143,7 @@ def main(args):
         output_calendar=calendar_hist,
         valid_min=args.valid_min,
         valid_max=args.valid_max,
+        drop_vars=args.ref_drop_vars,
     )
     ds_out = train(
         ds_hist,
@@ -306,6 +308,20 @@ if __name__ == '__main__':
         action='store_true',
         default=False,
         help="Use wildcards to shorten the file lists in output_file history attribute",
+    )
+    parser.add_argument(
+        "--hist_drop_vars",
+        type=str,
+        nargs='*',
+        default=[],
+        help="File variables to drop when reading hist files"
+    )
+    parser.add_argument(
+        "--ref_drop_vars",
+        type=str,
+        nargs='*',
+        default=[],
+        help="File variables to drop when reading ref files"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING

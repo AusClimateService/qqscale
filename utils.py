@@ -192,6 +192,7 @@ def read_data(
     output_calendar=None,
     valid_min=None,
     valid_max=None,
+    drop_vars=[],
 ):
     """Read and process an input dataset.
 
@@ -225,6 +226,8 @@ def read_data(
         Clip data to valid minimum value
     valid_max : float, optional
         Clip data to valid maximum value
+    drop_vars : list, optional
+        List of variables to drop when reading file
 
     Returns
     -------
@@ -243,10 +246,9 @@ def read_data(
         except ValueError:
             ds = xr.open_mfdataset(infiles)
 
-    drop_coords = ['height', 'sigma', 'level_height', 'model_level_number']
-    for coord in drop_coords:
+    for drop_var in drop_vars:
         try:
-            ds = ds.drop(coord)
+            ds = ds.drop(drop_var)
         except ValueError:
             pass
 
