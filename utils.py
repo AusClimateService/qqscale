@@ -245,7 +245,7 @@ def read_data(
             ds = xr.open_mfdataset(infiles, use_cftime=use_cftime)
         except ValueError:
             ds = xr.open_mfdataset(infiles)
-
+    ds = ds.drop_duplicates(dim='time')
     for drop_var in drop_vars:
         try:
             ds = ds.drop(drop_var)
