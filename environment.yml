@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - xclim
+  - xclim=0.36.0
   - xesmf
   - netCDF4
   - cmdline_provenance
