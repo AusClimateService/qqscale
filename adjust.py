@@ -226,7 +226,6 @@ def main(args):
     ds = utils.read_data(
         args.infiles,
         args.var,
-        rename_var=args.rename_var,
         time_bounds=args.adjustment_tbounds,
         input_units=args.input_units,
         output_units=args.output_units,
