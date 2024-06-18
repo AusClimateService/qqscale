@@ -23,8 +23,8 @@ def get_outfile_encoding(ds, var, time_units=None, compress=False):
     ds_vars = list(ds.coords) + list(ds.keys())
     for ds_var in ds_vars:
         encoding[ds_var] = {'_FillValue': None}
+    encoding[var]['dtype'] = 'float32'
     if compress:
-        encoding[var]['least_significant_digit'] = 2
         encoding[var]['zlib'] = True
     if time_units:
         encoding['time']['units'] = time_units.replace('_', ' ')
