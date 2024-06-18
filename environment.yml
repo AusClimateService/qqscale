@@ -2,8 +2,9 @@ name: qqscale
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python
   - xclim=0.36.0
+  - pint=0.19.2
   - xesmf
   - netCDF4
   - cmdline_provenance
