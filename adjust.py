@@ -56,6 +56,7 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
     var_overwrite:
       - pr:
         - long_name: "precipitation rate"
+
     """
 
     with open(metadata_file, 'r') as reader:
@@ -67,10 +68,13 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
             raise KeyError(f"Invalid metadata key: {key}")
 
     # Variable attributes
+    output_var = input_var
     if 'rename' in metadata_dict:
         for old_var, new_var in metadata_dict['rename'].items():
             with suppress(ValueError):
                 ds = ds.rename({old_var: new_var})
+                if old_var == output_var:
+                    output_var = new_var
 
     if 'var_remove' in metadata_dict:
         for var, attr_list in metadata_dict['var_remove'].items():
@@ -96,7 +100,7 @@ def amend_attributes(ds, input_var, input_attrs, metadata_file):
                     ds[input_var].attrs['long_name'] = 'Bias-Adjusted ' + ds[input_var].attrs['long_name']
     ds.attrs['creation_date'] = datetime.now().isoformat()
 
-    return ds
+    return ds, output_var
 
 
 def adjust(
@@ -111,7 +115,6 @@ def adjust(
     valid_min=None,
     valid_max=None,
     output_tslice=None,
-    outfile_attrs=None,
 ):
     """Apply qq-scale adjustment factors.
 
@@ -140,8 +143,6 @@ def adjust(
     output_tslice : list, optional
         Return a time slice of the adjusted data
         Format: ['YYYY-MM-DD', 'YYYY-MM-DD']
-    outfile_attrs : str, optional
-        Apply file attributes defined for bias adjusted CORDEX simulations for a given obs dataset
         
     Returns
     -------
@@ -214,8 +215,6 @@ def adjust(
     del qq[var].attrs['bias_adjustment']
     with suppress(KeyError):
         del qq[var].attrs['cell_methods']
-    if outfile_attrs:
-        qq = amend_attributes(qq, var, ds.attrs, outfile_attrs)
 
     return qq
 
@@ -236,13 +235,12 @@ def main(args):
         valid_max=args.valid_max,
         drop_vars=args.drop_vars,
     )
-    var = args.rename_var if args.rename_var else args.var
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
 
     qq = adjust(
         ds,
-        var,
+        args.var,
         ds_adjust,
         spatial_grid=args.spatial_grid,
         interp=args.interp,
@@ -252,8 +250,8 @@ def main(args):
         valid_min=args.valid_min,
         valid_max=args.valid_max,
         output_tslice=args.output_tslice,
-        outfile_attrs=args.outfile_attrs,
     )
+    qq, output_var = amend_attributes(qq, args.var, ds.attrs, args.outfile_attrs)
 
     infile_logs = {}
     if 'history' in ds_adjust.attrs:
@@ -271,7 +269,7 @@ def main(args):
 
     encoding = utils.get_outfile_encoding(
         qq,
-        var,
+        output_var,
         time_units=args.output_time_units,
         compress=args.compress,
     )
@@ -290,7 +288,6 @@ if __name__ == '__main__':
     parser.add_argument("adjustment_file", type=str, help="adjustment factor file")
     parser.add_argument("outfile", type=str, help="output file")
 
-    parser.add_argument("--rename_var", type=str, default=None, help='rename var to value of rename_var')
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
     parser.add_argument(
