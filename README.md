@@ -17,8 +17,8 @@ Depending on the context, there are two different ways the programs can be used:
 - To remove quantile biases between an historical model simulation and observations
   from model data in order to produce bias corrected model data.
   This has been referred to as
-  *equidistant CDF matching* (EDCDFm; in the case of additive bias correction; [Li et al, 2010](https://doi.org/10.1029/2009JD012882)) or
-  *equiratio CDF matching* (EQCDFm; in the case of multiplicative bias correction; [Wang and Chen, 2013](https://doi.org/10.1002/asl2.454)).
+  *equidistant CDF matching* (EDCDFm) in the case of additive bias correction or
+  *equiratio CDF matching* (EQCDFm) in the case of multiplicative bias correction.
 
 See [docs/method_ecdfm.md](docs/method_ecdfm.md) and [docs/method_qdc.md](docs/method_qdc.md) for a detailed description
 of these methods and how they are implemented in the qqscale software.
@@ -55,7 +55,7 @@ pre-installed you'll need to create your own.
 For example:
 
 ```
-$ conda install -c conda-forge netCDF4 xclim xesmf cmdline_provenance gitpython
+$ conda install -c conda-forge netCDF4 xclim=0.36.0 pint=0.19.2 xesmf cmdline_provenance gitpython
 ```
 
 You can then clone this GitHub repository and run the help option
@@ -79,6 +79,9 @@ At the command line, QDC and/or ECDFm can be achieved by running the following s
    (in QDC the target data is observations; in ECDFm it is a model simulation)
 
 See the files named `docs/example_*.md` for detailed worked examples using these two command line programs.
+
+Various command line workflows that use the qqscale software can be found at:  
+https://github.com/AusClimateService/qq-workflows
 
 ### Jupyter notebook
 
@@ -113,20 +116,6 @@ ds_qq = adjust.adjust(
     interp='nearest', 
 )
 ```
-
-### Performance
-
-The adjustment step (`adjust.py`) is the most time and memory intensive.
-Here's some examples of time and memory requirements for different applications:
-
-EDCDFm with 30 years of daily CORDEX and AGCD data (on AUS-05i 691 x 886 horizontal grid):
-- Training step: Compute (1 core) requires 250GB and 1hr 30min. Produces 1.3GB adjustment factor file.
-- Adjustment step: Compute (1 core) requires 185GB and 1hr 50min. Produces output files of approx 200MB per year.
-- Regridding the target data prior to performing the adjustment makes very little difference to processing time.
-
-EDCDFm with 20 years of daily CORDEX and AGCD data (on AUS-20i 171 x 211 horizontal grid):
-- Training step: Compute (1 core) requires 7.3GB and 3min.
-- Adjustment step: Compute (1 core) requires 7.9GB and 4min.
 
 ## Questions
 
