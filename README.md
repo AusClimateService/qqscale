@@ -73,10 +73,10 @@ $ python adjust.py -h
 ### Command line
   
 At the command line, QDC and/or ECDFm can be achieved by running the following scripts:
-1. `train.py` to calculate the adjustment factors between an *historical* and *reference* dataset
-   (in QDC the reference dataset is a future model simulation; in ECDFm it is observations)
+1. `train.py` to calculate the adjustment factors between an *historical* model dataset and a *reference* dataset
+   (for QDC the reference dataset is a future model simulation; for ECDFm it is observations)
 1. `adjust.py` to apply the adjustment factors to the *target* data
-   (in QDC the target data is observations; in ECDFm it is a model simulation)
+   (for QDC the target data is observations; for ECDFm it is a model simulation)
 
 See the files named `docs/example_*.md` for detailed worked examples using these two command line programs.
 
@@ -89,7 +89,7 @@ Starting with historical (`ds_hist`), reference (`ds_ref`) and target (`ds_targe
 containing the variable of interest (`hist_var`, `ref_var` and `target_var`)
 you can import the relevant functions from the scripts mentioned above.
 For instance,
-a QDC workflow would look something like this:
+a typical workflow would look something like this:
 
 ```python
 
