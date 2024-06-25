@@ -1,6 +1,7 @@
 # qqscale
 
-[![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml)
+[![tests](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml/badge.svg)](https://github.com/climate-innovation-hub/qqscale/actions/workflows/tests.yml) 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12523626.svg)](https://doi.org/10.5281/zenodo.12523626)
 
 This directory contains command line programs for applying quantile scaling. 
 
