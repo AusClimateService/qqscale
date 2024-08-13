@@ -1,4 +1,5 @@
 """Command line program for calculating adjustment factors for matching up the model and QDC-scaled mean change."""
+
 import logging
 import argparse
 
