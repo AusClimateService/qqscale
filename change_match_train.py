@@ -1,5 +1,5 @@
 """Command line program for calculating adjustment factors for matching up the model and QDC-scaled mean change."""
-
+import pdb
 import logging
 import argparse
 
@@ -8,7 +8,7 @@ import dask.diagnostics
 import utils
 
 
-def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, timescale):
+def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, time_grouping=None):
     """Get adjustment factors for matching the model and QDC-scaled mean change.
 
     Parameters
@@ -25,32 +25,30 @@ def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, tim
         Data that the quantile delta changes were applied to
     scaling : {'additive', 'multiplicative'}
         Scaling method
-    timescale : {'annual', 'monthly'}
-        Timescale for mean matching
+    time_grouping : {'monthly'}, optional
+        Time grouping for mean matching
         
     Returns
     -------
     adjustment_factor : xarray Dataset    
     """
 
-    if timescale == 'monthly':
+    if time_grouping == 'monthly':
         hist_clim = da_hist.groupby('time.month').mean('time', keep_attrs=True)
         ref_clim = da_ref.groupby('time.month').mean('time', keep_attrs=True)
         target_clim = da_target.groupby('time.month').mean('time', keep_attrs=True)
         qdc_clim = ds_qdc[qdc_var].groupby('time.month').mean('time', keep_attrs=True)
-    elif timescale == 'annual':
+    else:
         hist_clim = da_hist.mean('time', keep_attrs=True)
         ref_clim = da_ref.mean('time', keep_attrs=True)
         target_clim = da_target.mean('time', keep_attrs=True)
         qdc_clim = ds_qdc[qdc_var].mean('time', keep_attrs=True)
-    else:
-        raise ValueError(f'Invalid mean match timescale: {timescale}')
 
     dims = ds_qdc[qdc_var].dims
     on_spatial_grid = ('lat' in dims) and ('lon' in dims)
     if on_spatial_grid:
-        assert len(target_clim['lat']) != len(qdc_clim['lat'])
-        assert len(target_clim['lon']) != len(qdc_clim['lon'])
+        assert len(target_clim['lat']) == len(qdc_clim['lat'])
+        assert len(target_clim['lon']) == len(qdc_clim['lon'])
         target_clim['lat'] = qdc_clim['lat']
         target_clim['lon'] = qdc_clim['lon'] 
 
@@ -70,8 +68,14 @@ def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, tim
         adjustment_factors = ref_hist_clim_diff - (qdc_clim - target_clim)
     else:
         raise ValueError(f'Invalid scaling method: {scaling}')
+    
+    ds_af = adjustment_factors.to_dataset(name=qdc_var)
+    ds_af[qdc_var].attrs['long_name'] = ds_qdc[qdc_var].attrs['long_name']
+    ds_af[qdc_var].attrs['standard_name'] = ds_qdc[qdc_var].attrs['standard_name']
+    if scaling == 'additive':
+        ds_af[qdc_var].attrs['units'] = ds_qdc[qdc_var].attrs['units']
 
-    return adjustment_factors
+    return ds_af
 
 
 def main(args):
@@ -99,19 +103,19 @@ def main(args):
     )
     ds_target = utils.read_data(
         args.target_files,
-        args.qdc_var,
+        args.target_var,
         time_bounds=args.target_time_bounds,
         input_units=args.input_target_units,
         output_units=units,
     )
-    adjustment_factors = change_match_train(
+    ds_af = change_match_train(
         ds_qdc,
         args.qdc_var,
         ds_hist[args.hist_var],
         ds_ref[args.ref_var],
-        ds_target[args.qdc_var],
+        ds_target[args.target_var],
         args.scaling,
-        args.timescale
+        args.time_grouping,
     )
 
     if args.short_history:
@@ -120,10 +124,10 @@ def main(args):
         )
     else:
         unique_dirnames = []
-    adjustment_factors.attrs['history'] = utils.get_new_log(wildcard_prefixes=unique_dirnames)
+    ds_af.attrs['history'] = utils.get_new_log(wildcard_prefixes=unique_dirnames)
 
-    encoding = utils.get_outfile_encoding(adjustment_factors, args.qdc_var)
-    adjustment_factors.to_netcdf(args.outfile, encoding=encoding)
+    encoding = utils.get_outfile_encoding(ds_af, args.qdc_var)
+    ds_af.to_netcdf(args.outfile, encoding=encoding)
 
 
 if __name__ == '__main__':
@@ -199,6 +203,12 @@ if __name__ == '__main__':
         help="target data files"
     )
     parser.add_argument(
+        "--target_var",
+        type=str,
+        required=True,
+        help="target variable"
+    )
+    parser.add_argument(
         "--input_target_units",
         type=str,
         default=None,
@@ -221,17 +231,23 @@ if __name__ == '__main__':
         help="scaling method",
     )
     parser.add_argument(
-        "--timescale",
+        "--time_grouping",
         type=str,
-        choices=('annual', 'monthly'),
-        default='annual',
-        help="timescale for mean matching",
+        choices=('monthly'),
+        default=None,
+        help="Time period grouping",
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
         default=False,
         help='Set logging level to INFO',
+    )
+    parser.add_argument(
+        "--short_history",
+        action='store_true',
+        default=False,
+        help="Use wildcards to shorten the file lists in output_file history attribute",
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
