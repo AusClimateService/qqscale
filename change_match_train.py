@@ -8,7 +8,7 @@ import dask.diagnostics
 import utils
 
 
-def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, time_grouping=None):
+def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling):
     """Get adjustment factors for matching the model and QDC-scaled mean change.
 
     Parameters
@@ -25,24 +25,16 @@ def change_match_train(ds_qdc, qdc_var, da_hist, da_ref, da_target, scaling, tim
         Data that the quantile delta changes were applied to
     scaling : {'additive', 'multiplicative'}
         Scaling method
-    time_grouping : {'monthly'}, optional
-        Time grouping for mean matching
         
     Returns
     -------
     adjustment_factor : xarray Dataset    
     """
 
-    if time_grouping == 'monthly':
-        hist_clim = da_hist.groupby('time.month').mean('time', keep_attrs=True)
-        ref_clim = da_ref.groupby('time.month').mean('time', keep_attrs=True)
-        target_clim = da_target.groupby('time.month').mean('time', keep_attrs=True)
-        qdc_clim = ds_qdc[qdc_var].groupby('time.month').mean('time', keep_attrs=True)
-    else:
-        hist_clim = da_hist.mean('time', keep_attrs=True)
-        ref_clim = da_ref.mean('time', keep_attrs=True)
-        target_clim = da_target.mean('time', keep_attrs=True)
-        qdc_clim = ds_qdc[qdc_var].mean('time', keep_attrs=True)
+    hist_clim = da_hist.mean('time', keep_attrs=True)
+    ref_clim = da_ref.mean('time', keep_attrs=True)
+    target_clim = da_target.mean('time', keep_attrs=True)
+    qdc_clim = ds_qdc[qdc_var].mean('time', keep_attrs=True)
 
     dims = ds_qdc[qdc_var].dims
     on_spatial_grid = ('lat' in dims) and ('lon' in dims)
@@ -115,7 +107,6 @@ def main(args):
         ds_ref[args.ref_var],
         ds_target[args.target_var],
         args.scaling,
-        args.time_grouping,
     )
 
     if args.short_history:
@@ -229,13 +220,6 @@ if __name__ == '__main__':
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
-    )
-    parser.add_argument(
-        "--time_grouping",
-        type=str,
-        choices=('monthly'),
-        default=None,
-        help="Time period grouping",
     )
     parser.add_argument(
         "--verbose",

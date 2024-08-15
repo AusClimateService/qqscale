@@ -9,7 +9,7 @@ import dask.diagnostics
 import utils
 
 
-def change_match_adjust(ds_qdc, qdc_var, adjustment_factors, scaling, time_grouping=None):
+def change_match_adjust(ds_qdc, qdc_var, adjustment_factors, scaling):
     """Apply adjustment factors to match model and quantile delta mean change.
 
     Parameters
@@ -20,8 +20,6 @@ def change_match_adjust(ds_qdc, qdc_var, adjustment_factors, scaling, time_group
         Variable (in ds_qdc)
     scaling : {'additive', 'multiplicative'}
         Scaling method
-    time_grouping : {'monthly'}, optional
-        Time grouping for mean matching
         
     Returns
     -------
@@ -30,20 +28,12 @@ def change_match_adjust(ds_qdc, qdc_var, adjustment_factors, scaling, time_group
     """
 
     if scaling == 'multiplicative':
-        if time_grouping == 'monthly':
-            da_qdc_adjusted = ds_qdc[qdc_var].groupby('time.month') * adjustment_factors
-        else:
-            da_qdc_adjusted = ds_qdc[qdc_var] * adjustment_factors
+        da_qdc_adjusted = ds_qdc[qdc_var] * adjustment_factors
     elif scaling == 'additive':
-        if time_grouping == 'monthly':
-            da_qdc_adjusted = ds_qdc[qdc_var].groupby('time.month') + adjustment_factors
-        else:
-            da_qdc_adjusted = ds_qdc[qdc_var] + adjustment_factors
+        da_qdc_adjusted = ds_qdc[qdc_var] + adjustment_factors
     else:
         raise ValueError(f'Invalid scaling method: {scaling}')
 
-    if time_grouping == 'monthly':
-        del da_qdc_adjusted['month']
     da_qdc_adjusted.attrs = ds_qdc[qdc_var].attrs
     ds_qdc_adjusted = da_qdc_adjusted.to_dataset(name=qdc_var)
     ds_qdc_adjusted.attrs = ds_qdc.attrs
@@ -66,7 +56,6 @@ def main(args):
         args.qdc_var,
         ds_adjust[args.qdc_var],
         args.scaling,
-        args.time_grouping,
     )
 
     infile_logs = {
@@ -98,13 +87,6 @@ if __name__ == '__main__':
         choices=('additive', 'multiplicative'),
         default='additive',
         help="scaling method",
-    )
-    parser.add_argument(
-        "--time_grouping",
-        type=str,
-        choices=('monthly'),
-        default=None,
-        help="time grouping for mean matching",
     )
     parser.add_argument(
         "--output_time_units",
