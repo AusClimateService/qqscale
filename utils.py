@@ -177,6 +177,26 @@ def convert_units(da, target_units):
     return da
 
 
+def drop_vars(ds):
+    """Drop variables from dataset"""
+
+    drop_vars = [
+        'sigma',
+        'level_height',
+        'height',
+        'model_level_number',
+        'crs',
+    ]
+ 
+    for drop_var in drop_vars:
+        try:
+            ds = ds.drop(drop_var)
+        except ValueError:
+            pass
+
+    return ds
+
+
 def read_data(
     infiles,
     input_var,
@@ -192,7 +212,6 @@ def read_data(
     output_calendar=None,
     valid_min=None,
     valid_max=None,
-    drop_vars=[],
 ):
     """Read and process an input dataset.
 
@@ -226,8 +245,6 @@ def read_data(
         Clip data to valid minimum value
     valid_max : float, optional
         Clip data to valid maximum value
-    drop_vars : list, optional
-        List of variables to drop when reading file
 
     Returns
     -------
@@ -240,17 +257,13 @@ def read_data(
             ds = xr.open_dataset(infiles[0], use_cftime=use_cftime)
         except ValueError:
             ds = xr.open_dataset(infiles[0])
+        ds = drop_vars(ds)
     else:
         try:
-            ds = xr.open_mfdataset(infiles, use_cftime=use_cftime)
+            ds = xr.open_mfdataset(infiles, use_cftime=use_cftime, preprocess=drop_vars)
         except ValueError:
-            ds = xr.open_mfdataset(infiles)
+            ds = xr.open_mfdataset(infiles, preprocess=drop_vars)
     ds = ds.drop_duplicates(dim='time')
-    for drop_var in drop_vars:
-        try:
-            ds = ds.drop(drop_var)
-        except ValueError:
-            pass
 
     if rename_var:
         ds = ds.rename({input_var: rename_var})

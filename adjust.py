@@ -232,7 +232,6 @@ def main(args):
         use_cftime=False,
         valid_min=args.valid_min,
         valid_max=args.valid_max,
-        drop_vars=args.drop_vars,
     )
 
     ds_adjust = xr.open_dataset(args.adjustment_file)
@@ -384,13 +383,6 @@ if __name__ == '__main__':
         action='store_true',
         default=False,
         help="Use wildcards to shorten the file lists in output_file history attribute",
-    )
-    parser.add_argument(
-        "--drop_vars",
-        type=str,
-        nargs='*',
-        default=[],
-        help="File variables to drop when reading infiles"
     )
     args = parser.parse_args()
     log_level = logging.INFO if args.verbose else logging.WARNING
