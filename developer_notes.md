@@ -5,32 +5,32 @@
 The command line programs in this repository use the
 [bias adjustment and downscaling](https://xclim.readthedocs.io/en/stable/sdba.html) functionality in xclim. 
 
-A typical quantile delta change workflow using xclim
+A typical Quantile Delta Change (QDC) workflow using xclim
 starts by calculating the adjustment factors for each quantile:
 
 ```python
 from xclim import sdba
 
-QDM = sdba.QuantileDeltaMapping.train(
+QDC = sdba.QuantileDeltaMapping.train(
     da_sim, da_hist, nquantiles=100, group="time.month", kind="+"
 )
 ```
 
 The `group` determines the timescale for the adjustment factors
 (see [grouping](https://xclim.readthedocs.io/en/stable/notebooks/sdba.html#Grouping) for options)
-and the `kind` can be additive or multiplicative.
+and the `kind` can be additive (`+`) or multiplicative (`*`).
 In this case adjustment factors for each month are calculated by
 taking the difference between the quantiles from a future experiment (`da_sim`)
 and an historical experiment (`da_hist`).
 
-The resulting xarray Dataset (`QDM.ds`) contains the adjustment factors (`af`).
+The resulting xarray Dataset (`QDC.ds`) contains the adjustment factors (`af`).
 It can be useful to plot these adjustment factors to understand the climate signal
 between the two experiments.
 
 The next step is to apply the adjustment factors to a dataset of interest.
 
 ```python
-da_qq = QDM.adjust(da_ref, interp="nearest") 
+da = QDC.adjust(da_ref, interp="nearest") 
 ```
 
 For each value in the observational dataset (`da_ref`),
