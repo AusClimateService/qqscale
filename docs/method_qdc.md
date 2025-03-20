@@ -44,7 +44,7 @@ was used to produce application ready climate data.
 
 ## Methodological decisions
 
-There are a number of choices to make when implementing QDC: 
+There are a number of general choices to make when implementing the QDC method: 
 - *Parametric or non-parametric*:
   It is generally accepted that non-parametric quantile mapping is best,
   so QDC is usually applied without fitting a parametric distribution to the data first.
@@ -63,37 +63,39 @@ There are a number of choices to make when implementing QDC:
   to avoid conflating different times of the year
   (e.g. spring and autumn temperatures often occupy the same annual quantile space
   but may change in different ways between an historical and future simulation).
-  When processing temperature data (or indeed any additive application of QDC)
-  we commonly use monthly time grouping (i.e. process each month separately).
+  We commonly use monthly time grouping (i.e. process each month separately).
   We've found that something like a 30-day running window is far more computationally expensive
   and produces similar results to monthly grouping.
-  When processing precipitation data (a multiplicative application of QDC)
-  we've found (see [simple](https://github.com/AusClimateService/qq-workflows/blob/main/qdm-vs-ecdfm/seasonal_cycle_simple.ipynb)
-  and [more complex](https://github.com/climate-innovation-hub/qq-workflows/blob/main/qdm-vs-ecdfm/seasonal_cycle.ipynb) notebooks)
-  that in many locations the model bias in the timing of the seasonal cycle
-  means that monthly time grouping dramatically modifies the climate trend in the data
-  (i.e. the mean change between the future data produced by QDC and the observations
-  is much different than the mean change between the future and historical model simulations).
-  As such, we don't apply any time grouping when applying QDC to precipitation data.
 - *Qunatiles*:
   Our qqscale software allows the user to specify
   the number of quantiles to calculate.
   We've found that it's best to have approximately 10 data values between each quanite.
   If you're processing 30 years of daily data,
-  that means 100 quantiles if the time grouping is monthly
-  or 1000 quantiles if no time grouping is applied. 
+  that means 100 quantiles if the time grouping is monthly. 
 - *Adjustment factor smoothing*:
-  By default, the delta change applied to each observational data point is the closest value from the array of adjustment factors.
-  For example, it might be a 12 (months) by 100 (quantiles) array of adjustment factors.
-  Linear or cubic interpolation / smoothing of the adjustment factors can be optionally applied along the time (e.g. month) axis.
-  For example, the adjustment factor for a observational data point from 29 July that corresponds to the 0.651 quantile
-  could be a linear combination of the adjustment factors for the nearest quantile (0.65) from both July and August.
+  The bias correction applied to each target data point is the closest value from the array of adjustment factors.
+  In the case of monthly time grouping, it is a 12 (months) by 100 (quantiles) array
+  and linear interpolation/smoothing is applied along the month axis.
+  That means the adjustment factor for a target data point from 29 July that corresponds to the 0.651 quantile
+  will be a linear combination of the adjustment factors for the nearest quantile (0.65) from both July and August.
   We've found that linear and cubic interpolation along the time axis produce slighty better results
   than no smoothing at all but can be more computationally expensive.
+
+There are a couple of additional methodological considerations unique to working with precipitation data:
 - *Singularity stochastic removal* ([Vrac et al 2016](https://doi.org/10.1002/2015JD024511))
   is used to avoid divide by zero errors in the analysis of precipitation data.
   All near-zero values (i.e. values less than a very small positive threshold value)
   are set to a small random non-zero value prior to data processing,
   and then after QDC has been applied
   any values less than the threshold are set to zero.
+- *Large adjustment factors*: Model biases in the simulated precipitation distribution can cause the QDC method
+  to produce unrealistically large adjustment factors under special circumstances
+  (when there is an increasing rainfall trend and a dry model bias at marginal rainfall values;
+  [Irving and Macadam 2024](https://doi.org/10.25919/03by-9y62)).
+  Following [Irving and Macadam (2024)](https://doi.org/10.25919/03by-9y62),
+  it can therefore be helpful to limit the adjustment factors to 5.0 or less
+  when applying the QDC method to precipitation data.
+  A common multiplicative scaling factor can also applied to every data
+  point after the QDC method has been applied to make sure the annual mean percentage change
+  in the QDC precipitation data matches the model.
    
