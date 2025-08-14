@@ -125,6 +125,7 @@ def main(args):
         args.hist_files,
         args.hist_var,
         time_bounds=args.hist_time_bounds,
+        isel_hour=args.isel_hour,
         input_units=args.input_hist_units,
         output_units=args.output_units,
         valid_min=args.valid_min,
@@ -135,6 +136,7 @@ def main(args):
         args.ref_files,
         args.ref_var,
         time_bounds=args.ref_time_bounds,
+        isel_hour=args.isel_hour,
         lat_bounds=args.lat_bounds,
         lon_bounds=args.lon_bounds,
         input_units=args.input_ref_units,
@@ -195,6 +197,12 @@ if __name__ == '__main__':
         nargs='*',
         required=True,
         help="reference data files"
+    )
+    parser.add_argument(
+        "--isel_hour",
+        type=int,
+        default=None,
+        help="select a single hour from the input files"
     )
     parser.add_argument(
         "--hist_time_bounds",

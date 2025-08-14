@@ -227,6 +227,7 @@ def main(args):
         args.infiles,
         args.var,
         time_bounds=args.adjustment_tbounds,
+        isel_hour=args.isel_hour,
         input_units=args.input_units,
         output_units=args.output_units,
         use_cftime=False,
@@ -288,6 +289,12 @@ if __name__ == '__main__':
 
     parser.add_argument("--input_units", type=str, default=None, help="input data units")
     parser.add_argument("--output_units", type=str, default=None, help="output data units")
+    parser.add_argument(
+        "--isel_hour",
+        type=int,
+        default=None,
+        help="select a single hour from the infiles"
+    )
     parser.add_argument(
         "--adjustment_tbounds",
         type=str,

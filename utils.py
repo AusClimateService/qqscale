@@ -204,6 +204,7 @@ def read_data(
     time_bounds=None,
     lat_bounds=None,
     lon_bounds=None,
+    isel_hour=None,
     input_units=None,
     output_units=None,
     lon_chunk_size=None,
@@ -225,6 +226,8 @@ def read_data(
         Rename var to value of rename_var
     time_bounds : list, optional
         Time period to extract from infiles [YYYY-MM-DD, YYYY-MM-DD]
+    isel_hour : int, optional
+        Select a single hour from the infiles
     lat_bnds : list, optional
         Latitude bounds: [south bound, north bound] 
     lon_bnds : list, optional
@@ -278,7 +281,11 @@ def read_data(
 
     if time_bounds:
         start_date, end_date = time_bounds
-        ds = ds.sel({'time': slice(start_date, end_date)})        
+        ds = ds.sel({'time': slice(start_date, end_date)})
+
+    if type(isel_hour) == int:
+        ds = ds.isel(time=(ds.time.dt.hour == isel_hour))
+
     if lat_bounds:
         ds = subset_lat(ds, lat_bounds)
     if lon_bounds:
